@@ -108,21 +108,24 @@ class TripletOrm(Base):
         back_populates="triplets",
     )
 
-    __table_args__ = (UniqueConstraint(
-        'doc_id',
-        'subject_entity_id',
-        'predicate_relation_id',
-        'object_entity_id',
-        name='unique_triplet_constraint'
-    ),)
+    # __table_args__ = (UniqueConstraint(
+    #     'doc_id',
+    #     'subject_entity_id',
+    #     'predicate_relation_id',
+    #     'object_entity_id',
+    #     name='unique_triplet_constraint'
+    # ),)
 
 
 class DocumentOrm(Base):
     __tablename__ = "docs"
     id = Column(Integer, primary_key=True, autoincrement=True)
     text = Column(Text, nullable=False)
+
+    str_id = Column(String, nullable=True, index=True)
     orig_text = Column(Text, nullable=True)
     timestamp = Column(DateTime, nullable=True)
+    category = Column(String, nullable=True)
 
     # Relationships
     triplets = relationship("TripletOrm", back_populates="document")

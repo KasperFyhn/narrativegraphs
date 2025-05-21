@@ -1,4 +1,6 @@
 pydantic~=2.11.4
-sqlalchemy
-pandas
-spacy
+sqlalchemy~=2.0.41
+pandas~=2.2.3
+spacy~=3.8.6
+scikit-learn~=1.6.1
+tqdm~=4.67.1

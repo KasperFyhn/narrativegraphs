@@ -1,0 +1,45 @@
+import logging
+from datetime import datetime
+
+from tqdm import tqdm
+
+from narrativegraph.db.service import DbService
+from narrativegraph.extraction.common import TripletExtractor
+from narrativegraph.extraction.spacy import DependencyGraphExtractor
+from narrativegraph.mapping.common import Mapper
+
+logging.basicConfig(level=logging.INFO)
+_logger = logging.getLogger("narrativegraph")
+_logger.setLevel(logging.INFO)
+
+
+class NarrativeGraph:
+    def __init__(self, triplet_extractor: TripletExtractor = None, entity_mapper: Mapper = None,
+                 relation_mapper: Mapper = None, sqlite_db_path: str = None):
+        # Analysis components
+        self._triplet_extractor = triplet_extractor or DependencyGraphExtractor()
+        self._entity_mapper = entity_mapper
+        self._relation_mapper = relation_mapper
+
+        # Data storage
+        self._db_service = DbService(db_filepath=sqlite_db_path)
+
+    def fit(self, docs: list[str], doc_ids: list[int | str] = None, timestamps: list[datetime] = None,
+            categories: list[str] = None):
+        _logger.info(f"Adding {len(docs)} documents to database")
+        self._db_service.add_documents(
+            docs, doc_ids=doc_ids, timestamps=timestamps, categories=categories)
+
+        _logger.info(f"Extracting triplets")
+        doc_orms = self._db_service.get_docs()
+        extracted_triplets = self._triplet_extractor.batch_extract(
+            [d.text for d in doc_orms]
+        )
+        docs_and_triplets = zip(doc_orms, extracted_triplets)
+        if _logger.isEnabledFor(logging.INFO):
+            docs_and_triplets = tqdm(docs_and_triplets,
+                                     desc="Extracting triplets",
+                                     total=len(docs))
+        for doc, doc_triplets in docs_and_triplets:
+            self._db_service.add_triplets(doc.id, doc_triplets)
+
