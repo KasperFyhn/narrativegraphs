@@ -60,12 +60,19 @@ class EntityAndRelationCache:
         for entity in tqdm(self._entities.values(), desc="Updating entity info"):
             as_subject = len(entity.subject_triplets)  # noqa
             as_object = len(entity.object_triplets)  # noqa
+
             entity.term_frequency = as_subject + as_object
+
+            triplets = entity.subject_triplets + entity.object_triplets
             entity.doc_frequency = len(
-                set(t.doc_id for t in entity.subject_triplets + entity.object_triplets),
+                set(t.doc_id for t in triplets),
+            )
+            entity.categories = ','.join(
+                sorted(t.category for t in triplets
+                if t.category is not None)
             )
             dates = [
-                t.timestamp for t in entity.subject_triplets + entity.object_triplets
+                t.timestamp for t in triplets
                 if t.timestamp is not None
             ]
             entity.first_occurrence = min(dates, default=None)
@@ -83,6 +90,10 @@ class EntityAndRelationCache:
         ):
             relation.term_frequency = len(relation.triplets)  # noqa
             relation.doc_frequency = len(set(t.doc_id for t in relation.triplets))
+            relation.categories = ','.join(
+                sorted(t.category for t in relation.triplets
+                if t.category is not None)
+            )
             dates = [t.timestamp for t in relation.triplets
                      if t.timestamp is not None]
             relation.first_occurrence = min(dates, default=None)

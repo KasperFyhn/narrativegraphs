@@ -20,6 +20,7 @@ class EntityOrm(Base):
     is_supernode = Column(Boolean, nullable=False, default=False)
     term_frequency = Column(Integer, default=-1, nullable=False)
     doc_frequency = Column(Integer, default=-1, nullable=False)
+    categories = Column(String, nullable=True)
     first_occurrence = Column(DateTime, nullable=True)
     last_occurrence = Column(DateTime, nullable=True)
 
@@ -52,6 +53,7 @@ class RelationOrm(Base):
     object_id = Column(Integer, ForeignKey("entities.id"), nullable=False, index=True)
     term_frequency = Column(Integer, default=-1, nullable=False)
     doc_frequency = Column(Integer, default=-1, nullable=False)
+    categories = Column(String, nullable=True)
     first_occurrence = Column(DateTime, nullable=True)
     last_occurrence = Column(DateTime, nullable=True)
 
@@ -75,10 +77,13 @@ class TripletOrm(Base):
     __tablename__ = "triplets"
     id = Column(Integer, primary_key=True, autoincrement=True)
     timestamp = Column(DateTime, nullable=True)
+    category = Column(String, nullable=True, index=True)
     doc_id = Column(Integer, ForeignKey("docs.id"), nullable=False, index=True)
+
     subject_id = Column(Integer, ForeignKey("entities.id"), nullable=True, index=True)
     relation_id = Column(Integer, ForeignKey("relations.id"), nullable=True, index=True)
     object_id = Column(Integer, ForeignKey("entities.id"), nullable=True, index=True)
+
     subj_span_start = Column(Integer, nullable=False)
     subj_span_end = Column(Integer, nullable=False)
     subj_span_text = Column(String, nullable=False)

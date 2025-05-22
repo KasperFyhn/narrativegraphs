@@ -1,13 +1,17 @@
 import logging
 from datetime import datetime
+from string import punctuation
 
 from tqdm import tqdm
 
+from narrativegraph.db.orms import EntityOrm
 from narrativegraph.db.service import DbService
 from narrativegraph.extraction.common import TripletExtractor
 from narrativegraph.extraction.spacy import DependencyGraphExtractor
 from narrativegraph.mapping.common import Mapper
 from narrativegraph.mapping.linguistic import StemmingMapper, SubgramStemmingMapper
+from narrativegraph.visualization.common import Edge, Node
+from narrativegraph.visualization.plotly import GraphPlotter
 
 logging.basicConfig(level=logging.INFO)
 _logger = logging.getLogger("narrativegraph")
@@ -46,7 +50,7 @@ class NarrativeGraph:
                                      desc="Extracting triplets",
                                      total=len(docs))
         for doc, doc_triplets in docs_and_triplets:
-            self._db_service.add_triplets(doc.id, doc_triplets)
+            self._db_service.add_triplets(doc.id, doc_triplets, category=doc.category)
 
         _logger.info(f"Mapping entities and relations")
         triplets = self._db_service.get_triplets()
@@ -57,4 +61,32 @@ class NarrativeGraph:
         predicates = [triplet.pred_span_text for triplet in triplets]
         self.predicate_mapping = self._entity_mapper.create_mapping(predicates)
 
+        _logger.info(f"Mapping triplets")
         self._db_service.map_triplets(self.entity_mapping, self.predicate_mapping)
+
+    def show_graph(self, max_edges: int = 25):
+        _logger.info(f"Showing graph")
+        relations = self._db_service.get_relations(n=max_edges)
+        entities: dict[int, EntityOrm] = {}
+        for relation in relations:
+            entities[relation.subject_id] = relation.subject
+            entities[relation.object_id] = relation.object
+
+        edges = [Edge(
+            source_id=relation.subject_id,
+            target_id=relation.object_id,
+            label=relation.label,
+            categories=relation.categories.split(',')
+        )
+            for relation in relations]
+        nodes = [Node(
+            id=entity.id,
+            label=''.join(c for c in entity.label if c.isalnum() or c in " '-"),
+            categories=entity.categories.split(',')
+        )
+            for entity in entities.values()]
+
+        GraphPlotter(
+            edges=edges,
+            nodes=nodes,
+        ).plot()
