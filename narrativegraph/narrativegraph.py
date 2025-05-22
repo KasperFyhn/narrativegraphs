@@ -18,12 +18,16 @@ class NarrativeGraph:
     def __init__(self, triplet_extractor: TripletExtractor = None, entity_mapper: Mapper = None,
                  relation_mapper: Mapper = None, sqlite_db_path: str = None):
         # Analysis components
+
         self._triplet_extractor = triplet_extractor or DependencyGraphExtractor()
         self._entity_mapper = entity_mapper or StemmingMapper()
         self._relation_mapper = relation_mapper or SubgramStemmingMapper()
 
         # Data storage
         self._db_service = DbService(db_filepath=sqlite_db_path)
+
+        self.predicate_mapping = None
+        self.entity_mapping = None
 
     def fit(self, docs: list[str], doc_ids: list[int | str] = None, timestamps: list[datetime] = None,
             categories: list[str] = None):
@@ -52,3 +56,5 @@ class NarrativeGraph:
 
         predicates = [triplet.pred_span_text for triplet in triplets]
         self.predicate_mapping = self._entity_mapper.create_mapping(predicates)
+
+        self._db_service.map_triplets(self.entity_mapping, self.predicate_mapping)
