@@ -7,6 +7,7 @@ from narrativegraph.db.service import DbService
 from narrativegraph.extraction.common import TripletExtractor
 from narrativegraph.extraction.spacy import DependencyGraphExtractor
 from narrativegraph.mapping.common import Mapper
+from narrativegraph.mapping.linguistic import StemmingMapper, SubgramStemmingMapper
 
 logging.basicConfig(level=logging.INFO)
 _logger = logging.getLogger("narrativegraph")
@@ -18,8 +19,8 @@ class NarrativeGraph:
                  relation_mapper: Mapper = None, sqlite_db_path: str = None):
         # Analysis components
         self._triplet_extractor = triplet_extractor or DependencyGraphExtractor()
-        self._entity_mapper = entity_mapper
-        self._relation_mapper = relation_mapper
+        self._entity_mapper = entity_mapper or StemmingMapper()
+        self._relation_mapper = relation_mapper or SubgramStemmingMapper()
 
         # Data storage
         self._db_service = DbService(db_filepath=sqlite_db_path)
@@ -43,3 +44,11 @@ class NarrativeGraph:
         for doc, doc_triplets in docs_and_triplets:
             self._db_service.add_triplets(doc.id, doc_triplets)
 
+        _logger.info(f"Mapping entities and relations")
+        triplets = self._db_service.get_triplets()
+        entities = [entity for triplet in triplets
+                    for entity in [triplet.subj_span_text, triplet.obj_span_text]]
+        self.entity_mapping = self._entity_mapper.create_mapping(entities)
+
+        predicates = [triplet.pred_span_text for triplet in triplets]
+        self.predicate_mapping = self._entity_mapper.create_mapping(predicates)

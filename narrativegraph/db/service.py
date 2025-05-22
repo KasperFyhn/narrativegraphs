@@ -70,3 +70,7 @@ class DbService:
             session.bulk_save_objects(triplet_orms)
             session.commit()
 
+    def get_triplets(self):
+        with get_session(self._engine) as session:
+            return session.query(TripletOrm).all()
+

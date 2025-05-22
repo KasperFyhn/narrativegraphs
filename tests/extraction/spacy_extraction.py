@@ -73,13 +73,13 @@ class TestDependencyGraphExtractor(unittest.TestCase):
         self.assertEqual(len(triplets), len(expected_triplets))
         self.assertTripletEqual(triplets[0], expected_triplets[0], msg=f"Test '{text}':")
 
-    def test_copular_verb_attribute(self):
-        text = "She is a doctor."
+    def test_copula_verb_attribute(self):
+        text = "Pam is a doctor."
         triplets = self.extractor.extract(text)
 
         expected_triplets = [
             Triplet(
-                subject=TripletPart(text="She", start_char=0, end_char=3),
+                subject=TripletPart(text="Pam", start_char=0, end_char=3),
                 predicate=TripletPart(text="is", start_char=4, end_char=6),
                 obj=TripletPart(text="a doctor", start_char=7, end_char=15)
             )
@@ -92,15 +92,15 @@ class TestDependencyGraphExtractor(unittest.TestCase):
         triplets = self.extractor.extract(text)
 
         expected_triplets = [
-            Triplet(
-                subject=TripletPart(text="He", start_char=0, end_char=2),
-                predicate=TripletPart(text="likes to read", start_char=3, end_char=16),
-                # 'likes' (3-8), 'to' (9-11), 'read' (12-16)
-                obj=TripletPart(text="books", start_char=17, end_char=22)
-            )
+            # Triplet(
+            #     subject=TripletPart(text="He", start_char=0, end_char=2),
+            #     predicate=TripletPart(text="likes to read", start_char=3, end_char=16),
+            #     # 'likes' (3-8), 'to' (9-11), 'read' (12-16)
+            #     obj=TripletPart(text="books", start_char=17, end_char=22)
+            # )
         ]
         self.assertEqual(len(triplets), len(expected_triplets))
-        self.assertTripletEqual(triplets[0], expected_triplets[0], msg=f"Test '{text}':")
+        # self.assertTripletEqual(triplets[0], expected_triplets[0], msg=f"Test '{text}':")
 
     def test_passive_voice_with_agent(self):
         text = "The book was read by Mary."
@@ -115,13 +115,6 @@ class TestDependencyGraphExtractor(unittest.TestCase):
         ]
         self.assertEqual(len(triplets), len(expected_triplets))
         self.assertTripletEqual(triplets[0], expected_triplets[0], msg=f"Test '{text}':")
-
-    def test_intransitive_verb(self):
-        text = "Birds fly."
-        triplets = self.extractor.extract(text)
-
-        expected_triplets = []
-        self.assertEqual(len(triplets), len(expected_triplets))
 
     def test_copular_verb_adjective(self):
         text = "The car is red."
@@ -153,10 +146,7 @@ class TestDependencyGraphExtractor(unittest.TestCase):
         self.assertEqual(len(triplets), len(expected_triplets))
         self.assertTripletEqual(triplets[0], expected_triplets[0], msg=f"Test '{text}':")
 
-    def test_no_verb_sentence(self):
-        text = "A beautiful day."
-        triplets = self.extractor.extract(text)
-        self.assertEqual(len(triplets), 0)
+
 
     def test_multiple_sentences(self):
         text = "John hit the ball. Birds fly fast. The dog chased the cat quickly."
@@ -178,3 +168,23 @@ class TestDependencyGraphExtractor(unittest.TestCase):
         self.assertEqual(len(triplets), len(expected_triplets))
         self.assertTripletEqual(triplets[0], expected_triplets[0], msg=f"Test '{text}' sentence 1:")
         self.assertTripletEqual(triplets[1], expected_triplets[1], msg=f"Test '{text}' sentence 2:")
+
+    def test_intransitive_verb(self):
+        text = "Birds fly."
+        triplets = self.extractor.extract(text)
+        self.assertEqual(len(triplets), 0)
+
+    def test_no_verb_sentence(self):
+        text = "A beautiful day."
+        triplets = self.extractor.extract(text)
+        self.assertEqual(len(triplets), 0)
+
+    def test_pronoun_subject(self):
+        text = "He saw the dog."
+        triplets = self.extractor.extract(text)
+        self.assertEqual(len(triplets), 0)
+
+    def test_pronoun_object(self):
+        text = "The dog saw him."
+        triplets = self.extractor.extract(text)
+        self.assertEqual(len(triplets), 0)
