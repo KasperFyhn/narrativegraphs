@@ -59,7 +59,7 @@ class EntityAndRelationCache:
     def update_entity_info(self):
         for entity in tqdm(self._entities.values(), desc="Updating entity info"):
             as_subject = len(entity.subject_triplets)  # noqa
-            as_object = len(entity.object_triplets)  # noqa
+            as_object = len(entity.obect_triplets)  # noqa
 
             entity.term_frequency = as_subject + as_object
 
