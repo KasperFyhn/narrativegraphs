@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -5,6 +6,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
 
 import os
+
+from narrativegraph.db.service import DbService
 
 app = FastAPI()
 
@@ -18,9 +21,13 @@ app.mount("/vis", StaticFiles(directory=build_directory, html=True), name="stati
 
 @app.on_event("startup")
 async def startup_event():
-    db_path = os.getenv('DB_PATH', None)
-    # Here you would initialize your database connection with `db_path`
-    print(f"Database path: {db_path}")
+    if app.state.db_service is not None:
+        logging.info("Database service provided to state before startup.")
+    elif os.environ.get("DB_PATH") is not None:
+        app.state.db_service = DbService(os.environ["DB_PATH"])
+        logging.info("Database service initialized from environment variable 'DB_PATH'.")
+    else:
+        raise ValueError("No database service provided.")
 
 @app.get("/")
 async def root():

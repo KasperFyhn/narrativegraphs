@@ -1,14 +1,12 @@
 import asyncio
 import logging
-import os
-import threading
 import time
 from datetime import datetime
-from string import punctuation
-from threading import Event
 
+import nest_asyncio
 import uvicorn
 from tqdm import tqdm
+from uvicorn import Server
 
 from narrativegraph.db.orms import EntityOrm
 from narrativegraph.db.service import DbService
@@ -41,9 +39,8 @@ class NarrativeGraph:
         self.entity_mapping = None
 
         # Visualizer server
-        self._server_thread = None
-        self._server: uvicorn.Server | None = None
-
+        self._server_task = None
+        self._server: Server = None
 
     def fit(self, docs: list[str], doc_ids: list[int | str] = None, timestamps: list[datetime] = None,
             categories: list[str] = None):
@@ -103,59 +100,72 @@ class NarrativeGraph:
             nodes=nodes,
         ).plot()
 
-    def serve_visualizer(self, port: int = 8001):
+    def serve_visualizer(self, port: int = 8001, block: bool = True):
+        """
+        Serve the visualizer application.
 
-        if self._server_thread is not None and self._server_thread.is_alive():
-            _logger.warning(f"Server already running on port {self._server.config.port}!")
+        :param port: The port number on which the visualizer should be served. Defaults to 8001.
+
+        :param block: If True, the function will block until the server is stopped. If False, the server will run in the background. Defaults to True.
+
+        :return: None
+        """
+
+        # Check if server is already running
+
+        if self._server_task is not None and not self._server_task.done():
+            _logger.warning("Server already running! Stop it first with stop_visualizer()")
             return
 
         _logger.info(f"Serving visualizer on port {port}")
 
-        # Set environment variables
-        os.environ['DB_PATH'] = self._sql_db_path
+        nest_asyncio.apply()
 
         async def run_server():
             config = uvicorn.Config(app, port=port, log_level="info")
             server = uvicorn.Server(config)
-
-            # Store server reference for shutdown
             self._server = server
 
             try:
+                app.state.db_service = self._db_service
                 await server.serve()
             except asyncio.CancelledError:
                 _logger.info("Server cancelled")
 
-        def run_server_thread():
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-
+        if block:
             try:
-                loop.run_until_complete(run_server())
-            except Exception as e:
-                _logger.error(f"Server error: {e}")
-            finally:
-                loop.close()
+                asyncio.run(run_server())
+            except KeyboardInterrupt:
+                self._server = None
+                _logger.info("Server stopped by user")
+        else:
+            # Create background task
+            self._server_task = asyncio.create_task(run_server())
+            _logger.info(f"Server started in background on port {port}")
 
-        if self._server_thread is None:
-            self._server_thread = threading.Thread(target=run_server_thread, daemon=True)
-            self._server_thread.start()
+    async def stop_visualizer(self):
+        """
+        Asynchronously stops the background visualizer server.
 
-    def stop_server(self):
-        if self._server:
-            _logger.info("Stopping server...")
+        Example usage: ``await narrative_graph.stop_visualizer()``
 
-            # Shutdown the uvicorn server
+        """
+        if self._server_task is not None and not self._server_task.done():
             self._server.should_exit = True
 
-            if self._server_thread and self._server_thread.is_alive():
-                self._server_thread.join(timeout=10)
+            try:
+                # Wait up to 5 seconds for graceful shutdown
+                await asyncio.wait_for(self._server_task, timeout=5.0)
+            except asyncio.TimeoutError:
+                _logger.warning("Server didn't shut down gracefully, forcing cancellation")
+                self._server_task.cancel()
+                try:
+                    await self._server_task
+                except asyncio.CancelledError:
+                    pass
 
-            if self._server_thread and self._server_thread.is_alive():
-                _logger.warning("Server did not stop successfully!")
-            else:
-                _logger.info("Server stopped successfully")
-                self._server_thread = None
-                self._server = None
+            self._server = None
+            self._server_task = None
+            _logger.info("Background server stopped")
         else:
-            _logger.error("Server is not running!")
+            _logger.info("No server running")
