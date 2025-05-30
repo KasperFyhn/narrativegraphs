@@ -17,10 +17,10 @@ export const ServiceContextProvider: React.FC<PropsWithChildren> = ({
   children,
 }) => {
   const value: Services = {
-    graphService: new GraphServiceImpl("http://localhost:5000"),
-    docService: new DocServiceImpl("http://localhost:5000"),
-    entityService: new EntityServiceImpl("http://localhost:5000"),
-    relationService: new RelationServiceImpl("http://localhost:5000"),
+    graphService: new GraphServiceImpl("http://localhost:8001"),
+    docService: new DocServiceImpl("http://localhost:8001"),
+    entityService: new EntityServiceImpl("http://localhost:8001"),
+    relationService: new RelationServiceImpl("http://localhost:8001"),
   };
 
   return (

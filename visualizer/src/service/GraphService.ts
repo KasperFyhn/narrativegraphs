@@ -32,7 +32,7 @@ export class GraphServiceImpl implements GraphService {
     const response = await fetch(`${this.baseUrl}/graph`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ graphFilter: filter }),
+      body: JSON.stringify(filter),
     });
 
     if (!response.ok) {

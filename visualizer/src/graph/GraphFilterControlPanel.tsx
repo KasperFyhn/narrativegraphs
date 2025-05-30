@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, {useEffect, useState} from "react";
 import "./graph.css";
 import LogarithmicRangeSlider from "../common/LogarithmicRangeSlider";
-import { DataBounds, GraphFilter } from "../types/graphfilter";
-import { useServiceContext } from "../service/ServiceContextProvider";
-import { ClipLoader } from "react-spinners";
+import {DataBounds, GraphFilter} from "../types/graphfilter";
+import {useServiceContext} from "../service/ServiceContextProvider";
+import {ClipLoader} from "react-spinners";
 
 interface GraphFilterControlPanelProps {
   graphFilter: GraphFilter;
@@ -11,10 +11,10 @@ interface GraphFilterControlPanelProps {
 }
 
 export const GraphFilterControlPanel = ({
-  graphFilter,
-  setGraphFilter,
-}: GraphFilterControlPanelProps) => {
-  const { graphService } = useServiceContext();
+                                          graphFilter,
+                                          setGraphFilter,
+                                        }: GraphFilterControlPanelProps) => {
+  const {graphService} = useServiceContext();
 
   const [dataBounds, setDataBounds] = useState<DataBounds>();
   useEffect(() => {
@@ -28,6 +28,9 @@ export const GraphFilterControlPanel = ({
   );
 
   const setMinAndMaxNodeFrequency = (min: number, max: number) => {
+    if (min === graphFilter.minimumNodeFrequency && max === graphFilter.maximumNodeFrequency) {
+      return;
+    }
     setGraphFilter({
       ...graphFilter,
       minimumNodeFrequency: min,
@@ -35,6 +38,9 @@ export const GraphFilterControlPanel = ({
     });
   };
   const setMinAndMaxEdgeFrequency = (min: number, max: number) => {
+    if (min === graphFilter.minimumEdgeFrequency && max === graphFilter.maximumEdgeFrequency) {
+      return;
+    }
     setGraphFilter({
       ...graphFilter,
       minimumEdgeFrequency: min,
@@ -45,7 +51,7 @@ export const GraphFilterControlPanel = ({
   if (!dataBounds) {
     return (
       <div className={"flex-container"}>
-        <ClipLoader loading={true} />
+        <ClipLoader loading={true}/>
       </div>
     );
   }
@@ -89,7 +95,7 @@ export const GraphFilterControlPanel = ({
       </div>
       <div className={"flex-container"}>
         <span className={"option-span"}>Node Frequency:&nbsp;</span>
-        <div style={{ width: "250px" }}>
+        <div style={{width: "250px"}}>
           <LogarithmicRangeSlider
             onChange={(e) => {
               setMinAndMaxNodeFrequency(e.minValue, e.maxValue);
@@ -104,8 +110,8 @@ export const GraphFilterControlPanel = ({
               dataBounds.maximumPossibleNodeFrequency
             }
             max={dataBounds.maximumPossibleNodeFrequency}
-            style={{ border: "none", boxShadow: "none", padding: "15px 10px" }}
-          ></LogarithmicRangeSlider>
+            style={{border: "none", boxShadow: "none", padding: "15px 10px"}}
+          />
         </div>
       </div>
       <div className={"flex-container"}>
@@ -132,7 +138,7 @@ export const GraphFilterControlPanel = ({
       </div>
       <div className={"flex-container"}>
         <span className={"option-span"}>Edge Frequency:&nbsp;</span>
-        <div style={{ width: "250px" }}>
+        <div style={{width: "250px"}}>
           <LogarithmicRangeSlider
             onChange={(e) => {
               setMinAndMaxEdgeFrequency(e.minValue, e.maxValue);
@@ -147,28 +153,14 @@ export const GraphFilterControlPanel = ({
               dataBounds.maximumPossibleEdgeFrequency
             }
             max={dataBounds.maximumPossibleEdgeFrequency}
-            style={{ border: "none", boxShadow: "none", padding: "15px 10px" }}
+            style={{border: "none", boxShadow: "none", padding: "15px 10px"}}
           ></LogarithmicRangeSlider>
         </div>
       </div>
-      {/*<div >*/}
-      {/*  Show unconnected nodes:*/}
-      {/*  <input*/}
-      {/*    type={"checkbox"}*/}
-      {/*    */}
-      {/*    checked={graphFilter.showUnconnectedNodes}*/}
-      {/*    onChange={(event) =>*/}
-      {/*      setGraphFilter({*/}
-      {/*        ...graphFilter,*/}
-      {/*        showUnconnectedNodes: event.target.checked,*/}
-      {/*      })*/}
-      {/*    }*/}
-      {/*  />*/}
-      {/*</div>*/}
       <div className={"flex-container"}>
         <span className={"option-span"}>Search nodes:</span>
         <form
-          style={{ margin: 0 }}
+          style={{margin: 0}}
           onSubmit={(event) => {
             event.preventDefault();
             setGraphFilter((prevState) => ({
@@ -193,29 +185,54 @@ export const GraphFilterControlPanel = ({
           />
         </form>
       </div>
-      <div className={"flex-container"}>
-        <span className={"option-span"}>Date Filter:</span>
-        <div>
-          <input
-            type={"date"}
-            onChange={(event) =>
-              setGraphFilter({
-                ...graphFilter,
-                earliestDate: event.target.valueAsDate ?? undefined,
-              })
-            }
-          />
-          <input
-            type={"date"}
-            onChange={(event) =>
-              setGraphFilter({
-                ...graphFilter,
-                latestDate: event.target.valueAsDate ?? undefined,
-              })
-            }
-          />
-        </div>
-      </div>
+      {dataBounds.categories &&
+
+
+          <div className={"flex-container"}>
+              <details>
+                  <summary>
+                      <span className={"option-span"}>Categories</span>
+                  </summary>
+                  <div>
+                    {dataBounds.categories.map((category) => (
+                      <div key={category}>
+                        <input
+                          type="checkbox"
+                          onChange={(event) => {
+                            console.log("Changed:", category);
+                          }}
+                        />
+                        {category}
+                      </div>
+
+                    ))}
+                  </div>
+              </details>
+
+          </div>}
+      {dataBounds.earliestDate && dataBounds.latestDate && <div className={"flex-container"}>
+          <span className={"option-span"}>Date Filter:</span>
+          <div>
+              <input
+                  type={"date"}
+                  onChange={(event) =>
+                    setGraphFilter({
+                      ...graphFilter,
+                      earliestDate: event.target.valueAsDate ?? undefined,
+                    })
+                  }
+              />
+              <input
+                  type={"date"}
+                  onChange={(event) =>
+                    setGraphFilter({
+                      ...graphFilter,
+                      latestDate: event.target.valueAsDate ?? undefined,
+                    })
+                  }
+              />
+          </div>
+      </div>}
     </div>
   );
 };

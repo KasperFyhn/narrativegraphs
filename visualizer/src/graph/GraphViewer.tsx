@@ -41,7 +41,6 @@ export const GraphViewer: React.FC = () => {
   const [partialGraphFilter, setPartialGraphFilter] = useState<GraphFilter>({
     limitNodes: 50,
     limitEdges: 100,
-    minimumEdgeFrequency: 5,
   });
 
   const [graphData, setGraphData] = useState<GraphData>({
