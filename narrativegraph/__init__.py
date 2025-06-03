@@ -1,1 +1,1 @@
-
+from narrativegraph.narrativegraph import NarrativeGraph

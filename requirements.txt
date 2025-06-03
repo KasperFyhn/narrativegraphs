@@ -11,3 +11,5 @@ uvicorn~=0.34.2
 fastapi~=0.115.12
 ipython~=9.2.0
 nest-asyncio~=1.6.0
+kagglehub~=0.3.12
+fastapi_camelcase~=2.0.0

@@ -7,6 +7,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.requests import Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
+
 from narrativegraph.server.routes.graph import router as graph_router
 from narrativegraph.server.routes.entities import router as entities_router
 from narrativegraph.server.routes.relations import router as relations_router
@@ -36,6 +38,10 @@ if not os.path.isdir(build_directory):
 # Mount the static files at the root URL
 app.mount("/vis", StaticFiles(directory=build_directory, html=True), name="static")
 
+@app.get("/", include_in_schema=False)
+async def root():
+    return RedirectResponse(url="/vis")
+
 @app.on_event("startup")
 async def startup_event():
     if hasattr(app.state, "db_service") and app.state.db_service is not None:
@@ -45,7 +51,6 @@ async def startup_event():
         logging.info("Database service initialized from environment variable.")
     else:
         raise ValueError("No database service provided. Set environment variable DB_PATH.")
-
 
 
 @app.exception_handler(RequestValidationError)

@@ -1,11 +1,7 @@
-import asyncio
 import logging
 from datetime import datetime
 
-import nest_asyncio
-import uvicorn
 from tqdm import tqdm
-from uvicorn import Server
 
 from narrativegraph.db.orms import EntityOrm
 from narrativegraph.db.service import DbService
@@ -13,7 +9,7 @@ from narrativegraph.extraction.common import TripletExtractor
 from narrativegraph.extraction.spacy import DependencyGraphExtractor
 from narrativegraph.mapping.common import Mapper
 from narrativegraph.mapping.linguistic import StemmingMapper, SubgramStemmingMapper
-from narrativegraph.server.main import app
+from narrativegraph.server.backgroundserver import BackgroundServer
 from narrativegraph.visualization.common import Edge, Node
 from narrativegraph.visualization.plotly import GraphPlotter
 
@@ -36,10 +32,6 @@ class NarrativeGraph:
 
         self.predicate_mapping = None
         self.entity_mapping = None
-
-        # Visualizer server
-        self._server_task = None
-        self._server: Server = None
 
     def fit(self, docs: list[str], doc_ids: list[int | str] = None, timestamps: list[datetime] = None,
             categories: list[str] = None):
@@ -99,72 +91,20 @@ class NarrativeGraph:
             nodes=nodes,
         ).plot()
 
-    def serve_visualizer(self, port: int = 8001, block: bool = True):
+    def serve_visualizer(self, port: int = 8001, autostart: bool = True, block: bool = True):
         """
         Serve the visualizer application.
 
         :param port: The port number on which the visualizer should be served. Defaults to 8001.
-
+        :param autostart: If True, the server is started automatically. Defaults to True.
         :param block: If True, the function will block until the server is stopped. If False, the server will run in the background. Defaults to True.
 
         :return: None
         """
-
-        # Check if server is already running
-
-        if self._server_task is not None and not self._server_task.done():
-            _logger.warning("Server already running! Stop it first with stop_visualizer()")
-            return
-
-        _logger.info(f"Serving visualizer on port {port}")
-
-        nest_asyncio.apply()
-
-        async def run_server():
-            config = uvicorn.Config(app, port=port, log_level="info")
-            server = uvicorn.Server(config)
-            self._server = server
-
-            try:
-                app.state.db_service = self._db_service
-                await server.serve()
-            except asyncio.CancelledError:
-                _logger.info("Server cancelled")
-
-        if block:
-            try:
-                asyncio.run(run_server())
-            except KeyboardInterrupt:
-                self._server = None
-                _logger.info("Server stopped by user")
+        server = BackgroundServer(self._db_service, port=port)
+        if autostart:
+            server.start(block=block)
+        if not block:
+            return server
         else:
-            # Create background task
-            self._server_task = asyncio.create_task(run_server())
-            _logger.info(f"Server started in background on port {port}")
-
-    async def stop_visualizer(self):
-        """
-        Asynchronously stops the background visualizer server.
-
-        Example usage: ``await narrative_graph.stop_visualizer()``
-
-        """
-        if self._server_task is not None and not self._server_task.done():
-            self._server.should_exit = True
-
-            try:
-                # Wait up to 5 seconds for graceful shutdown
-                await asyncio.wait_for(self._server_task, timeout=5.0)
-            except asyncio.TimeoutError:
-                _logger.warning("Server didn't shut down gracefully, forcing cancellation")
-                self._server_task.cancel()
-                try:
-                    await self._server_task
-                except asyncio.CancelledError:
-                    pass
-
-            self._server = None
-            self._server_task = None
-            _logger.info("Background server stopped")
-        else:
-            _logger.info("No server running")
+            return None
