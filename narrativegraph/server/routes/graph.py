@@ -1,14 +1,13 @@
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session, selectinload
-from sqlalchemy import and_, between, func, not_, or_
-from typing import List, Dict, Optional, Any
-from pydantic import BaseModel
 from collections import defaultdict
+from typing import List, Dict, Optional, Any
+
+from fastapi import APIRouter, Depends
+from sqlalchemy import and_, between, func, not_, or_
+from sqlalchemy.orm import Session, selectinload
 
 from narrativegraph.db.orms import RelationOrm, EntityOrm
-from narrativegraph.db.service import DbService
 from narrativegraph.server.dtos import GraphFilter, Edge, Node, DataBounds, RelationGroup
-from narrativegraph.server.routes.common import get_db_service
+from narrativegraph.server.routes.common import get_db_session
 
 router = APIRouter()
 
@@ -215,9 +214,8 @@ def get_connected_entities(focus_entity_ids: List[int], graph_filter: GraphFilte
 
 
 @router.post("/")
-async def get_graph(graph_filter: GraphFilter, db_service: DbService = Depends(get_db_service)):
+async def get_graph(graph_filter: GraphFilter, db: Session = Depends(get_db_session)):
     """Get graph data with entities and relations based on filters"""
-    db = db_service.session
 
     # Build entity filter conditions
     entity_filters = [
@@ -324,14 +322,14 @@ async def get_graph(graph_filter: GraphFilter, db_service: DbService = Depends(g
 
 
 @router.get("/bounds")
-async def get_bounds(db_service: DbService = Depends(get_db_service)) -> DataBounds:
+async def get_bounds(db: Session = Depends(get_db_session)) -> DataBounds:
     return DataBounds(
-        minimum_possible_node_frequency=db_service.session.query(func.min(EntityOrm.term_frequency)).scalar(),
-        maximum_possible_node_frequency=db_service.session.query(func.max(EntityOrm.term_frequency)).scalar(),
-        minimum_possible_edge_frequency=db_service.session.query(func.min(RelationOrm.term_frequency)).scalar(),
-        maximum_possible_edge_frequency=db_service.session.query(func.max(RelationOrm.term_frequency)).scalar(),
-        categories={cat for cat_list in db_service.session.query(EntityOrm.categories).all()
+        minimum_possible_node_frequency=db.query(func.min(EntityOrm.term_frequency)).scalar(),
+        maximum_possible_node_frequency=db.query(func.max(EntityOrm.term_frequency)).scalar(),
+        minimum_possible_edge_frequency=db.query(func.min(RelationOrm.term_frequency)).scalar(),
+        maximum_possible_edge_frequency=db.query(func.max(RelationOrm.term_frequency)).scalar(),
+        categories={cat for cat_list in db.query(EntityOrm.categories).all()
                     for cat in cat_list[0].split(',')},
-        earliest_date=db_service.session.query(func.min(EntityOrm.first_occurrence)).scalar() or None,
-        latest_date=db_service.session.query(func.max(EntityOrm.last_occurrence)).scalar() or None,
+        earliest_date=db.query(func.min(EntityOrm.first_occurrence)).scalar() or None,
+        latest_date=db.query(func.max(EntityOrm.last_occurrence)).scalar() or None,
     )

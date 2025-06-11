@@ -4,28 +4,26 @@ import logging
 import nest_asyncio
 import uvicorn
 from IPython.lib.display import IFrame
+from sqlalchemy import Engine
 
-from narrativegraph.db.service import DbService
 from narrativegraph.server.main import app
 
 
 class BackgroundServer:
-    def __init__(self, db_service: DbService, port: int = 8001):
-        self._db_service = db_service
+    def __init__(self, db_engine: Engine, port: int = 8001):
+        self._db_engine = db_engine
         self._port = port
 
         self._server = None
         self._server_task = None
 
     async def _run_server(self):
-        nest_asyncio.apply()
-
         config = uvicorn.Config(app, port=self._port, log_level="info")
         server = uvicorn.Server(config)
         self._server = server
 
         try:
-            app.state.db_service = self._db_service
+            app.state.db_engine = self._db_engine
             await server.serve()
         except asyncio.CancelledError:
             logging.info("Server cancelled")
@@ -33,6 +31,7 @@ class BackgroundServer:
     def start(self, block: bool = True):
         if block:
             try:
+                nest_asyncio.apply()
                 asyncio.run(self._run_server())
             except KeyboardInterrupt:
                 self._server = None

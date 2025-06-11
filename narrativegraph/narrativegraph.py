@@ -1,4 +1,5 @@
 import logging
+import os
 from datetime import datetime
 
 from tqdm import tqdm
@@ -19,14 +20,26 @@ _logger.setLevel(logging.INFO)
 
 
 class NarrativeGraph:
-    def __init__(self, triplet_extractor: TripletExtractor = None, entity_mapper: Mapper = None,
-                 relation_mapper: Mapper = None, sqlite_db_path: str = None):
+    def __init__(
+            self,
+            triplet_extractor: TripletExtractor = None,
+            entity_mapper: Mapper = None,
+            relation_mapper: Mapper = None,
+            sqlite_db_path: str = None,
+            overwrite_db: bool = False,
+    ):
         # Analysis components
         self._triplet_extractor = triplet_extractor or DependencyGraphExtractor()
         self._entity_mapper = entity_mapper or StemmingMapper()
         self._relation_mapper = relation_mapper or SubgramStemmingMapper()
 
         # Data storage
+        if sqlite_db_path is not None and os.path.exists(sqlite_db_path):
+            if overwrite_db:
+                _logger.info("Overwriting SQLite DB %s", sqlite_db_path)
+                os.remove(sqlite_db_path)
+            else:
+                raise FileExistsError("SQLite database already exists")
         self._sql_db_path = sqlite_db_path or "sqlite:///:memory:"
         self._db_service = DbService(db_filepath=sqlite_db_path)
 
@@ -34,7 +47,7 @@ class NarrativeGraph:
         self.entity_mapping = None
 
     def fit(self, docs: list[str], doc_ids: list[int | str] = None, timestamps: list[datetime] = None,
-            categories: list[str] = None):
+            categories: list[str] = None) -> "NarrativeGraph":
         _logger.info(f"Adding {len(docs)} documents to database")
         self._db_service.add_documents(
             docs, doc_ids=doc_ids, timestamps=timestamps, categories=categories)
@@ -63,6 +76,8 @@ class NarrativeGraph:
 
         _logger.info(f"Mapping triplets")
         self._db_service.map_triplets(self.entity_mapping, self.predicate_mapping)
+
+        return self
 
     def show_graph(self, max_edges: int = 25):
         _logger.info(f"Showing graph")
@@ -101,7 +116,7 @@ class NarrativeGraph:
 
         :return: None
         """
-        server = BackgroundServer(self._db_service, port=port)
+        server = BackgroundServer(self._db_service.engine, port=port)
         if autostart:
             server.start(block=block)
         if not block:

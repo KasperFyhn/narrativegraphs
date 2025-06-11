@@ -1,5 +1,6 @@
 pydantic~=2.11.4
 sqlalchemy~=2.0.41
+sqlalchemy-stubs
 pandas~=2.2.3
 spacy~=3.8.6
 scikit-learn~=1.6.1
@@ -10,6 +11,7 @@ networkx~=3.4.2
 uvicorn~=0.34.2
 fastapi~=0.115.12
 ipython~=9.2.0
+ipywidgets
 nest-asyncio~=1.6.0
 kagglehub~=0.3.12
 fastapi_camelcase~=2.0.0

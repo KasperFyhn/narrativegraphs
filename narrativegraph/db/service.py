@@ -1,7 +1,7 @@
 from datetime import datetime
 from pathlib import Path
 
-from sqlalchemy.orm import Session
+from sqlalchemy import Engine
 from tqdm import tqdm
 
 from narrativegraph.db.cache import EntityAndRelationCache
@@ -19,9 +19,8 @@ class DbService:
         self._session = get_session(self._engine)
 
     @property
-    def session(self) -> Session:
-        return self._session
-        
+    def engine(self) -> Engine:
+        return self._engine
 
     def add_documents(self, docs: list[str], doc_ids: list[int | str] = None, timestamps: list[datetime] = None,
                       categories: list[str] = None):

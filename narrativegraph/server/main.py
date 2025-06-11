@@ -1,4 +1,5 @@
 import logging
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, status
@@ -9,6 +10,7 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 
+from narrativegraph.db.engine import get_engine
 from narrativegraph.server.routes.graph import router as graph_router
 from narrativegraph.server.routes.entities import router as entities_router
 from narrativegraph.server.routes.relations import router as relations_router
@@ -16,7 +18,17 @@ from narrativegraph.server.routes.docs import router as docs_router
 
 import os
 
-from narrativegraph.db.service import DbService
+@asynccontextmanager
+async def lifespan(app_arg: FastAPI):
+    if hasattr(app_arg.state, "db_engine") and app_arg.state.db_engine is not None:
+        logging.info("Database engine provided to state before startup.")
+    elif os.environ.get("DB_PATH") is not None:
+        app_arg.state.db_service = get_engine(os.environ["DB_PATH"])
+        logging.info("Database engine initialized from environment variable.")
+    else:
+        raise ValueError("No database service provided. Set environment variable DB_PATH.")
+    yield
+
 
 app = FastAPI()
 
@@ -41,17 +53,6 @@ app.mount("/vis", StaticFiles(directory=build_directory, html=True), name="stati
 @app.get("/", include_in_schema=False)
 async def root():
     return RedirectResponse(url="/vis")
-
-@app.on_event("startup")
-async def startup_event():
-    if hasattr(app.state, "db_service") and app.state.db_service is not None:
-        logging.info("Database service provided to state before startup.")
-    elif os.environ.get("DB_PATH") is not None:
-        app.state.db_service = DbService(os.environ["DB_PATH"])
-        logging.info("Database service initialized from environment variable.")
-    else:
-        raise ValueError("No database service provided. Set environment variable DB_PATH.")
-
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):

@@ -4,9 +4,8 @@ from fastapi import Depends, HTTPException, APIRouter
 from sqlalchemy.orm import Session
 
 from narrativegraph.db.orms import DocumentOrm
-from narrativegraph.db.service import DbService
 from narrativegraph.server.dtos import transform_orm_to_dto, Doc
-from narrativegraph.server.routes.common import get_db_service
+from narrativegraph.server.routes.common import get_db_session
 
 
 router = APIRouter()
@@ -22,9 +21,8 @@ def get_docs_by_ids(db: Session, doc_ids: list[int], limit: Optional[int] = None
 
 
 @router.get("/{doc_id}", response_model=Doc)
-async def get_doc(doc_id: int, db_service: DbService = Depends(get_db_service)):
+async def get_doc(doc_id: int, db: Session = Depends(get_db_session)):
     """Get a single document by ID"""
-    db = db_service.session
     doc_orm = db.query(DocumentOrm).filter(DocumentOrm.id == doc_id).first()
 
     if doc_orm is None:
@@ -35,13 +33,7 @@ async def get_doc(doc_id: int, db_service: DbService = Depends(get_db_service)):
 
 @router.post("/", response_model=list[Doc])
 async def get_docs(doc_request: Any, limit: Optional[int] = None,
-                   db_service: DbService = Depends(get_db_service)):
+                   db: Session = Depends(get_db_session)):
     """Get multiple documents by IDs"""
-    db = db_service.session
-
     doc_ids = doc_request.doc_ids
-    doc_orms = get_docs_by_ids(db, doc_ids, limit)
-
-    docs = [transform_orm_to_dto(doc_orm) for doc_orm in doc_orms]
-
-    return docs
+    return get_docs_by_ids(db, doc_ids, limit)

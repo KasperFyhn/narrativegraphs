@@ -4,9 +4,8 @@ from fastapi import Depends, HTTPException, APIRouter
 from sqlalchemy.orm import Session
 
 from narrativegraph.db.orms import DocumentOrm, TripletOrm, RelationOrm
-from narrativegraph.db.service import DbService
 from narrativegraph.server.dtos import transform_relation_orm_to_details, Details
-from narrativegraph.server.routes.common import get_db_service
+from narrativegraph.server.routes.common import get_db_session
 from narrativegraph.server.routes.docs import get_docs_by_ids
 
 
@@ -33,9 +32,8 @@ router = APIRouter()
 
 # API Endpoints
 @router.get("/{relation_id}", response_model=Details)
-async def get_relation(relation_id: int, db_service: DbService = Depends(get_db_service)):
+async def get_relation(relation_id: int, db: Session = Depends(get_db_session)):
     """Get relation details by ID"""
-    db = db_service.session
     relation = get_relation_by_id(db, relation_id)
     if not relation:
         raise HTTPException(status_code=404, detail="Relation not found.")
@@ -47,10 +45,9 @@ async def get_relation(relation_id: int, db_service: DbService = Depends(get_db_
 async def get_docs_by_relation(
         relation_id: int,
         limit: Optional[int] = None,
-        db_service: DbService = Depends(get_db_service)
+        db: Session = Depends(get_db_session)
 ):
     """Get documents that contain the relation"""
-    db = db_service.session
     doc_ids = get_document_ids_by_relation(db, relation_id, limit)
 
     if len(doc_ids) == 0:
