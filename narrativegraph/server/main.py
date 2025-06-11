@@ -26,16 +26,15 @@ async def lifespan(app_arg: FastAPI):
         app_arg.state.db_service = get_engine(os.environ["DB_PATH"])
         logging.info("Database engine initialized from environment variable.")
     else:
-        raise ValueError("No database service provided. Set environment variable DB_PATH.")
+        raise ValueError("No database engine provided. Set environment variable DB_PATH.")
     yield
 
 
 app = FastAPI()
 
-# Add the CORS middleware to allow all origins for development purposes
 app.add_middleware(
     CORSMiddleware,  # noqa, PyCharm bug: https://github.com/fastapi/fastapi/discussions/10968
-    allow_origins=["*"],  # You can specify specific origins if needed
+    allow_origins=["*"],  # specify specific origins if needed
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
