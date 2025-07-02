@@ -60,7 +60,7 @@ class DependencyGraphExtractor(TripletExtractor):
                         potential_objects.append(('dobj', chunk))
                         break
 
-            elif self.preposition_objects and child.dep_ == "prep":
+            elif self.preposition_objects and child.dep_ == "prep" and verb_token.i < child.i:
                 # Find the object of the preposition
                 for grandchild in child.children:
                     if grandchild.dep_ == "pobj":

@@ -213,24 +213,56 @@ export const GraphFilterControlPanel = ({
       {dataBounds.earliestDate && dataBounds.latestDate && <div className={"flex-container"}>
           <span className={"option-span"}>Date Filter:</span>
           <div>
-              <input
-                  type={"date"}
-                  onChange={(event) =>
-                    setGraphFilter({
-                      ...graphFilter,
-                      earliestDate: event.target.valueAsDate ?? undefined,
-                    })
-                  }
-              />
-              <input
-                  type={"date"}
-                  onChange={(event) =>
-                    setGraphFilter({
-                      ...graphFilter,
-                      latestDate: event.target.valueAsDate ?? undefined,
-                    })
-                  }
-              />
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                const startDateStr = formData.get('startDate') as string;
+                const endDateStr = formData.get('endDate') as string;
+
+                const startDate = startDateStr ? new Date(startDateStr) : null;
+                const endDate = endDateStr ? new Date(endDateStr) : null;
+
+                if (startDate && endDate && dataBounds.earliestDate && dataBounds?.latestDate) {
+                  // Clamp both dates to bounds
+                  const clampedStartDate = startDate < dataBounds.earliestDate
+                    ? dataBounds.earliestDate
+                    : startDate > dataBounds.latestDate
+                      ? dataBounds.latestDate
+                      : startDate;
+
+                  const clampedEndDate = endDate < dataBounds.earliestDate
+                    ? dataBounds.earliestDate
+                    : endDate > dataBounds.latestDate
+                      ? dataBounds.latestDate
+                      : endDate;
+
+                  // Ensure start <= end
+                  const finalStartDate = clampedStartDate > clampedEndDate ? clampedEndDate : clampedStartDate;
+                  const finalEndDate = clampedEndDate < finalStartDate ? finalStartDate : clampedEndDate;
+
+                  setGraphFilter({
+                    ...graphFilter,
+                    earliestDate: finalStartDate,
+                    latestDate: finalEndDate,
+                  });
+                }
+              }}>
+                  <input
+                      type="date"
+                      name="startDate"
+                      min={dataBounds.earliestDate.toLocaleDateString('en-CA')}
+                      max={dataBounds.latestDate.toLocaleDateString('en-CA')}
+                      defaultValue={dataBounds.earliestDate.toLocaleDateString('en-CA')}
+                  />
+                  <input
+                      type="date"
+                      name="endDate"
+                      min={dataBounds.earliestDate.toLocaleDateString('en-CA')}
+                      max={dataBounds.latestDate.toLocaleDateString('en-CA')}
+                      defaultValue={dataBounds.latestDate.toLocaleDateString('en-CA')}
+                  />
+                  <button type="submit">Apply Filter</button>
+              </form>
           </div>
       </div>}
     </div>

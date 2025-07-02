@@ -16,9 +16,9 @@ def date_filter(graph_filter: GraphFilter) -> Dict[str, Any]:
     """Create date filtering conditions for entities/relations"""
     conditions = {}
     if graph_filter.earliest_date:
-        conditions['last_occurrence'] = graph_filter.earliest_date
+        conditions['last_occurrence__gte'] = graph_filter.earliest_date
     if graph_filter.latest_date:
-        conditions['first_occurrence'] = graph_filter.latest_date
+        conditions['first_occurrence__lte'] = graph_filter.latest_date
     return conditions
 
 

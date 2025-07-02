@@ -25,7 +25,12 @@ export class GraphServiceImpl implements GraphService {
       throw new Error(`Failed to fetch data bounds: ${response.statusText}`);
     }
 
-    return await response.json();
+    const data = await response.json();
+    return {
+      ...data,
+      earliestDate: data.earliestDate ? new Date(data.earliestDate) : undefined,
+      latestDate: data.latestDate ? new Date(data.latestDate) : undefined,
+    };
   }
 
   async getGraph(filter?: GraphFilter): Promise<GraphData> {

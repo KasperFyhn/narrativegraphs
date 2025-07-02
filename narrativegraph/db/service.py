@@ -57,23 +57,27 @@ class DbService:
     def get_docs(self):
         return self._session.query(DocumentOrm).all()
 
-    def add_triplets(self, doc_id: int, triplets: list[Triplet], category: str = None):
+    def add_triplets(self,
+                     doc_id: int, triplets: list[Triplet],
+                     category: str = None,
+                     timestamp: datetime = None):
         triplet_orms = [
-                TripletOrm(
-                    doc_id=doc_id,
-                    subj_span_start=triplet.subject.start_char,
-                    subj_span_end=triplet.subject.end_char,
-                    subj_span_text=triplet.subject.text,
-                    pred_span_start=triplet.predicate.start_char,
-                    pred_span_end=triplet.predicate.end_char,
-                    pred_span_text=triplet.predicate.text,
-                    obj_span_start=triplet.obj.start_char,
-                    obj_span_end=triplet.obj.end_char,
-                    obj_span_text=triplet.obj.text,
-                    category=category
-                )
-                for triplet in triplets
-            ]
+            TripletOrm(
+                doc_id=doc_id,
+                subj_span_start=triplet.subject.start_char,
+                subj_span_end=triplet.subject.end_char,
+                subj_span_text=triplet.subject.text,
+                pred_span_start=triplet.predicate.start_char,
+                pred_span_end=triplet.predicate.end_char,
+                pred_span_text=triplet.predicate.text,
+                obj_span_start=triplet.obj.start_char,
+                obj_span_end=triplet.obj.end_char,
+                obj_span_text=triplet.obj.text,
+                category=category,
+                timestamp=timestamp
+            )
+            for triplet in triplets
+        ]
         self._session.bulk_save_objects(triplet_orms)
         self._session.commit()
 

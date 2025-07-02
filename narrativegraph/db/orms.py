@@ -128,7 +128,6 @@ class DocumentOrm(Base):
     text = Column(Text, nullable=False)
 
     str_id = Column(String, nullable=True, index=True)
-    orig_text = Column(Text, nullable=True)
     timestamp = Column(DateTime, nullable=True)
     category = Column(String, nullable=True)
 

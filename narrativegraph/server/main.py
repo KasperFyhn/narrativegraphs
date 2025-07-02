@@ -23,14 +23,14 @@ async def lifespan(app_arg: FastAPI):
     if hasattr(app_arg.state, "db_engine") and app_arg.state.db_engine is not None:
         logging.info("Database engine provided to state before startup.")
     elif os.environ.get("DB_PATH") is not None:
-        app_arg.state.db_service = get_engine(os.environ["DB_PATH"])
+        app_arg.state.db_engine = get_engine(os.environ["DB_PATH"])
         logging.info("Database engine initialized from environment variable.")
     else:
         raise ValueError("No database engine provided. Set environment variable DB_PATH.")
     yield
 
 
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,  # noqa, PyCharm bug: https://github.com/fastapi/fastapi/discussions/10968
