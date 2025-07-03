@@ -1,8 +1,8 @@
-import React, { useEffect, useRef, useState } from "react";
-import { useServiceContext } from "../service/ServiceContextProvider";
-import { useClickOutside } from "../common/useClickOutside";
-import { Identifiable } from "../types/graph";
-import { ClipLoader } from "react-spinners";
+import React, { useEffect, useRef, useState } from 'react';
+import { useServiceContext } from '../service/ServiceContextProvider';
+import { useClickOutside } from '../common/useClickOutside';
+import { Identifiable } from '../types/graph';
+import { ClipLoader } from 'react-spinners';
 
 interface EntityListEditorProps {
   ids: string[] | number[];
@@ -15,7 +15,7 @@ export const EntityListEditor: React.FC<EntityListEditorProps> = ({
   onCloseOrClickOutside,
   onRemove,
 }) => {
-  let ref = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLDivElement>(null);
   useClickOutside(ref, () => {
     if (onCloseOrClickOutside) onCloseOrClickOutside();
   });
@@ -31,17 +31,17 @@ export const EntityListEditor: React.FC<EntityListEditorProps> = ({
   }, [entityService, ids, onCloseOrClickOutside]);
 
   return (
-    <div className={"panel list-editor flex-container"} ref={ref}>
-      <button className={"panel__close-button"} onClick={onCloseOrClickOutside}>
+    <div className={'panel list-editor flex-container'} ref={ref}>
+      <button className={'panel__close-button'} onClick={onCloseOrClickOutside}>
         Close
       </button>
       <ClipLoader loading={idsWithLabels === undefined} />
       {idsWithLabels &&
         idsWithLabels.map(({ id, label }) => (
-          <div key={id} className={"panel__sub-panel"}>
+          <div key={id} className={'panel__sub-panel'}>
             {label}
             &nbsp;
-            <button style={{ background: "red" }} onClick={() => onRemove(id)}>
+            <button style={{ background: 'red' }} onClick={() => onRemove(id)}>
               X
             </button>
           </div>

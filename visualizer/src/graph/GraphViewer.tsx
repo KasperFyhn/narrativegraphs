@@ -1,19 +1,18 @@
-import React, {useEffect, useMemo, useState} from "react";
-import Graph, {GraphEvents, Options} from "react-vis-graph-wrapper";
-import {GraphOptionsControlPanel} from "./GraphOptionsControlPanel";
-import {useServiceContext} from "../service/ServiceContextProvider";
-import {Edge, GraphData, Node} from "../types/graph";
-import {NodeInfo} from "../inspector/NodeInfo";
-import {EdgeInfo} from "../inspector/EdgeInfo";
-import {GraphFilter} from "../types/graphfilter";
-import {GraphFilterControlPanel} from "./GraphFilterControlPanel";
-import {EntityListEditor} from "./EntityListEditor";
+import React, { useEffect, useMemo, useState } from 'react';
+import Graph, { GraphEvents, Options } from 'react-vis-graph-wrapper';
+import { GraphOptionsControlPanel } from './GraphOptionsControlPanel';
+import { useServiceContext } from '../service/ServiceContextProvider';
+import { Edge, GraphData, Node } from '../types/graph';
+import { NodeInfo } from '../inspector/NodeInfo';
+import { EdgeInfo } from '../inspector/EdgeInfo';
+import { GraphFilter } from '../types/graphfilter';
+import { GraphFilterControlPanel } from './GraphFilterControlPanel';
+import { EntityListEditor } from './EntityListEditor';
 
-export interface GraphViewerProps {
-}
+// export interface GraphViewerProps {}
 
 export const GraphViewer: React.FC = () => {
-  const {graphService} = useServiceContext();
+  const { graphService } = useServiceContext();
 
   const [selectedNode, setSelectedNode] = useState<Node>();
   const [selectedEdge, setSelectedEdge] = useState<Edge>();
@@ -28,8 +27,8 @@ export const GraphViewer: React.FC = () => {
   const [blacklistParts, setBlacklistParts] = useState<string[][]>([]);
   const blacklistSet = useMemo(() => {
     const result = new Set<string>();
-    for (let add of blacklistParts) {
-      for (let member of add) {
+    for (const add of blacklistParts) {
+      for (const member of add) {
         result.add(member);
       }
     }
@@ -68,12 +67,12 @@ export const GraphViewer: React.FC = () => {
         ...n,
         // TODO: fix this horrible block
         color: whitelistSet.has(n.id.toString())
-          ? "lightgreen"
+          ? 'lightgreen'
           : n.focus
-            ? "yellow"
+            ? 'yellow'
             : blacklistSet.has(n.id.toString())
-              ? "red"
-              : "cyan",
+              ? 'red'
+              : 'cyan',
       })),
     };
   }, [blacklistSet, graphData, whitelistSet]);
@@ -85,8 +84,8 @@ export const GraphViewer: React.FC = () => {
     };
   }, [graphData]);
 
-  let events: GraphEvents = {
-    doubleClick: ({nodes}) => {
+  const events: GraphEvents = {
+    doubleClick: ({ nodes }) => {
       if (nodes.length === 0) return;
       const node = nodes.map((v: number) => v.toString())[0];
       if (whitelistSet.has(node)) {
@@ -97,7 +96,7 @@ export const GraphViewer: React.FC = () => {
         setWhitelistSet((prevState) => new Set([...prevState, node]));
       }
     },
-    hold: ({nodes}) => {
+    hold: ({ nodes }) => {
       if (nodes.length === 0) return;
       const node = nodes.map((v: number) => v.toString())[0];
       if (whitelistSet.has(node)) {
@@ -107,18 +106,18 @@ export const GraphViewer: React.FC = () => {
       }
       setBlacklistParts((prev) => [...prev, [node]]);
     },
-    select: ({nodes}) => {
+    select: ({ nodes }) => {
       if (nodes.length < 2) return;
       nodes = nodes
         .map((v: number) => v.toString())
         .filter((n: string) => !whitelistSet.has(n));
       setBlacklistParts((prev) => [...prev, nodes]);
     },
-    selectNode: ({nodes, edges}) => {
+    selectNode: ({ nodes, edges }) => {
       setSelectedEdge(undefined);
       setSelectedNode(graphDataMaps.nodesMap.get(nodes[0]));
     },
-    selectEdge: ({nodes, edges}) => {
+    selectEdge: ({ nodes, edges }) => {
       if (nodes.length < 1) {
         setSelectedNode(undefined);
         setSelectedEdge(graphDataMaps.edgeGroupMap.get(edges[0]));
@@ -132,7 +131,7 @@ export const GraphViewer: React.FC = () => {
     },
   };
 
-  let [options, setOptions] = useState<Options>({
+  const [options, setOptions] = useState<Options>({
     physics: {
       enabled: true,
       barnesHut: {
@@ -142,7 +141,7 @@ export const GraphViewer: React.FC = () => {
     edges: {
       smooth: true,
       font: {
-        align: "top",
+        align: 'top',
       },
     },
   });
@@ -156,31 +155,31 @@ export const GraphViewer: React.FC = () => {
       <button
         onClick={() => setShowControlPanel((prev) => !prev)}
         style={{
-          position: "absolute",
-          top: "1px",
-          right: "1px",
+          position: 'absolute',
+          top: '1px',
+          right: '1px',
           zIndex: 5,
-          fontSize: "16px",
+          fontSize: '16px',
         }}
       >
         {showControlPanel ? <>&#8614;</> : <>&#8612;</>}
       </button>
       <div
         className={
-          "panel control-panel " +
-          (showControlPanel ? "" : "control-panel--hidden")
+          'panel control-panel ' +
+          (showControlPanel ? '' : 'control-panel--hidden')
         }
       >
-        <GraphOptionsControlPanel options={options} setOptions={setOptions}/>
-        <hr/>
+        <GraphOptionsControlPanel options={options} setOptions={setOptions} />
+        <hr />
         {partialGraphFilter && (
           <GraphFilterControlPanel
             graphFilter={partialGraphFilter}
             setGraphFilter={setPartialGraphFilter}
           />
         )}
-        <hr/>
-        <div className={"flex-container flex-container--vertical"}>
+        <hr />
+        <div className={'flex-container flex-container--vertical'}>
           <div>
             <span>
               <b>Double-click</b> to add or remove nodes from whitelist.
@@ -206,7 +205,7 @@ export const GraphViewer: React.FC = () => {
               }
             />
           )}
-          <div className={"flex-container"}>
+          <div className={'flex-container'}>
             <div>
               <b>Hold</b> or <b>shift+mark</b> to add nodes to blacklist.
             </div>
@@ -254,9 +253,9 @@ export const GraphViewer: React.FC = () => {
       </div>
 
       <div className="graph-container">
-        {selectedNode && <NodeInfo node={selectedNode}/>}
-        {selectedEdge && <EdgeInfo edge={selectedEdge}/>}
-        <Graph graph={coloredGraphData} options={options} events={events}/>
+        {selectedNode && <NodeInfo node={selectedNode} />}
+        {selectedEdge && <EdgeInfo edge={selectedEdge} />}
+        <Graph graph={coloredGraphData} options={options} events={events} />
       </div>
     </div>
   );

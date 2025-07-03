@@ -1,7 +1,7 @@
-import React, { useMemo, useState } from "react";
-import HighlightWithinTextarea from "react-highlight-within-textarea";
-import "./docinfo.css";
-import { Doc, Triplet, TripletField } from "../types/doc";
+import React, { useMemo, useState } from 'react';
+import HighlightWithinTextarea from 'react-highlight-within-textarea';
+import './docinfo.css';
+import { Doc, Triplet, TripletField } from '../types/doc';
 
 function subtractOffsetFromTripletField(
   tripletField: TripletField,
@@ -55,12 +55,12 @@ function createExcerpt(
   return {
     ...document,
     text:
-      (offset > 0 ? "... " : "") +
+      (offset > 0 ? '... ' : '') +
       document.text.slice(
         offset + (offset > 0 ? 4 : 0),
         tail - (tail < document.text.length ? 4 : 0),
       ) +
-      (tail < document.text.length ? " ..." : ""),
+      (tail < document.text.length ? ' ...' : ''),
     triplets: document.triplets.map((t) =>
       subtractOffsetFromTriplet(t, offset),
     ),
@@ -89,7 +89,7 @@ const HighlightedText: React.FC<HighlightedTextProps> = ({
   const objects = [];
   const highlightObjects = [];
 
-  for (let triplet of triplets) {
+  for (const triplet of triplets) {
     const subject = triplet.subject;
     const subjectSpan = [subject.start, subject.end];
     if (subject.id === subjectId) {
@@ -120,28 +120,28 @@ const HighlightedText: React.FC<HighlightedTextProps> = ({
       highlight={[
         {
           highlight: subjects,
-          className: "subject",
+          className: 'subject',
         },
         {
           highlight: highlightSubjects,
-          className: "highlight-subject",
+          className: 'highlight-subject',
         },
 
         {
           highlight: predicates,
-          className: "predicate",
+          className: 'predicate',
         },
         {
           highlight: highlightPredicates,
-          className: "highlight-predicate",
+          className: 'highlight-predicate',
         },
         {
           highlight: objects,
-          className: "object",
+          className: 'object',
         },
         {
           highlight: highlightObjects,
-          className: "highlight-object",
+          className: 'highlight-object',
         },
       ]}
     />
@@ -171,10 +171,10 @@ export const DocInfo: React.FC<DocInfoProps> = ({
   );
 
   return (
-    <div className={"panel__sub-panel"}>
+    <div className={'panel__sub-panel'}>
       <h3>
-        {document.id}{" "}
-        <i style={{ color: "gray" }}>{document.timestamp?.toString()}</i>
+        {document.id}{' '}
+        <i style={{ color: 'gray' }}>{document.timestamp?.toString()}</i>
       </h3>
 
       <HighlightedText
@@ -187,7 +187,7 @@ export const DocInfo: React.FC<DocInfoProps> = ({
       <br />
       {document.text !== excerpt.text && (
         <button onClick={() => setShowExcerpt((prevState) => !prevState)}>
-          {showExcerpt ? "Show more" : "Show less"}
+          {showExcerpt ? 'Show more' : 'Show less'}
         </button>
       )}
     </div>

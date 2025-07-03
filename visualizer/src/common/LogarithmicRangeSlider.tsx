@@ -1,12 +1,13 @@
-import React, {useEffect, useMemo, useState} from "react";
-import MultiRangeSlider from "multi-range-slider-react";
+import React, { useEffect, useMemo, useState } from 'react';
+import MultiRangeSlider from 'multi-range-slider-react';
 
 interface LogarithmicRangeSliderProps {
   min: number; // Real-world minimum value
   max: number; // Real-world maximum value
   minValue: number; // Current minimum value
   maxValue: number; // Current maximum value
-  onChange: (values: { minValue: number; maxValue: number }) => void; // Callback for value changes
+  // callback for value changes
+  onChange: (values: { minValue: number; maxValue: number }) => void;
   style?: React.CSSProperties; // Optional style prop
   ruler?: boolean; // Optional ruler prop
 }
@@ -41,14 +42,14 @@ const logToLinear = (
 };
 
 const LogarithmicRangeSlider: React.FC<LogarithmicRangeSliderProps> = ({
-                                                                         min,
-                                                                         max,
-                                                                         minValue,
-                                                                         maxValue,
-                                                                         onChange,
-                                                                         ruler,
-                                                                         ...rest
-                                                                       }) => {
+  min,
+  max,
+  minValue,
+  maxValue,
+  onChange,
+  ruler,
+  ...rest
+}) => {
   const [minCaption, setMinCaption] = useState(Math.round(minValue));
   const [maxCaption, setMaxCaption] = useState(Math.round(maxValue));
   useEffect(() => {
@@ -77,7 +78,10 @@ const LogarithmicRangeSlider: React.FC<LogarithmicRangeSliderProps> = ({
   const handleSliderChange = (e: { minValue: number; maxValue: number }) => {
     const realMinValue = linearScaleToRealValue(e.minValue);
     const realMaxValue = linearScaleToRealValue(e.maxValue);
-    onChange({minValue: realMinValue, maxValue: realMaxValue});
+    onChange({
+      minValue: realMinValue,
+      maxValue: realMaxValue,
+    });
   };
 
   const labels = [
@@ -86,8 +90,7 @@ const LogarithmicRangeSlider: React.FC<LogarithmicRangeSliderProps> = ({
     String(linearScaleToRealValue(50)),
     String(linearScaleToRealValue(75)),
     String(max),
-  ].filter((value, index, array) =>
-    index === 0 || value !== array[index - 1]);
+  ].filter((value, index, array) => index === 0 || value !== array[index - 1]);
 
   return (
     <MultiRangeSlider
