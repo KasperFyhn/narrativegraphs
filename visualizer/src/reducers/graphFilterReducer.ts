@@ -1,56 +1,136 @@
-import {
-  GraphFilter,
-  GraphFilterAction,
-  initialGraphFilter,
-} from '../types/graphFilter';
+import { GraphFilter } from '../types/graphFilter';
+
+export type GraphFilterAction =
+  | {
+      type: 'SET_NODE_LIMIT';
+      payload: number;
+    }
+  | {
+      type: 'SET_EDGE_LIMIT';
+      payload: number;
+    }
+  | {
+      type: 'SET_NODE_FREQUENCY_RANGE';
+      payload: { min?: number; max?: number };
+    }
+  | {
+      type: 'SET_EDGE_FREQUENCY_RANGE';
+      payload: { min?: number; max?: number };
+    }
+  | { type: 'SET_LABEL_SEARCH'; payload: string }
+  | { type: 'SET_DATE_RANGE'; payload: { start?: Date; end?: Date } }
+  | {
+      type: 'ADD_WHITELIST_ENTITY';
+      payload: string;
+    }
+  | {
+      type: 'REMOVE_WHITELIST_ENTITY';
+      payload: string;
+    }
+  | {
+      type: 'ADD_BLACKLIST_ENTITY';
+      payload: string;
+    }
+  | {
+      type: 'REMOVE_BLACKLIST_ENTITY';
+      payload: string;
+    }
+  | { type: 'RESET_FILTER' };
+
+function addToArray<T>(obj: T, array?: T[]): T[] {
+  if (array === undefined) {
+    array = [];
+  }
+  return [...array, obj];
+}
+
+function removeFromArray<T>(obj: T, array?: T[]): T[] {
+  if (array === undefined) {
+    return [];
+  }
+  return array.filter((item: T) => item !== obj);
+}
 
 export function graphFilterReducer(
   state: GraphFilter,
   action: GraphFilterAction,
 ): GraphFilter {
   switch (action.type) {
-    case 'SET_NODE_LIMITS':
-      return { ...state, ...action.payload };
-
-    case 'SET_FREQUENCY_RANGE': {
-      const { min, max, target } = action.payload;
-      const minKey =
-        `minimum${target === 'node' ? 'Node' : 'Edge'}Frequency` as keyof GraphFilter;
-      const maxKey =
-        `maximum${target === 'node' ? 'Node' : 'Edge'}Frequency` as keyof GraphFilter;
-
+    case 'SET_NODE_LIMIT':
       return {
         ...state,
-        [minKey]: min,
-        [maxKey]: max,
+        limitNodes: action.payload,
       };
-    }
+
+    case 'SET_EDGE_LIMIT':
+      return {
+        ...state,
+        limitEdges: action.payload,
+      };
+
+    case 'SET_NODE_FREQUENCY_RANGE':
+      return {
+        ...state,
+        minimumNodeFrequency: action.payload.min,
+        maximumNodeFrequency: action.payload.max,
+      };
+
+    case 'SET_EDGE_FREQUENCY_RANGE':
+      return {
+        ...state,
+        minimumEdgeFrequency: action.payload.min,
+        maximumEdgeFrequency: action.payload.max,
+      };
+
+    case 'SET_LABEL_SEARCH':
+      const value = action.payload === '' ? undefined : action.payload;
+      return {
+        ...state,
+        labelSearch: value,
+      };
 
     case 'SET_DATE_RANGE':
       return {
         ...state,
-        earliestDate: action.payload.earliest,
-        latestDate: action.payload.latest,
+        earliestDate: action.payload.start,
+        latestDate: action.payload.end,
       };
 
-    case 'SET_SEARCH':
-      return { ...state, labelSearch: action.payload };
-
-    case 'TOGGLE_SUPERNODES':
-      return { ...state, onlySupernodes: !state.onlySupernodes };
-
-    case 'UPDATE_ENTITY_LISTS':
+    case 'ADD_WHITELIST_ENTITY':
       return {
         ...state,
-        whitelistedEntityIds: action.payload.whitelist,
-        blacklistedEntityIds: action.payload.blacklist,
+        whitelistedEntityIds: addToArray(
+          action.payload,
+          state.whitelistedEntityIds,
+        ),
       };
 
-    case 'RESET_FILTERS':
-      return { ...initialGraphFilter };
+    case 'ADD_BLACKLIST_ENTITY':
+      return {
+        ...state,
+        blacklistedEntityIds: addToArray(
+          action.payload,
+          state.blacklistedEntityIds,
+        ),
+      };
 
-    case 'BULK_UPDATE':
-      return { ...state, ...action.payload };
+    case 'REMOVE_WHITELIST_ENTITY':
+      return {
+        ...state,
+        whitelistedEntityIds: removeFromArray(
+          action.payload,
+          state.whitelistedEntityIds,
+        ),
+      };
+
+    case 'REMOVE_BLACKLIST_ENTITY':
+      return {
+        ...state,
+        blacklistedEntityIds: removeFromArray(
+          action.payload,
+          state.blacklistedEntityIds,
+        ),
+      };
 
     default:
       return state;

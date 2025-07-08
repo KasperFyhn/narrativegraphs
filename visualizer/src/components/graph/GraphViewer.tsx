@@ -5,9 +5,10 @@ import { Edge, GraphData, Node } from '../../types/graph';
 import { NodeInfo } from '../inspector/NodeInfo';
 import { EdgeInfo } from '../inspector/EdgeInfo';
 import { GraphFilter } from '../../types/graphFilter';
-import { GraphFilterControlPanel } from './GraphFilterControlPanel';
+import { GraphFilterControlPanel } from './ControlPanel/GraphFilterControlPanel';
 import { EntityListEditor } from './EntityListEditor';
 import { useServiceContext } from '../../contexts/ServiceContext';
+import { useGraphFilter } from '../../hooks/useGraphFilter';
 
 // export interface GraphViewerProps {}
 
@@ -38,10 +39,7 @@ export const GraphViewer: React.FC = () => {
     return blacklistSet.size === 0 ? undefined : [...blacklistSet];
   }, [blacklistSet]);
 
-  const [partialGraphFilter, setPartialGraphFilter] = useState<GraphFilter>({
-    limitNodes: 50,
-    limitEdges: 100,
-  });
+  const { filter } = useGraphFilter();
 
   const [graphData, setGraphData] = useState<GraphData>({
     edges: [],
@@ -50,12 +48,12 @@ export const GraphViewer: React.FC = () => {
   useEffect(() => {
     graphService
       .getGraph({
-        ...partialGraphFilter,
+        ...filter,
         whitelistedEntityIds: whitelist,
         blacklistedEntityIds: blacklist,
       })
       .then((r) => setGraphData(r));
-  }, [graphService, partialGraphFilter, whitelist, whitelistSet, blacklist]);
+  }, [graphService, filter, whitelist, whitelistSet, blacklist]);
 
   const coloredGraphData = useMemo(() => {
     return {
@@ -172,12 +170,7 @@ export const GraphViewer: React.FC = () => {
       >
         <GraphOptionsControlPanel options={options} setOptions={setOptions} />
         <hr />
-        {partialGraphFilter && (
-          <GraphFilterControlPanel
-            graphFilter={partialGraphFilter}
-            setGraphFilter={setPartialGraphFilter}
-          />
-        )}
+        <GraphFilterControlPanel />
         <hr />
         <div className={'flex-container flex-container--vertical'}>
           <div>
@@ -200,7 +193,7 @@ export const GraphViewer: React.FC = () => {
               onCloseOrClickOutside={() => setEditWhitelist(false)}
               onRemove={(id) =>
                 setWhitelistSet(
-                  (prev) => new Set([...prev].filter((n) => n !== id)),
+                  (prev) => new Set([...prev].filter((n) => n != id)),
                 )
               }
             />
@@ -234,7 +227,7 @@ export const GraphViewer: React.FC = () => {
                 onCloseOrClickOutside={() => setEditBlacklist(false)}
                 onRemove={(id) => {
                   setBlacklistParts((prevState) =>
-                    prevState.map((part) => part.filter((n) => n !== id)),
+                    prevState.map((part) => part.filter((n) => n != id)),
                   );
                 }}
               />

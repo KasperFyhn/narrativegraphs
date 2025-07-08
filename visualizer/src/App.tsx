@@ -2,13 +2,14 @@ import './App.css';
 import { GraphViewer } from './components/graph/GraphViewer';
 import React from 'react';
 import { ServiceContextProvider } from './contexts/ServiceContext';
+import { GraphFilterContextProvider } from './contexts/GraphFilterContext';
 
-export function App() {
+export const App: React.FC = () => {
   return (
     <ServiceContextProvider>
-      <GraphViewer />
+      <GraphFilterContextProvider>
+        <GraphViewer />
+      </GraphFilterContextProvider>
     </ServiceContextProvider>
   );
-}
-
-export default App;
+};

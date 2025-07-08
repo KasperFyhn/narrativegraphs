@@ -1,55 +1,60 @@
-import { useContext, useMemo } from 'react';
-import { GraphFilterContext } from '../contexts/GraphFilterContext';
-import { GraphFilter } from '../types/graphFilter';
+import { useEffect, useMemo, useState } from 'react';
 
-export function useGraphFilters() {
-  const context = useContext(GraphFilterContext);
+import { DataBounds, GraphFilter } from '../types/graphFilter';
+import { useGraphFilterContext } from '../contexts/GraphFilterContext';
+import { useServiceContext } from '../contexts/ServiceContext';
 
-  if (!context) {
-    throw new Error('useGraphFilters must be used within GraphFilterProvider');
-  }
+export interface GraphFilterAccessors {
+  dataBounds: DataBounds;
+  filter: GraphFilter;
+  setNodeLimit: (limit: number) => void;
+  setEdgeLimit: (limit: number) => void;
+  setNodeFrequencyRange: (min: number, max: number) => void;
+  setEdgeFrequencyRange: (min: number, max: number) => void;
+  setLabelSearch: (label: string) => void;
+  setDateRange: (start: Date, end: Date) => void;
+  addWhitelistedEntityId: (entityId: string) => void;
+  removeWhitelistedEntityId: (entityId: string) => void;
+  addBlacklistedEntityId: (entityId: string) => void;
+  removeBlacklistedEntityId: (entityId: string) => void;
+}
 
-  const { filters, dispatch } = context;
+export function useGraphFilter(): GraphFilterAccessors {
+  const context = useGraphFilterContext();
+
+  const { filter, dataBounds, dispatch } = context;
 
   // Memoized action creators
   const actions = useMemo(
     () => ({
-      setNodeLimits: (limitNodes: number, limitEdges: number) =>
-        dispatch({
-          type: 'SET_NODE_LIMITS',
-          payload: { limitNodes, limitEdges },
-        }),
-
-      setFrequencyRange: (min: number, max: number, target: 'node' | 'edge') =>
-        dispatch({
-          type: 'SET_FREQUENCY_RANGE',
-          payload: { min, max, target },
-        }),
-
-      setDateRange: (earliest?: Date, latest?: Date) =>
-        dispatch({ type: 'SET_DATE_RANGE', payload: { earliest, latest } }),
-
-      setSearch: (query: string) =>
-        dispatch({ type: 'SET_SEARCH', payload: query }),
-
-      toggleSupernodes: () => dispatch({ type: 'TOGGLE_SUPERNODES' }),
-
-      updateEntityLists: (whitelist?: string[], blacklist?: string[]) =>
-        dispatch({
-          type: 'UPDATE_ENTITY_LISTS',
-          payload: { whitelist, blacklist },
-        }),
-
-      resetFilters: () => dispatch({ type: 'RESET_FILTERS' }),
-
-      bulkUpdate: (updates: Partial<GraphFilter>) =>
-        dispatch({ type: 'BULK_UPDATE', payload: updates }),
+      setNodeLimit: (limit: number) =>
+        dispatch({ type: 'SET_NODE_LIMIT', payload: limit }),
+      setEdgeLimit: (limit: number) =>
+        dispatch({ type: 'SET_EDGE_LIMIT', payload: limit }),
+      setNodeFrequencyRange: (min: number, max: number) =>
+        dispatch({ type: 'SET_NODE_FREQUENCY_RANGE', payload: { min, max } }),
+      setEdgeFrequencyRange: (min: number, max: number) =>
+        dispatch({ type: 'SET_EDGE_FREQUENCY_RANGE', payload: { min, max } }),
+      setLabelSearch: (label: string) =>
+        dispatch({ type: 'SET_LABEL_SEARCH', payload: label }),
+      setDateRange: (start: Date, end: Date) =>
+        dispatch({ type: 'SET_DATE_RANGE', payload: { start, end } }),
+      addWhitelistedEntityId: (entityId: string) =>
+        dispatch({ type: 'ADD_WHITELIST_ENTITY', payload: entityId }),
+      removeWhitelistedEntityId: (entityId: string) =>
+        dispatch({ type: 'REMOVE_WHITELIST_ENTITY', payload: entityId }),
+      addBlacklistedEntityId: (entityId: string) =>
+        dispatch({ type: 'ADD_BLACKLIST_ENTITY', payload: entityId }),
+      removeBlacklistedEntityId: (entityId: string) =>
+        dispatch({ type: 'REMOVE_BLACKLIST_ENTITY', payload: entityId }),
+      resetFilter: () => dispatch({ type: 'RESET_FILTER' }),
     }),
     [dispatch],
   );
 
   return {
-    filters,
+    dataBounds,
+    filter,
     ...actions,
   };
 }
