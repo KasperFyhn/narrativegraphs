@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useServiceContext } from '../service/ServiceContextProvider';
-import { useClickOutside } from '../common/useClickOutside';
-import { Identifiable } from '../types/graph';
+import { useServiceContext } from '../../contexts/ServiceContext';
+import { useClickOutside } from '../../hooks/useClickOutside';
+import { Identifiable } from '../../types/graph';
 import { ClipLoader } from 'react-spinners';
 
 interface EntityListEditorProps {

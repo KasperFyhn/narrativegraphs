@@ -1,24 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import './graph.css';
 import LogarithmicRangeSlider from '../common/LogarithmicRangeSlider';
-import { DataBounds, GraphFilter } from '../types/graphfilter';
-import { useServiceContext } from '../service/ServiceContextProvider';
+import { DataBounds, GraphFilter } from '../../types/graphFilter';
 import { ClipLoader } from 'react-spinners';
+import { useServiceContext } from '../../contexts/ServiceContext';
 
 interface GraphFilterControlPanelProps {
   graphFilter: GraphFilter;
   setGraphFilter: React.Dispatch<React.SetStateAction<GraphFilter>>;
 }
 
-export const GraphFilterControlPanel = ({
-  graphFilter,
-  setGraphFilter,
-}: GraphFilterControlPanelProps) => {
+export const GraphFilterControlPanel: React.FC<
+  GraphFilterControlPanelProps
+> = ({ graphFilter, setGraphFilter }: GraphFilterControlPanelProps) => {
   const { graphService } = useServiceContext();
 
   const [dataBounds, setDataBounds] = useState<DataBounds>();
   useEffect(() => {
-    graphService.getDataBounds().then((r) => setDataBounds(r));
+    graphService.getDataBounds().then((r: DataBounds) => setDataBounds(r));
   }, [graphService]);
 
   const [limitNodes, setLimitNodes] = useState<number>(graphFilter.limitNodes);
@@ -27,7 +26,7 @@ export const GraphFilterControlPanel = ({
     graphFilter.labelSearch,
   );
 
-  const setMinAndMaxNodeFrequency = (min: number, max: number) => {
+  const setMinAndMaxNodeFrequency = (min: number, max: number): void => {
     if (
       min === graphFilter.minimumNodeFrequency &&
       max === graphFilter.maximumNodeFrequency
@@ -40,7 +39,7 @@ export const GraphFilterControlPanel = ({
       maximumNodeFrequency: max,
     });
   };
-  const setMinAndMaxEdgeFrequency = (min: number, max: number) => {
+  const setMinAndMaxEdgeFrequency = (min: number, max: number): void => {
     if (
       min === graphFilter.minimumEdgeFrequency &&
       max === graphFilter.maximumEdgeFrequency
@@ -204,6 +203,7 @@ export const GraphFilterControlPanel = ({
                     type="checkbox"
                     onChange={(event) => {
                       console.log('Changed:', category);
+                      console.log('Event:', event);
                     }}
                   />
                   {category}

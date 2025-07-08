@@ -1,6 +1,6 @@
-import React from "react";
-import { Info } from "./Info";
-import { Node } from "../types/graph";
+import React from 'react';
+import { Info } from './Info';
+import { Node } from '../../types/graph';
 
 export interface NodeInfoProps {
   node: Node;
@@ -12,10 +12,10 @@ export const NodeInfo: React.FC<NodeInfoProps> = ({
   className,
 }: NodeInfoProps) => {
   return (
-    <div className={"panel node-info " + className}>
+    <div className={'panel node-info ' + className}>
       <h2>{node.label}</h2>
       {node.supernode && <p>Supernode: {node.supernode.label}</p>}
-      <Info id={node.id} type={"entity"} />
+      <Info id={node.id} type={'entity'} />
 
       {node.subnodes && node.subnodes.length > 0 && (
         <>
@@ -25,7 +25,7 @@ export const NodeInfo: React.FC<NodeInfoProps> = ({
             {node.subnodes.map((sn, i) => (
               <div key={sn.id}>
                 <b>{sn.label}</b>
-                <Info id={sn.id} type={"entity"} />
+                <Info id={sn.id} type={'entity'} />
                 {i + 1 < node.subnodes!.length && <hr />}
               </div>
             ))}

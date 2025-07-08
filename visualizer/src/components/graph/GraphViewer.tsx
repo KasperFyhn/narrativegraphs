@@ -1,13 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Graph, { GraphEvents, Options } from 'react-vis-graph-wrapper';
 import { GraphOptionsControlPanel } from './GraphOptionsControlPanel';
-import { useServiceContext } from '../service/ServiceContextProvider';
-import { Edge, GraphData, Node } from '../types/graph';
+import { Edge, GraphData, Node } from '../../types/graph';
 import { NodeInfo } from '../inspector/NodeInfo';
 import { EdgeInfo } from '../inspector/EdgeInfo';
-import { GraphFilter } from '../types/graphfilter';
+import { GraphFilter } from '../../types/graphFilter';
 import { GraphFilterControlPanel } from './GraphFilterControlPanel';
 import { EntityListEditor } from './EntityListEditor';
+import { useServiceContext } from '../../contexts/ServiceContext';
 
 // export interface GraphViewerProps {}
 

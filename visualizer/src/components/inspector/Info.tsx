@@ -1,13 +1,13 @@
-import React, { useEffect, useState } from "react";
-import { useServiceContext } from "../service/ServiceContextProvider";
-import { Details } from "../types/graph";
-import { Doc } from "../types/doc";
-import { DocInfo } from "./DocInfo";
-import { ClipLoader } from "react-spinners";
+import React, { useEffect, useState } from 'react';
+import { Details } from '../../types/graph';
+import { Doc } from '../../types/doc';
+import { DocInfo } from './DocInfo';
+import { ClipLoader } from 'react-spinners';
+import { useServiceContext } from '../../contexts/ServiceContext';
 
 export interface InfoProps {
   id: string | number;
-  type: "entity" | "relation";
+  type: 'entity' | 'relation';
 }
 
 export const Info: React.FC<InfoProps> = ({ type, id }) => {
@@ -19,7 +19,7 @@ export const Info: React.FC<InfoProps> = ({ type, id }) => {
   useEffect(() => {
     setDetails(undefined);
     setDocs(undefined);
-    (type === "entity" ? entityService : relationService)
+    (type === 'entity' ? entityService : relationService)
       .getDetails(id)
       .then(setDetails);
   }, [entityService, relationService, id, type]);
@@ -28,7 +28,7 @@ export const Info: React.FC<InfoProps> = ({ type, id }) => {
 
   const loadDocs = () => {
     setDocs(null);
-    (type === "entity" ? entityService : relationService)
+    (type === 'entity' ? entityService : relationService)
       .getDocs(id)
       .then((r) => {
         setDocs(r);
@@ -71,9 +71,9 @@ export const Info: React.FC<InfoProps> = ({ type, id }) => {
         {docs === undefined && <button onClick={loadDocs}>Load docs</button>}
         {docs === null && <ClipLoader loading={true} />}
         {docs && (
-          <div className={"scroll-content"}>
+          <div className={'scroll-content'}>
             <button
-              style={{ marginBottom: "3px" }}
+              style={{ marginBottom: '3px' }}
               onClick={() => setDocs(undefined)}
             >
               Hide docs
@@ -82,14 +82,14 @@ export const Info: React.FC<InfoProps> = ({ type, id }) => {
               <DocInfo
                 key={d.id}
                 document={d}
-                subjectId={type === "entity" ? details.id : undefined}
-                predicateId={type === "relation" ? details.id : undefined}
-                objectId={type === "entity" ? details.id : undefined}
+                subjectId={type === 'entity' ? details.id : undefined}
+                predicateId={type === 'relation' ? details.id : undefined}
+                objectId={type === 'entity' ? details.id : undefined}
               />
             ))}
             {visibleDocs < docs.length && (
               <button onClick={loadMore}>Load More</button>
-            )}{" "}
+            )}{' '}
           </div>
         )}
       </div>
