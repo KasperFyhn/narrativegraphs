@@ -20,6 +20,10 @@ export type GraphFilterAction =
   | { type: 'SET_LABEL_SEARCH'; payload: string }
   | { type: 'SET_DATE_RANGE'; payload: { start?: Date; end?: Date } }
   | {
+      type: 'TOGGLE_WHITELIST_ENTITY';
+      payload: string;
+    }
+  | {
       type: 'ADD_WHITELIST_ENTITY';
       payload: string;
     }
@@ -35,11 +39,19 @@ export type GraphFilterAction =
       type: 'REMOVE_BLACKLIST_ENTITY';
       payload: string;
     }
+  | {
+      type: 'CLEAR_WHITELIST';
+    }
+  | {
+      type: 'CLEAR_BLACKLIST';
+    }
   | { type: 'RESET_FILTER' };
 
 function addToArray<T>(obj: T, array?: T[]): T[] {
   if (array === undefined) {
     array = [];
+  } else if (array.includes(obj)) {
+    return array;
   }
   return [...array, obj];
 }
@@ -96,6 +108,17 @@ export function graphFilterReducer(
         latestDate: action.payload.end,
       };
 
+    case 'TOGGLE_WHITELIST_ENTITY':
+      const containsEntity =
+        state.whitelistedEntityIds &&
+        state.whitelistedEntityIds.includes(action.payload);
+      return {
+        ...state,
+        whitelistedEntityIds: containsEntity
+          ? removeFromArray(action.payload, state.whitelistedEntityIds)
+          : addToArray(action.payload, state.whitelistedEntityIds),
+      };
+
     case 'ADD_WHITELIST_ENTITY':
       return {
         ...state,
@@ -106,12 +129,16 @@ export function graphFilterReducer(
       };
 
     case 'ADD_BLACKLIST_ENTITY':
+      const entityId = action.payload;
+      if (
+        state.whitelistedEntityIds &&
+        state.whitelistedEntityIds.includes(entityId)
+      ) {
+        return state;
+      }
       return {
         ...state,
-        blacklistedEntityIds: addToArray(
-          action.payload,
-          state.blacklistedEntityIds,
-        ),
+        blacklistedEntityIds: addToArray(entityId, state.blacklistedEntityIds),
       };
 
     case 'REMOVE_WHITELIST_ENTITY':
@@ -130,6 +157,18 @@ export function graphFilterReducer(
           action.payload,
           state.blacklistedEntityIds,
         ),
+      };
+
+    case 'CLEAR_WHITELIST':
+      return {
+        ...state,
+        whitelistedEntityIds: undefined,
+      };
+
+    case 'CLEAR_BLACKLIST':
+      return {
+        ...state,
+        blacklistedEntityIds: undefined,
       };
 
     default:

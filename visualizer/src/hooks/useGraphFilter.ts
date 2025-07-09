@@ -13,10 +13,13 @@ export interface GraphFilterAccessors {
   setEdgeFrequencyRange: (min: number, max: number) => void;
   setLabelSearch: (label: string) => void;
   setDateRange: (start: Date, end: Date) => void;
+  toggleWhitelistedEntityId: (entityId: string) => void;
   addWhitelistedEntityId: (entityId: string) => void;
   removeWhitelistedEntityId: (entityId: string) => void;
   addBlacklistedEntityId: (entityId: string) => void;
   removeBlacklistedEntityId: (entityId: string) => void;
+  clearWhitelist: () => void;
+  clearBlacklist: () => void;
 }
 
 export function useGraphFilter(): GraphFilterAccessors {
@@ -39,6 +42,8 @@ export function useGraphFilter(): GraphFilterAccessors {
         dispatch({ type: 'SET_LABEL_SEARCH', payload: label }),
       setDateRange: (start: Date, end: Date) =>
         dispatch({ type: 'SET_DATE_RANGE', payload: { start, end } }),
+      toggleWhitelistedEntityId: (entityId: string) =>
+        dispatch({ type: 'TOGGLE_WHITELIST_ENTITY', payload: entityId }),
       addWhitelistedEntityId: (entityId: string) =>
         dispatch({ type: 'ADD_WHITELIST_ENTITY', payload: entityId }),
       removeWhitelistedEntityId: (entityId: string) =>
@@ -47,6 +52,8 @@ export function useGraphFilter(): GraphFilterAccessors {
         dispatch({ type: 'ADD_BLACKLIST_ENTITY', payload: entityId }),
       removeBlacklistedEntityId: (entityId: string) =>
         dispatch({ type: 'REMOVE_BLACKLIST_ENTITY', payload: entityId }),
+      clearWhitelist: () => dispatch({ type: 'CLEAR_WHITELIST' }),
+      clearBlacklist: () => dispatch({ type: 'CLEAR_BLACKLIST' }),
       resetFilter: () => dispatch({ type: 'RESET_FILTER' }),
     }),
     [dispatch],

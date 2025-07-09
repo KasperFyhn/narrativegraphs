@@ -1,12 +1,15 @@
 import React from 'react';
 import '../graph.css';
-import { GraphFilter } from '../../../types/graphFilter';
 import { ClipLoader } from 'react-spinners';
 import { useGraphFilter } from '../../../hooks/useGraphFilter';
 import { SubmittedNumberInput } from '../../common/input/SubmittedNumberInput';
 import { SubmittedTextInput } from '../../common/input/SubmittedTextInput';
 import { EdgeFrequencySlider, NodeFrequencySlider } from './FrequencySlider';
 import { SubmittedDataRangeInput } from '../../common/input/SubmittedDateRangeInput';
+import {
+  EntityBlacklistControl,
+  EntityWhitelistControl,
+} from './EntityListControl';
 
 export const GraphFilterControlPanel: React.FC = () => {
   const {
@@ -87,6 +90,10 @@ export const GraphFilterControlPanel: React.FC = () => {
           />
         </div>
       )}
+      <div className={'flex-container flex-container--vertical'}>
+        <EntityWhitelistControl />
+        <EntityBlacklistControl />
+      </div>
     </div>
   );
 };
