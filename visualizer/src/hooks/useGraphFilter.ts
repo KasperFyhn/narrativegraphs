@@ -1,0 +1,67 @@
+import { useEffect, useMemo, useState } from 'react';
+
+import { DataBounds, GraphFilter } from '../types/graphFilter';
+import { useGraphFilterContext } from '../contexts/GraphFilterContext';
+import { useServiceContext } from '../contexts/ServiceContext';
+
+export interface GraphFilterAccessors {
+  dataBounds: DataBounds;
+  filter: GraphFilter;
+  setNodeLimit: (limit: number) => void;
+  setEdgeLimit: (limit: number) => void;
+  setNodeFrequencyRange: (min: number, max: number) => void;
+  setEdgeFrequencyRange: (min: number, max: number) => void;
+  setLabelSearch: (label: string) => void;
+  setDateRange: (start: Date, end: Date) => void;
+  toggleWhitelistedEntityId: (entityId: string) => void;
+  addWhitelistedEntityId: (entityId: string) => void;
+  removeWhitelistedEntityId: (entityId: string) => void;
+  addBlacklistedEntityId: (entityId: string) => void;
+  removeBlacklistedEntityId: (entityId: string) => void;
+  clearWhitelist: () => void;
+  clearBlacklist: () => void;
+}
+
+export function useGraphFilter(): GraphFilterAccessors {
+  const context = useGraphFilterContext();
+
+  const { filter, dataBounds, dispatch } = context;
+
+  // Memoized action creators
+  const actions = useMemo(
+    () => ({
+      setNodeLimit: (limit: number) =>
+        dispatch({ type: 'SET_NODE_LIMIT', payload: limit }),
+      setEdgeLimit: (limit: number) =>
+        dispatch({ type: 'SET_EDGE_LIMIT', payload: limit }),
+      setNodeFrequencyRange: (min: number, max: number) =>
+        dispatch({ type: 'SET_NODE_FREQUENCY_RANGE', payload: { min, max } }),
+      setEdgeFrequencyRange: (min: number, max: number) =>
+        dispatch({ type: 'SET_EDGE_FREQUENCY_RANGE', payload: { min, max } }),
+      setLabelSearch: (label: string) =>
+        dispatch({ type: 'SET_LABEL_SEARCH', payload: label }),
+      setDateRange: (start: Date, end: Date) =>
+        dispatch({ type: 'SET_DATE_RANGE', payload: { start, end } }),
+      toggleWhitelistedEntityId: (entityId: string) =>
+        dispatch({ type: 'TOGGLE_WHITELIST_ENTITY', payload: entityId }),
+      addWhitelistedEntityId: (entityId: string) =>
+        dispatch({ type: 'ADD_WHITELIST_ENTITY', payload: entityId }),
+      removeWhitelistedEntityId: (entityId: string) =>
+        dispatch({ type: 'REMOVE_WHITELIST_ENTITY', payload: entityId }),
+      addBlacklistedEntityId: (entityId: string) =>
+        dispatch({ type: 'ADD_BLACKLIST_ENTITY', payload: entityId }),
+      removeBlacklistedEntityId: (entityId: string) =>
+        dispatch({ type: 'REMOVE_BLACKLIST_ENTITY', payload: entityId }),
+      clearWhitelist: () => dispatch({ type: 'CLEAR_WHITELIST' }),
+      clearBlacklist: () => dispatch({ type: 'CLEAR_BLACKLIST' }),
+      resetFilter: () => dispatch({ type: 'RESET_FILTER' }),
+    }),
+    [dispatch],
+  );
+
+  return {
+    dataBounds,
+    filter,
+    ...actions,
+  };
+}

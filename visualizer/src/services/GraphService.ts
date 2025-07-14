@@ -1,5 +1,5 @@
-import { Details, GraphData } from "../types/graph";
-import { DataBounds, GraphFilter } from "../types/graphfilter";
+import { Details, GraphData } from '../types/graph';
+import { DataBounds, GraphFilter } from '../types/graphFilter';
 
 export interface GraphService {
   getDataBounds(): Promise<DataBounds>;
@@ -35,8 +35,8 @@ export class GraphServiceImpl implements GraphService {
 
   async getGraph(filter?: GraphFilter): Promise<GraphData> {
     const response = await fetch(`${this.baseUrl}/graph`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(filter),
     });
 

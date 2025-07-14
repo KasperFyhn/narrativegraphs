@@ -11,7 +11,6 @@ export interface DataBounds {
 export interface GraphFilter {
   limitNodes: number;
   limitEdges: number;
-  onlySupernodes?: boolean;
   minimumNodeFrequency?: number;
   maximumNodeFrequency?: number;
   minimumEdgeFrequency?: number;
@@ -22,3 +21,9 @@ export interface GraphFilter {
   whitelistedEntityIds?: string[];
   blacklistedEntityIds?: string[];
 }
+
+export const initialGraphFilter: GraphFilter = {
+  limitNodes: 100,
+  limitEdges: 200,
+  // ... other defaults
+};

@@ -25,7 +25,7 @@ def date_filter(graph_filter: GraphFilter) -> Dict[str, Any]:
 def term_frequency_filter(column_expr, min_freq: Optional[int], max_freq: Optional[int]) -> Dict[str, Any]:
     """Create term frequency filtering conditions"""
     if min_freq is not None and max_freq is not None:
-        return {'term_frequency': between(column_expr, min_freq, max_freq)}
+        return {'term_frequency': (min_freq, max_freq)}
     elif min_freq is not None:
         return {'term_frequency__gte': min_freq}
     elif max_freq is not None:
@@ -158,13 +158,13 @@ def get_focus_entities(graph_filter: GraphFilter, db, entity_conditions: List) -
     if graph_filter.label_search:
         label_filters = [entity_label_filter(graph_filter)]
         focus_conditions.extend(build_query_conditions(label_filters, EntityOrm))
-
-    # Combine focus conditions with entity conditions
-    all_conditions = entity_conditions + focus_conditions
+    #
+    # if len(focus_conditions) > 1:
+    #     focus_conditions = or_(*focus_conditions)
 
     focus_query = (
         db.query(EntityOrm)
-        .filter(and_(*all_conditions))
+        .filter(or_(*focus_conditions), *entity_conditions )
         .order_by(EntityOrm.term_frequency.desc())
         .limit(graph_filter.limit_nodes)
     )
@@ -237,31 +237,32 @@ async def get_graph(graph_filter: GraphFilter, db: Session = Depends(get_db_sess
     # Handle focus entities (whitelist or label search)
     if graph_filter.whitelisted_entity_ids or graph_filter.label_search:
         focus_entities = get_focus_entities(graph_filter, db, entity_conditions)
-        focus_entity_ids = [e.id for e in focus_entities]
+        actual_focus_entities = True
 
-        # Get connected entities if we need more
-        extra_entities = []
-        if len(focus_entities) < graph_filter.limit_nodes:
-            extra_entities = get_connected_entities(
-                focus_entity_ids, graph_filter, db, entity_conditions, relation_conditions
-            )
-
-        # Combine focus and extra entities
-        entities = (
-                [{'entity': e, 'focus': True} for e in focus_entities] +
-                [{'entity': e, 'focus': False} for e in extra_entities]
-        )
-    else:
-        # No focus entities, get top entities by frequency
+    else:  # No focus entities, get top entities by frequency
         query = (
             db.query(EntityOrm)
             .filter(and_(*entity_conditions))
             .order_by(EntityOrm.term_frequency.desc())
-            .limit(graph_filter.limit_nodes)
+            .limit(10)
         )
-        entity_results = query.all()
-        entities = [{'entity': e, 'focus': False} for e in entity_results]
+        focus_entities = query.all()
+        actual_focus_entities = False
 
+    focus_entity_ids = [e.id for e in focus_entities]
+
+    # Get connected entities if we need more
+    extra_entities = []
+    if len(focus_entities) < graph_filter.limit_nodes:
+        extra_entities = get_connected_entities(
+            focus_entity_ids, graph_filter, db, entity_conditions, relation_conditions
+        )
+
+    # Combine focus and extra entities
+    entities = (
+            [{'entity': e, 'focus': actual_focus_entities} for e in focus_entities] +
+            [{'entity': e, 'focus': False} for e in extra_entities]
+    )
     entity_ids = [item['entity'].id for item in entities]
 
     # Get relations between entities
