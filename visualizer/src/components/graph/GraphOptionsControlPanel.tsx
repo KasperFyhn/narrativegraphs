@@ -1,35 +1,19 @@
-import React from "react";
-import "./graph.css";
-import { Options } from "react-vis-graph-wrapper";
+import React from 'react';
+import './graph.css';
+import {
+  isSmoothEnabled,
+  useGraphOptionsContext,
+} from '../../contexts/GraphOptionsContext';
 
-interface GraphOptionsControlPanelProps {
-  options: Options;
-  setOptions: React.Dispatch<React.SetStateAction<Options>>;
-}
+export const GraphOptionsControlPanel: React.FC = () => {
+  const { options, setOptions } = useGraphOptionsContext();
 
-function getSmoothEnabled(options: Options): boolean {
-  if (typeof options.edges?.smooth === "boolean") {
-    return options.edges.smooth;
-  } else if (
-    typeof options.edges?.smooth === "object" &&
-    "enabled" in options.edges.smooth
-  ) {
-    return options.edges.smooth.enabled;
-  } else {
-    return false;
-  }
-}
-
-export const GraphOptionsControlPanel = ({
-  options,
-  setOptions,
-}: GraphOptionsControlPanelProps) => {
   return (
-    <div className={"flex-container flex-container--vertical"}>
-      <div className={"flex-container"}>
-        <span className={"option-span"}>Physics enabled:</span>
+    <div className={'flex-container flex-container--vertical'}>
+      <div className={'flex-container'}>
+        <span className={'option-span'}>Physics enabled:</span>
         <input
-          type={"checkbox"}
+          type={'checkbox'}
           checked={options.physics.enabled}
           onChange={(event) =>
             setOptions({
@@ -42,12 +26,12 @@ export const GraphOptionsControlPanel = ({
           }
         />
       </div>
-      <div className={"flex-container"}>
-        <span className={"option-span"}>Rounded edges:</span>
+      <div className={'flex-container'}>
+        <span className={'option-span'}>Rounded edges:</span>
         <input
-          type={"checkbox"}
-          checked={getSmoothEnabled(options)}
-          onChange={(event) =>
+          type={'checkbox'}
+          checked={isSmoothEnabled(options)}
+          onChange={() =>
             setOptions({
               ...options,
               edges: {
@@ -58,8 +42,8 @@ export const GraphOptionsControlPanel = ({
           }
         />
       </div>
-      <div className={"flex-container"}>
-        <span className={"option-span"}>Edge length:</span>
+      <div className={'flex-container'}>
+        <span className={'option-span'}>Edge length:</span>
         <input
           type="range"
           min="50"

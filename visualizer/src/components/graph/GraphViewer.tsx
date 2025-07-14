@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import Graph, { GraphEvents, Options } from 'react-vis-graph-wrapper';
+import Graph, { GraphEvents } from 'react-vis-graph-wrapper';
 import { GraphOptionsControlPanel } from './GraphOptionsControlPanel';
 import { Edge, GraphData, Node } from '../../types/graph';
 import { NodeInfo } from '../inspector/NodeInfo';
@@ -7,15 +7,18 @@ import { EdgeInfo } from '../inspector/EdgeInfo';
 import { useServiceContext } from '../../contexts/ServiceContext';
 import { useGraphFilter } from '../../hooks/useGraphFilter';
 import { GraphFilterControlPanel } from './FilterControlPanel/GraphFilterControlPanel';
+import { useGraphOptionsContext } from '../../contexts/GraphOptionsContext';
 
 export const GraphViewer: React.FC = () => {
   const { graphService } = useServiceContext();
 
-  const [selectedNode, setSelectedNode] = useState<Node>();
-  const [selectedEdge, setSelectedEdge] = useState<Edge>();
-
   const { filter, toggleWhitelistedEntityId, addBlacklistedEntityId } =
     useGraphFilter();
+
+  const { options } = useGraphOptionsContext();
+
+  const [selectedNode, setSelectedNode] = useState<Node>();
+  const [selectedEdge, setSelectedEdge] = useState<Edge>();
 
   const [graphData, setGraphData] = useState<GraphData>({
     edges: [],
@@ -26,6 +29,17 @@ export const GraphViewer: React.FC = () => {
   }, [graphService, filter]);
 
   const coloredGraphData = useMemo(() => {
+    const colorNode = (n: Node): string => {
+      if (filter.whitelistedEntityIds?.includes(n.id.toString())) {
+        return 'lightgreen';
+      } else if (n.focus) {
+        return 'yellow';
+      } else if (!filter.blacklistedEntityIds?.includes(n.id.toString())) {
+        return 'cyan';
+      } else {
+        return 'red';
+      }
+    };
     return {
       edges: graphData.edges.map((e) => ({
         ...e,
@@ -33,14 +47,7 @@ export const GraphViewer: React.FC = () => {
       })),
       nodes: graphData.nodes.map((n) => ({
         ...n,
-        // TODO: fix this horrible block
-        color: filter.whitelistedEntityIds?.includes(n.id.toString())
-          ? 'lightgreen'
-          : n.focus
-            ? 'yellow'
-            : filter.blacklistedEntityIds?.includes(n.id.toString())
-              ? 'red'
-              : 'cyan',
+        color: colorNode(n),
       })),
     };
   }, [
@@ -52,7 +59,7 @@ export const GraphViewer: React.FC = () => {
 
   const graphDataMaps = useMemo(() => {
     return {
-      nodesMap: new Map(graphData.nodes.map((node) => [node.id!, node])),
+      nodesMap: new Map(graphData.nodes.map((node) => [node.id, node])),
       edgeGroupMap: new Map(graphData.edges.map((edge) => [edge.id, edge])),
     };
   }, [graphData]);
@@ -72,7 +79,7 @@ export const GraphViewer: React.FC = () => {
       if (nodes.length < 2) return;
       nodes.forEach((v: number) => addBlacklistedEntityId(v.toString()));
     },
-    selectNode: ({ nodes, edges }) => {
+    selectNode: ({ nodes }) => {
       setSelectedEdge(undefined);
       setSelectedNode(graphDataMaps.nodesMap.get(nodes[0]));
     },
@@ -89,21 +96,6 @@ export const GraphViewer: React.FC = () => {
       setSelectedEdge(undefined);
     },
   };
-
-  const [options, setOptions] = useState<Options>({
-    physics: {
-      enabled: true,
-      barnesHut: {
-        springLength: 300,
-      },
-    },
-    edges: {
-      smooth: true,
-      font: {
-        align: 'top',
-      },
-    },
-  });
 
   const [showControlPanel, setShowControlPanel] = useState<boolean>(true);
 
@@ -127,7 +119,7 @@ export const GraphViewer: React.FC = () => {
           (showControlPanel ? '' : 'control-panel--hidden')
         }
       >
-        <GraphOptionsControlPanel options={options} setOptions={setOptions} />
+        <GraphOptionsControlPanel />
         <hr />
         <GraphFilterControlPanel />
       </div>
@@ -135,7 +127,7 @@ export const GraphViewer: React.FC = () => {
       <div className="graph-container">
         {selectedNode && <NodeInfo node={selectedNode} />}
         {selectedEdge && <EdgeInfo edge={selectedEdge} />}
-        <Graph graph={coloredGraphData} options={options} events={events} />
+        <Graph graph={coloredGraphData} events={events} options={options} />
       </div>
     </div>
   );
