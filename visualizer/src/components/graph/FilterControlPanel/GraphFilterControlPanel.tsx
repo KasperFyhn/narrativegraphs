@@ -19,6 +19,7 @@ export const GraphFilterControlPanel: React.FC = () => {
     setEdgeLimit,
     setLabelSearch,
     setDateRange,
+    historyControls,
   } = useGraphFilter();
 
   if (!dataBounds) {
@@ -31,6 +32,20 @@ export const GraphFilterControlPanel: React.FC = () => {
 
   return (
     <div className={'flex-container flex-container--vertical'}>
+      <div className={'flex-container'}>
+        <button
+          onClick={historyControls.undo}
+          disabled={!historyControls.canUndo}
+        >
+          Undo
+        </button>
+        <button
+          onClick={historyControls.redo}
+          disabled={!historyControls.canRedo}
+        >
+          Redo
+        </button>
+      </div>
       <div className={'flex-container'}>
         <span className={'option-span'}>Limit nodes:&nbsp;</span>
         <SubmittedNumberInput

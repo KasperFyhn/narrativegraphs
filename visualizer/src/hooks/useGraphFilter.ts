@@ -1,12 +1,13 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
 import { DataBounds, GraphFilter } from '../types/graphFilter';
 import { useGraphFilterContext } from '../contexts/GraphFilterContext';
-import { useServiceContext } from '../contexts/ServiceContext';
+import { HistoryControls } from '../reducers/historyReducer';
 
 export interface GraphFilterAccessors {
   dataBounds: DataBounds;
   filter: GraphFilter;
+  historyControls: HistoryControls;
   setNodeLimit: (limit: number) => void;
   setEdgeLimit: (limit: number) => void;
   setNodeFrequencyRange: (min: number, max: number) => void;
@@ -25,7 +26,7 @@ export interface GraphFilterAccessors {
 export function useGraphFilter(): GraphFilterAccessors {
   const context = useGraphFilterContext();
 
-  const { filter, dataBounds, dispatch } = context;
+  const { filter, dataBounds, dispatch, historyControls } = context;
 
   // Memoized action creators
   const actions = useMemo(
@@ -62,6 +63,7 @@ export function useGraphFilter(): GraphFilterAccessors {
   return {
     dataBounds,
     filter,
+    historyControls,
     ...actions,
   };
 }

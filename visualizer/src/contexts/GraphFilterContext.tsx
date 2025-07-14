@@ -1,6 +1,5 @@
 import {
   createContext,
-  useReducer,
   type ReactNode,
   useContext,
   useState,
@@ -15,11 +14,16 @@ import { initialGraphFilter } from '../types/graphFilter';
 import React from 'react';
 import { useServiceContext } from './ServiceContext';
 import { ClipLoader } from 'react-spinners';
+import {
+  HistoryControls,
+  useReducerWithHistory,
+} from '../reducers/historyReducer';
 
 export interface GraphFilterContextType {
   filter: GraphFilter;
   dataBounds: DataBounds;
   dispatch: React.Dispatch<GraphFilterAction>;
+  historyControls: HistoryControls;
 }
 
 const GraphFilterContext = createContext<GraphFilterContextType | undefined>(
@@ -34,7 +38,10 @@ interface GraphFilterContextProviderProps {
 export const GraphFilterContextProvider: React.FC<
   GraphFilterContextProviderProps
 > = ({ children, initialFilter = initialGraphFilter }) => {
-  const [filter, dispatch] = useReducer(graphFilterReducer, initialFilter);
+  const [filter, dispatch, historyControls] = useReducerWithHistory(
+    graphFilterReducer,
+    initialFilter,
+  );
 
   const { graphService } = useServiceContext();
 
@@ -49,7 +56,7 @@ export const GraphFilterContextProvider: React.FC<
 
   return (
     <GraphFilterContext.Provider
-      value={{ filter: filter, dataBounds: dataBounds, dispatch }}
+      value={{ filter, dataBounds, dispatch, historyControls }}
     >
       {children}
     </GraphFilterContext.Provider>
