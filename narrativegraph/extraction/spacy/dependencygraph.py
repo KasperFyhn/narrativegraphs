@@ -133,20 +133,20 @@ class DependencyGraphExtractor(SpacyTripletExtractor):
         return verbs
 
 
-    def extract_triplets_from_sent(self, sent: Span) -> Triplet | None:
+    def extract_triplets_from_sent(self, sent: Span) -> list[Triplet]:
         verbs = self._find_verbs(sent)
         if not verbs:
-            return None
+            return []
         verb_token = verbs[0]
 
         subject_span = self._find_subject(verb_token, sent)
         obj_span, is_passive = self._find_object(verb_token, sent)
         if subject_span is None or obj_span is None:
-            return None
+            return []
 
         for span in (subject_span, obj_span):
             if all(t.pos_ == "PRON" for t in span):
-                return None
+                return []
 
         subject_part = TripletPart.from_span(subject_span)
         predicate_part = TripletPart.from_span(verb_token)
@@ -155,7 +155,7 @@ class DependencyGraphExtractor(SpacyTripletExtractor):
         if subject_part and predicate_part and obj_part:
             if is_passive:
                 subject_part, obj_part = obj_part, subject_part
-            return Triplet(subj=subject_part, pred=predicate_part, obj=obj_part)
+            return [Triplet(subj=subject_part, pred=predicate_part, obj=obj_part)]
         else:
-            return None
+            return []
 
