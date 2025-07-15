@@ -89,7 +89,7 @@ class Triplet(CamelModel):
     object: SpanEntity
 
 
-class Doc(CamelModel):
+class Document(CamelModel):
     id: int
     text: str
     timestamp: str
@@ -102,9 +102,9 @@ class DocsRequest(CamelModel):
 
 
 
-def transform_orm_to_dto(doc_orm: DocumentOrm) -> Doc:
+def transform_orm_to_dto(doc_orm: DocumentOrm) -> Document:
     """Transform ORM model to DTO"""
-    return Doc(
+    return Document(
         id=doc_orm.id,
         text=doc_orm.text,
         timestamp=doc_orm.timestamp.isoformat() if doc_orm.timestamp else "",

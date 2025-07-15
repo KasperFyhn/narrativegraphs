@@ -5,8 +5,7 @@ from sqlalchemy import (
     ForeignKey,
     Text,
     DateTime,
-    Boolean, UniqueConstraint,
-)
+    Boolean, )
 from sqlalchemy.orm import declarative_base, relationship, Mapped
 
 Base = declarative_base()
@@ -132,4 +131,4 @@ class DocumentOrm(Base):
     category = Column(String, nullable=True)
 
     # Relationships
-    triplets = relationship("TripletOrm", back_populates="document")
+    triplets: Mapped[list[TripletOrm]] = relationship("TripletOrm", back_populates="document")

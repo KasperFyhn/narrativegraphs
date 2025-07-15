@@ -5,8 +5,8 @@ from datetime import datetime
 from tqdm import tqdm
 
 from narrativegraph.db.service import DbService
-from narrativegraph.extraction.common import TripletExtractor
-from narrativegraph.extraction.spacy import DependencyGraphExtractor
+from narrativegraph.extraction.spacy.common import SpacyTripletExtractor
+from narrativegraph.extraction.spacy.dependencygraph import DependencyGraphExtractor
 from narrativegraph.mapping.common import Mapper
 from narrativegraph.mapping.linguistic import StemmingMapper, SubgramStemmingMapper
 from narrativegraph.server.backgroundserver import BackgroundServer
@@ -19,7 +19,7 @@ _logger.setLevel(logging.INFO)
 class NarrativeGraph:
     def __init__(
             self,
-            triplet_extractor: TripletExtractor = None,
+            triplet_extractor: SpacyTripletExtractor = None,
             entity_mapper: Mapper = None,
             relation_mapper: Mapper = None,
             sqlite_db_path: str = None,

@@ -1,29 +1,40 @@
-from typing import NamedTuple, Generator
+from abc import ABC, abstractmethod
+from typing import NamedTuple, Generator, Iterable, Optional
+
+from pydantic import BaseModel
+from spacy.tokens import Span, Token
 
 
-# Define a NamedTuple for a part of the triplet with its text and character indices
-class TripletPart(NamedTuple):
+class TripletPart(BaseModel):
     text: str
     start_char: int
     end_char: int
+    normalized_text: Optional[str] = None
+
+    @classmethod
+    def from_span(cls, span: Span | Token) -> "TripletPart":
+        start = span.start_char if isinstance(span, Span) else span.idx
+        end = span.end_char if isinstance(span, Span) else span.idx + len(span.text)
+        return cls(
+            text=span.text,
+            normalized_text=span.lemma_,
+            start_char=start,
+            end_char=end,
+        )
 
 
-# Define a NamedTuple for the full triplet, composed of TripletParts
-class Triplet(NamedTuple):
-    subject: TripletPart
-    predicate: TripletPart
-    obj: TripletPart  # Naming 'obj' to avoid conflict with Python's built-in 'object'
+class Triplet(BaseModel):
+    subj: TripletPart
+    pred: TripletPart
+    obj: TripletPart
 
 
-class TripletExtractor:
-
-    def __init__(self):
+class TripletExtractor(ABC):
+    @abstractmethod
+    def extract(self, text: str) -> list[Triplet]:
         pass
 
-    def extract(self, doc: str) -> list[Triplet]:
-        pass
-
-    def batch_extract(self, docs: list[str], n_cpu: int = None) \
+    def batch_extract(self, texts: Iterable[str], **kwargs) \
             -> Generator[list[Triplet], None, None]:
-        for doc in docs:
-            yield self.extract(doc)
+        for text in texts:
+            yield self.extract(text)

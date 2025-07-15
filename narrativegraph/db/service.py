@@ -64,12 +64,12 @@ class DbService:
         triplet_orms = [
             TripletOrm(
                 doc_id=doc_id,
-                subj_span_start=triplet.subject.start_char,
-                subj_span_end=triplet.subject.end_char,
-                subj_span_text=triplet.subject.text,
-                pred_span_start=triplet.predicate.start_char,
-                pred_span_end=triplet.predicate.end_char,
-                pred_span_text=triplet.predicate.text,
+                subj_span_start=triplet.subj.start_char,
+                subj_span_end=triplet.subj.end_char,
+                subj_span_text=triplet.subj.text,
+                pred_span_start=triplet.pred.start_char,
+                pred_span_end=triplet.pred.end_char,
+                pred_span_text=triplet.pred.text,
                 obj_span_start=triplet.obj.start_char,
                 obj_span_end=triplet.obj.end_char,
                 obj_span_text=triplet.obj.text,
@@ -107,5 +107,4 @@ class DbService:
         return self._session.query(TripletOrm).all()
 
     def get_relations(self, n: int = None) -> list[RelationOrm]:
-        with (get_session(self._engine) as session):
-            return self._session.query(RelationOrm).limit(n).all()  # noqa
+        return self._session.query(RelationOrm).limit(n).all()

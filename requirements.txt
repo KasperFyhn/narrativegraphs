@@ -15,3 +15,5 @@ ipywidgets
 nest-asyncio~=1.6.0
 kagglehub~=0.3.12
 fastapi_camelcase~=2.0.0
+fastapi_camelcase~=2.0.0
+psutil~=7.0.0
