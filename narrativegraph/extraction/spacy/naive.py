@@ -1,4 +1,4 @@
-from typing import Tuple, Iterable
+from typing import Iterable
 
 from spacy.tokens import Span
 
@@ -35,31 +35,44 @@ class NaiveSpacyTripletExtractor(SpacyTripletExtractor):
                 result.append(span)
         return result
 
+    @staticmethod
+    def _spans_overlap(span1: Span, span2: Span) -> bool:
+        """Check if spans overlap at character level."""
+        return not (
+            span1.end_char <= span2.start_char or span2.end_char <= span1.start_char
+        )
 
     def extract_triplets_from_sent(self, sent: Span) -> list[Triplet]:
         triplets = []
 
-        # get ner and/or noun chunks in an ordered list
-        entities: list[Span] = []
+        # Collect entities with priority scoring
+        candidates = []
         if self.ner:
             ents = sent.ents
             if isinstance(self.ner, tuple):
                 ents = self._filter_by_range(ents, self.ner)
-            entities.extend(ents)
+            candidates.extend((span, 0) for span in ents)  # NER priority: 0
+
         if self.noun_chunks:
             chunks = sent.noun_chunks
-            if isinstance(self.ner, tuple):
+            if isinstance(self.noun_chunks, tuple):
                 chunks = self._filter_by_range(chunks, self.noun_chunks)
-            entities.extend(chunks)
+            candidates.extend((span, 1) for span in chunks)  # Noun chunk priority: 1
+
+        # Sort by priority: NER first, then length desc, then position
+        candidates.sort(key=lambda x: (x[1], -len(x[0]), x[0].start))
+
+        # Greedily select non-overlapping spans
+        entities = []
+        for target, _ in candidates:
+            if not any(self._spans_overlap(target, other) for other in entities):
+                entities.append(target)
 
         entities.sort(key=lambda x: x.start_char)
 
-        # for each (i, i+1) pair, create a triplet with the text between them
+        # Create triplets from adjacent entities
         for i in range(len(entities) - 1):
-            subj = entities[i]
-            obj = entities[i + 1]
-
-            # skip if the distance is too big
+            subj, obj = entities[i], entities[i + 1]
             if obj.start - subj.end > self.max_tokens_between:
                 continue
 
@@ -69,10 +82,12 @@ class NaiveSpacyTripletExtractor(SpacyTripletExtractor):
             if len(pred) == 0:
                 continue
 
-            subj_span = TripletPart.from_span(subj)
-            pred_span = TripletPart.from_span(pred)
-            obj_span = TripletPart.from_span(obj)
-
-            triplets.append(Triplet(subj=subj_span, pred=pred_span, obj=obj_span))
+            triplets.append(
+                Triplet(
+                    subj=TripletPart.from_span(subj),
+                    pred=TripletPart.from_span(pred),
+                    obj=TripletPart.from_span(obj),
+                )
+            )
 
         return triplets

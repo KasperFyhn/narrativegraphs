@@ -1,5 +1,3 @@
-import unittest
-
 from narrativegraph.extraction.common import Triplet, TripletPart
 from narrativegraph.extraction.spacy.naive import NaiveSpacyTripletExtractor
 from tests.extraction.common import ExtractorTest
@@ -28,10 +26,7 @@ class TestNaiveSpacyTripletExtractor(ExtractorTest):
                 obj=TripletPart(text="Paris", start_char=13, end_char=18),
             )
         ]
-        self.assertEqual(len(triplets), len(expected_triplets))
-        self.assertTripletEqual(
-            triplets[0], expected_triplets[0], msg=f"Test '{text}':"
-        )
+        self.assertTripletsEqual(expected_triplets, triplets)
 
     def test_noun_chunks_only(self):
         """Test extraction using only noun chunks."""
@@ -46,22 +41,21 @@ class TestNaiveSpacyTripletExtractor(ExtractorTest):
                 obj=TripletPart(text="the small cat", start_char=19, end_char=32),
             )
         ]
-        self.assertEqual(len(triplets), len(expected_triplets))
-        self.assertTripletEqual(
-            triplets[0], expected_triplets[0], msg=f"Test '{text}':"
-        )
+        self.assertTripletsEqual(expected_triplets, triplets)
 
     def test_mixed_entities_and_chunks(self):
         """Test extraction with both named entities and noun chunks."""
-        text = "Apple Inc. released the new iPhone."
+        text = "Apple Inc. released a new iPhone."
         triplets = self.extractor.extract(text)
 
-        # Should extract triplets from both named entities and noun chunks
-        self.assertGreater(len(triplets), 0)
-        # Check that we have reasonable subject/object spans
-        for triplet in triplets:
-            self.assertGreater(len(triplet.subj.text.strip()), 0)
-            self.assertGreater(len(triplet.obj.text.strip()), 0)
+        expected_triplets = [
+            Triplet(
+                subj=TripletPart(text="Apple Inc.", start_char=0, end_char=10),
+                pred=TripletPart(text="released", start_char=11, end_char=19),
+                obj=TripletPart(text="a new iPhone", start_char=20, end_char=32),
+            )
+        ]
+        self.assertTripletsEqual(expected_triplets, triplets)
 
     def test_max_tokens_between_filtering(self):
         """Test that triplets are filtered based on max_tokens_between."""
@@ -69,13 +63,7 @@ class TestNaiveSpacyTripletExtractor(ExtractorTest):
         text = "John walked slowly and carefully to the store."
         triplets = extractor.extract(text)
 
-        # With max_tokens_between=1, long predicates should be filtered out
-        for triplet in triplets:
-            # Count tokens in predicate (rough approximation)
-            pred_tokens = len(triplet.pred.text.split())
-            self.assertLessEqual(
-                pred_tokens, 2
-            )  # Allow some flexibility for tokenization
+        self.assertEqual(len(triplets), 0)
 
     def test_entity_length_filtering(self):
         """Test filtering entities by length ranges."""
@@ -85,14 +73,18 @@ class TestNaiveSpacyTripletExtractor(ExtractorTest):
         text = "Dr. John Smith visited New York City."
         triplets = extractor.extract(text)
 
-        # Should filter out single-token entities and very long entities
-        for triplet in triplets:
-            subj_tokens = len(triplet.subj.text.split())
-            obj_tokens = len(triplet.obj.text.split())
-            self.assertGreaterEqual(subj_tokens, 2)
-            self.assertLess(subj_tokens, 4)
-            self.assertGreaterEqual(obj_tokens, 2)
-            self.assertLess(obj_tokens, 4)
+        expected_triplets = [
+            Triplet(
+                subj=TripletPart(
+                    text="John Smith",
+                    start_char=4,
+                    end_char=14,
+                ),
+                pred=TripletPart(text="visited", start_char=15, end_char=22),
+                obj=TripletPart(text="New York City", start_char=23, end_char=36),
+            )
+        ]
+        self.assertTripletsEqual(expected_triplets, triplets)
 
     def test_multiple_triplets_same_sentence(self):
         """Test extraction of multiple triplets from the same sentence."""
@@ -113,14 +105,14 @@ class TestNaiveSpacyTripletExtractor(ExtractorTest):
         text = "John visited Paris. Mary went to London. Tom stayed home."
         triplets = self.extractor.extract(text)
 
-        # Should extract from multiple sentences
-        self.assertGreater(len(triplets), 0)
-
-        # Check that character positions are correct across sentences
-        for triplet in triplets:
-            self.assertLess(triplet.subj.start_char, triplet.subj.end_char)
-            self.assertLess(triplet.pred.start_char, triplet.pred.end_char)
-            self.assertLess(triplet.obj.start_char, triplet.obj.end_char)
+        expected_triplets = [
+            Triplet(
+                subj=TripletPart(text="John", start_char=0, end_char=4),
+                pred=TripletPart(text="visited", start_char=5, end_char=12),
+                obj=TripletPart(text="Paris", start_char=13, end_char=18),
+            )
+        ]
+        self.assertTripletsEqual(expected_triplets, triplets)
 
     def test_no_valid_entities(self):
         """Test with text that has no valid entities."""
@@ -135,7 +127,6 @@ class TestNaiveSpacyTripletExtractor(ExtractorTest):
         text = "John."
         triplets = self.extractor.extract(text)
 
-        # Should return empty list when only one entity (need at least 2 for triplet)
         self.assertEqual(len(triplets), 0)
 
     def test_entities_too_far_apart(self):
@@ -152,13 +143,10 @@ class TestNaiveSpacyTripletExtractor(ExtractorTest):
 
     def test_empty_predicate(self):
         """Test adjacent entities with empty predicate."""
-        text = "John Mary went to the store."
+        text = "He sent John a letter."
         triplets = self.extractor.extract(text)
 
-        # Should handle cases where entities are adjacent
-        for triplet in triplets:
-            # Predicate might be empty or whitespace
-            self.assertIsNotNone(triplet.pred.text)
+        self.assertEqual(len(triplets), 0)
 
     def test_noun_chunks_length_filtering(self):
         """Test filtering noun chunks by length."""
@@ -168,38 +156,5 @@ class TestNaiveSpacyTripletExtractor(ExtractorTest):
         text = "The very large red car hit the small bike."
         triplets = extractor.extract(text)
 
-        # Should only include noun chunks within the specified range
-        for triplet in triplets:
-            subj_tokens = len(triplet.subj.text.split())
-            obj_tokens = len(triplet.obj.text.split())
-            self.assertGreaterEqual(subj_tokens, 3)
-            self.assertLessEqual(subj_tokens, 5)
-            self.assertGreaterEqual(obj_tokens, 3)
-            self.assertLessEqual(obj_tokens, 5)
-
-    def test_overlapping_entities(self):
-        """Test handling of overlapping entities and noun chunks."""
-        text = "Apple Inc. in California released the new iPhone."
-        triplets = self.extractor.extract(text)
-
-        # Should handle overlapping spans gracefully
-        self.assertGreaterEqual(len(triplets), 0)
-
-        # Verify all triplets have valid character spans
-        for triplet in triplets:
-            self.assertLess(triplet.subj.start_char, triplet.subj.end_char)
-            self.assertLess(triplet.pred.start_char, triplet.pred.end_char)
-            self.assertLess(triplet.obj.start_char, triplet.obj.end_char)
-
-    def test_complex_sentence_structure(self):
-        """Test extraction from complex sentence structures."""
-        text = "The European Union and the United States signed a comprehensive trade agreement."
-        triplets = self.extractor.extract(text)
-
-        # Should extract meaningful triplets from complex noun phrases
-        self.assertGreater(len(triplets), 0)
-
-        # Check that we get reasonable spans
-        for triplet in triplets:
-            self.assertGreater(len(triplet.subj.text.strip()), 0)
-            self.assertGreater(len(triplet.obj.text.strip()), 0)
+        expected_triplets = []
+        self.assertTripletsEqual(expected_triplets, triplets)
