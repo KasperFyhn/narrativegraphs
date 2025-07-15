@@ -2,12 +2,13 @@ import multiprocessing
 
 import spacy
 
-from narrativegraph.extraction.common import TripletExtractor, Triplet, TripletPart
+from narrativegraph.extraction.common import Triplet, TripletPart
+from narrativegraph.extraction.spacy.common import SpacyTripletExtractor
 from typing import List, Tuple, Optional, Generator
 from spacy.tokens import Doc, Span, Token
 
 
-class DependencyGraphExtractor(TripletExtractor):
+class DependencyGraphExtractor(SpacyTripletExtractor):
 
     def __init__(
             self,
@@ -20,10 +21,7 @@ class DependencyGraphExtractor(TripletExtractor):
             xcomp_as_objects: bool = True,
 
     ):
-        super().__init__()
-        if model_name is None:
-            model_name = "en_core_web_sm"
-        self._nlp = spacy.load(model_name)
+        super().__init__(model_name)
 
         self.remove_pronoun_entities = remove_pronoun_entities
         self.direct_objects = direct_objects
@@ -135,7 +133,7 @@ class DependencyGraphExtractor(TripletExtractor):
         return verbs
 
 
-    def _extract_triplets_from_sent(self, sent: Span) -> Triplet | None:
+    def extract_triplets_from_sent(self, sent: Span) -> Triplet | None:
         verbs = self._find_verbs(sent)
         if not verbs:
             return None
@@ -150,45 +148,14 @@ class DependencyGraphExtractor(TripletExtractor):
             if all(t.pos_ == "PRON" for t in span):
                 return None
 
-        subject_part = TripletPart(
-            text=subject_span.text,
-            start_char=subject_span.start_char,
-            end_char=subject_span.end_char
-        )
-
-        predicate_part = TripletPart(
-            text=verb_token.text,
-            start_char=verb_token.idx,
-            end_char=verb_token.idx + len(verb_token.text)
-        )
-
-        obj_part = TripletPart(
-            text=obj_span.text,
-            start_char=obj_span.start_char,
-            end_char=obj_span.end_char
-        )
+        subject_part = TripletPart.from_span(subject_span)
+        predicate_part = TripletPart.from_span(verb_token)
+        obj_part = TripletPart.from_span(obj_span)
 
         if subject_part and predicate_part and obj_part:
             if is_passive:
                 subject_part, obj_part = obj_part, subject_part
-            return Triplet(subject=subject_part, predicate=predicate_part, obj=obj_part)
+            return Triplet(subj=subject_part, pred=predicate_part, obj=obj_part)
         else:
             return None
 
-    def _extract_triplets_from_doc(self, doc: Doc) -> list[Triplet]:
-        triplets = []
-        for sent in doc.sents:
-            triplet = self._extract_triplets_from_sent(sent)
-            if triplet is not None:
-                triplets.append(triplet)
-        return triplets
-
-    def extract(self, doc: str) -> list[Triplet]:
-        doc = self._nlp(doc)
-        return self._extract_triplets_from_doc(doc)
-
-    def batch_extract(self, docs: list[str], n_cpu: int = None) \
-            -> Generator[list[Triplet], None, None]:
-        docs = self._nlp.pipe(docs, n_process=n_cpu or multiprocessing.cpu_count())
-        for doc in docs:
-            yield self._extract_triplets_from_doc(doc)
