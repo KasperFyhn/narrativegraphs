@@ -1,10 +1,11 @@
 from abc import ABC, abstractmethod
 from typing import NamedTuple, Generator, Iterable, Optional
 
+from pydantic import BaseModel
 from spacy.tokens import Span, Token
 
 
-class TripletPart(NamedTuple):
+class TripletPart(BaseModel):
     text: str
     start_char: int
     end_char: int
@@ -22,11 +23,10 @@ class TripletPart(NamedTuple):
         )
 
 
-class Triplet(NamedTuple):
+class Triplet(BaseModel):
     subj: TripletPart
     pred: TripletPart
     obj: TripletPart
-
 
 
 class TripletExtractor(ABC):

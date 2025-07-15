@@ -1,35 +1,13 @@
-import unittest
-
 from narrativegraph.extraction.common import Triplet, TripletPart
 from narrativegraph.extraction.spacy.dependencygraph import DependencyGraphExtractor
+from tests.extraction.common import ExtractorTest
 
 
-class TestDependencyGraphExtractor(unittest.TestCase):
-    """
-    Test suite for the _extract_triplets_from_doc function.
-    """
+class TestDependencyGraphExtractor(ExtractorTest):
 
     @classmethod
     def setUpClass(cls):
         cls.extractor = DependencyGraphExtractor()
-
-    def assertTripletEqual(self, expected: Triplet, actual: Triplet, msg: str = ""):
-        """
-        Custom assertion to compare Triplet NamedTuples.
-        Compares text, start_char, and end_char for each part.
-        """
-        self.assertEqual(actual.subj.text, expected.subj.text, f"{msg} Subject text mismatch.")
-        self.assertEqual(actual.subj.start_char, expected.subj.start_char, f"{msg} Subject start_char mismatch.")
-        self.assertEqual(actual.subj.end_char, expected.subj.end_char, f"{msg} Subject end_char mismatch.")
-
-        self.assertEqual(actual.pred.text, expected.pred.text, f"{msg} Predicate text mismatch.")
-        self.assertEqual(actual.pred.start_char, expected.pred.start_char,
-                         f"{msg} Predicate start_char mismatch.")
-        self.assertEqual(actual.pred.end_char, expected.pred.end_char, f"{msg} Predicate end_char mismatch.")
-
-        self.assertEqual(actual.obj.text, expected.obj.text, f"{msg} Object text mismatch.")
-        self.assertEqual(actual.obj.start_char, expected.obj.start_char, f"{msg} Object start_char mismatch.")
-        self.assertEqual(actual.obj.end_char, expected.obj.end_char, f"{msg} Object end_char mismatch.")
 
     def test_active_voice(self):
         text = "John hit the ball."
@@ -39,11 +17,13 @@ class TestDependencyGraphExtractor(unittest.TestCase):
             Triplet(
                 subj=TripletPart(text="John", start_char=0, end_char=4),
                 pred=TripletPart(text="hit", start_char=5, end_char=8),
-                obj=TripletPart(text="the ball", start_char=9, end_char=17)
+                obj=TripletPart(text="the ball", start_char=9, end_char=17),
             )
         ]
         self.assertEqual(len(triplets), len(expected_triplets))
-        self.assertTripletEqual(triplets[0], expected_triplets[0], msg=f"Test '{text}':")
+        self.assertTripletEqual(
+            triplets[0], expected_triplets[0], msg=f"Test '{text}':"
+        )
 
     def test_active_voice_with_adjuncts(self):
         text = "The dog chased the cat quickly in the barn."
@@ -53,11 +33,13 @@ class TestDependencyGraphExtractor(unittest.TestCase):
             Triplet(
                 subj=TripletPart(text="The dog", start_char=0, end_char=7),
                 pred=TripletPart(text="chased", start_char=8, end_char=14),
-                obj=TripletPart(text="the cat", start_char=15, end_char=22)
+                obj=TripletPart(text="the cat", start_char=15, end_char=22),
             )
         ]
         self.assertEqual(len(triplets), len(expected_triplets))
-        self.assertTripletEqual(triplets[0], expected_triplets[0], msg=f"Test '{text}':")
+        self.assertTripletEqual(
+            triplets[0], expected_triplets[0], msg=f"Test '{text}':"
+        )
 
     def test_prepositional_object(self):
         text = "The dog looked at the sky"
@@ -67,11 +49,13 @@ class TestDependencyGraphExtractor(unittest.TestCase):
             Triplet(
                 subj=TripletPart(text="The dog", start_char=0, end_char=7),
                 pred=TripletPart(text="looked", start_char=8, end_char=14),
-                obj=TripletPart(text="the sky", start_char=18, end_char=25)
+                obj=TripletPart(text="the sky", start_char=18, end_char=25),
             )
         ]
         self.assertEqual(len(triplets), len(expected_triplets))
-        self.assertTripletEqual(triplets[0], expected_triplets[0], msg=f"Test '{text}':")
+        self.assertTripletEqual(
+            triplets[0], expected_triplets[0], msg=f"Test '{text}':"
+        )
 
     def test_copula_verb_attribute(self):
         text = "Pam is a doctor."
@@ -81,11 +65,13 @@ class TestDependencyGraphExtractor(unittest.TestCase):
             Triplet(
                 subj=TripletPart(text="Pam", start_char=0, end_char=3),
                 pred=TripletPart(text="is", start_char=4, end_char=6),
-                obj=TripletPart(text="a doctor", start_char=7, end_char=15)
+                obj=TripletPart(text="a doctor", start_char=7, end_char=15),
             )
         ]
         self.assertEqual(len(triplets), len(expected_triplets))
-        self.assertTripletEqual(triplets[0], expected_triplets[0], msg=f"Test '{text}':")
+        self.assertTripletEqual(
+            triplets[0], expected_triplets[0], msg=f"Test '{text}':"
+        )
 
     def test_xcomp_verb_object(self):
         text = "He likes to read books."
@@ -108,13 +94,21 @@ class TestDependencyGraphExtractor(unittest.TestCase):
 
         expected_triplets = [
             Triplet(
-                subj=TripletPart(text="Mary", start_char=21, end_char=25),  # Swapped subject (agent)
-                pred=TripletPart(text="read", start_char=13, end_char=17),  # 'was' (9-12), 'read' (13-17)
-                obj=TripletPart(text="The book", start_char=0, end_char=8)  # Swapped object (grammatical subject)
+                subj=TripletPart(
+                    text="Mary", start_char=21, end_char=25
+                ),  # Swapped subject (agent)
+                pred=TripletPart(
+                    text="read", start_char=13, end_char=17
+                ),  # 'was' (9-12), 'read' (13-17)
+                obj=TripletPart(
+                    text="The book", start_char=0, end_char=8
+                ),  # Swapped object (grammatical subject)
             )
         ]
         self.assertEqual(len(triplets), len(expected_triplets))
-        self.assertTripletEqual(triplets[0], expected_triplets[0], msg=f"Test '{text}':")
+        self.assertTripletEqual(
+            triplets[0], expected_triplets[0], msg=f"Test '{text}':"
+        )
 
     def test_copular_verb_adjective(self):
         text = "The car is red."
@@ -124,11 +118,13 @@ class TestDependencyGraphExtractor(unittest.TestCase):
             Triplet(
                 subj=TripletPart(text="The car", start_char=0, end_char=7),
                 pred=TripletPart(text="is", start_char=8, end_char=10),
-                obj=TripletPart(text="red", start_char=11, end_char=14)
+                obj=TripletPart(text="red", start_char=11, end_char=14),
             )
         ]
         self.assertEqual(len(triplets), len(expected_triplets))
-        self.assertTripletEqual(triplets[0], expected_triplets[0], msg=f"Test '{text}':")
+        self.assertTripletEqual(
+            triplets[0], expected_triplets[0], msg=f"Test '{text}':"
+        )
 
     def test_ditransitive_verb(self):
         text = "The boy gave his friend a present."
@@ -140,13 +136,13 @@ class TestDependencyGraphExtractor(unittest.TestCase):
             Triplet(
                 subj=TripletPart(text="The boy", start_char=0, end_char=7),
                 pred=TripletPart(text="gave", start_char=8, end_char=12),
-                obj=TripletPart(text="a present", start_char=24, end_char=33)
+                obj=TripletPart(text="a present", start_char=24, end_char=33),
             )
         ]
         self.assertEqual(len(triplets), len(expected_triplets))
-        self.assertTripletEqual(triplets[0], expected_triplets[0], msg=f"Test '{text}':")
-
-
+        self.assertTripletEqual(
+            triplets[0], expected_triplets[0], msg=f"Test '{text}':"
+        )
 
     def test_multiple_sentences(self):
         text = "John hit the ball. Birds fly fast. The dog chased the cat quickly."
@@ -156,18 +152,21 @@ class TestDependencyGraphExtractor(unittest.TestCase):
             Triplet(
                 subj=TripletPart(text="John", start_char=0, end_char=4),
                 pred=TripletPart(text="hit", start_char=5, end_char=8),
-                obj=TripletPart(text="the ball", start_char=9, end_char=17)
+                obj=TripletPart(text="the ball", start_char=9, end_char=17),
             ),
             Triplet(
                 subj=TripletPart(text="The dog", start_char=35, end_char=42),
                 pred=TripletPart(text="chased", start_char=43, end_char=49),
-                obj=TripletPart(text="the cat", start_char=50, end_char=57)
-            )
-
+                obj=TripletPart(text="the cat", start_char=50, end_char=57),
+            ),
         ]
         self.assertEqual(len(triplets), len(expected_triplets))
-        self.assertTripletEqual(triplets[0], expected_triplets[0], msg=f"Test '{text}' sentence 1:")
-        self.assertTripletEqual(triplets[1], expected_triplets[1], msg=f"Test '{text}' sentence 2:")
+        self.assertTripletEqual(
+            triplets[0], expected_triplets[0], msg=f"Test '{text}' sentence 1:"
+        )
+        self.assertTripletEqual(
+            triplets[1], expected_triplets[1], msg=f"Test '{text}' sentence 2:"
+        )
 
     def test_intransitive_verb(self):
         text = "Birds fly."

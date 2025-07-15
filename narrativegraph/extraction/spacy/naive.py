@@ -18,7 +18,7 @@ class NaiveSpacyTripletExtractor(SpacyTripletExtractor):
         super().__init__(model_name)
         if not named_entities and not noun_chunks:
             raise NotImplementedError(
-                "Naive spacy requires either named entities or noun_chunks"
+                "Naive spacy requires at least named_entities or noun_chunks."
             )
         self.ner = named_entities
         self.noun_chunks = noun_chunks
@@ -64,6 +64,10 @@ class NaiveSpacyTripletExtractor(SpacyTripletExtractor):
                 continue
 
             pred = sent[subj.end : obj.start]
+
+            # skip if no predicate
+            if len(pred) == 0:
+                continue
 
             subj_span = TripletPart.from_span(subj)
             pred_span = TripletPart.from_span(pred)
