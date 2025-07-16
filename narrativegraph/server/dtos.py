@@ -2,7 +2,7 @@ from datetime import date, datetime
 from typing import Optional
 
 from fastapi_camelcase import CamelModel
-from pydantic import Field
+from pydantic import Field, AliasChoices
 
 from narrativegraph.db.orms import DocumentOrm, EntityOrm, RelationOrm
 
@@ -43,16 +43,18 @@ class RelationGroup(CamelModel):
 class Edge(CamelModel):
     """Edge in the graph representing grouped relations"""
     id: str
-    from_id: int = Field(alias="from")
-    to_id: int = Field(alias="to")
+    from_id: int = Field(
+        serialization_alias="from", validation_alias="from_id"
+    )
+    to_id: int = Field(
+        serialization_alias="to", validation_alias= "to_id"
+    )
+
     subject_label: str
     object_label: str
     label: str
     total_term_frequency: int
     group: list[RelationGroup]
-
-    class Config:
-        validate_by_name = True
 
 
 class SubNode(CamelModel):
@@ -101,7 +103,6 @@ class DocsRequest(CamelModel):
     limit: Optional[int] = None
 
 
-
 def transform_orm_to_dto(doc_orm: DocumentOrm) -> Document:
     """Transform ORM model to DTO"""
     return Document(
@@ -145,7 +146,6 @@ class EntityLabel(CamelModel):
 
 class EntityLabelsRequest(CamelModel):
     ids: list[int]
-
 
 
 # Business logic functions
