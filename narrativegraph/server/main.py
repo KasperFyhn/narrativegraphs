@@ -20,6 +20,7 @@ import os
 
 @asynccontextmanager
 async def lifespan(app_arg: FastAPI):
+    # Ensure DB path is set
     if hasattr(app_arg.state, "db_engine") and app_arg.state.db_engine is not None:
         logging.info("Database engine provided to state before startup.")
     elif os.environ.get("DB_PATH") is not None:
@@ -27,8 +28,14 @@ async def lifespan(app_arg: FastAPI):
         logging.info("Database engine initialized from environment variable.")
     else:
         raise ValueError("No database engine provided. Set environment variable DB_PATH.")
-    yield
 
+    # Ensure the correct path to your build directory
+    build_directory = Path(os.path.dirname(__file__)) / "../../visualizer/build/"
+    if not os.path.isdir(build_directory):
+        raise ValueError(f"Build directory '{build_directory}' does not exist.")
+    app_arg.mount("/vis", StaticFiles(directory=build_directory, html=True), name="static")
+
+    yield
 
 app = FastAPI(lifespan=lifespan)
 
@@ -39,15 +46,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-# Ensure the correct path to your build directory
-build_directory = Path(os.path.dirname(__file__)) / "../../visualizer/build/"
-if not os.path.isdir(build_directory):
-    raise ValueError(f"Build directory '{build_directory}' does not exist.")
-
-# Mount the static files at the root URL
-app.mount("/vis", StaticFiles(directory=build_directory, html=True), name="static")
 
 @app.get("/", include_in_schema=False)
 async def root():
@@ -60,11 +58,6 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     content = {'status_code': 10422, 'message': exc_str, 'data': None}
     return JSONResponse(content=content, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
-
-
-# @app.get("/")
-# async def root():
-#     return RedirectResponse(url="/vis")
 
 app.include_router(graph_router, prefix="/graph", tags=["Graph"])
 app.include_router(docs_router, prefix="/docs", tags=["Docs"])
