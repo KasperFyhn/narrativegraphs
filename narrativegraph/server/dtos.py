@@ -1,8 +1,8 @@
-from datetime import date, datetime
+from datetime import date
 from typing import Optional
 
 from fastapi_camelcase import CamelModel
-from pydantic import Field, AliasChoices
+from pydantic import Field
 
 from narrativegraph.db.orms import DocumentOrm, EntityOrm, RelationOrm
 
@@ -12,7 +12,7 @@ class DataBounds(CamelModel):
     maximum_possible_node_frequency: int
     minimum_possible_edge_frequency: int
     maximum_possible_edge_frequency: int
-    categories: Optional[set[str]] = None
+    categories: Optional[dict[str, list[str]]] = None
     earliest_date: Optional[date] = None
     latest_date: Optional[date] = None
 
@@ -34,6 +34,7 @@ class GraphFilter(CamelModel):
 
 class RelationGroup(CamelModel):
     """Individual relation within an edge group"""
+
     id: int
     label: str
     subject_label: str
@@ -42,14 +43,10 @@ class RelationGroup(CamelModel):
 
 class Edge(CamelModel):
     """Edge in the graph representing grouped relations"""
-    id: str
-    from_id: int = Field(
-        serialization_alias="from", validation_alias="from_id"
-    )
-    to_id: int = Field(
-        serialization_alias="to", validation_alias= "to_id"
-    )
 
+    id: str
+    from_id: int = Field(serialization_alias="from", validation_alias="from_id")
+    to_id: int = Field(serialization_alias="to", validation_alias="to_id")
     subject_label: str
     object_label: str
     label: str
@@ -59,6 +56,7 @@ class Edge(CamelModel):
 
 class SubNode(CamelModel):
     """Subnode within a supernode"""
+
     id: int
     label: str
     term_frequency: int
@@ -66,6 +64,7 @@ class SubNode(CamelModel):
 
 class Node(CamelModel):
     """Node in the graph"""
+
     id: int
     label: str
     term_frequency: int
@@ -75,6 +74,7 @@ class Node(CamelModel):
 
 class GraphResponse(CamelModel):
     """Response containing graph data"""
+
     edges: list[Edge]
     nodes: list[Node]
 
@@ -96,6 +96,7 @@ class Document(CamelModel):
     text: str
     timestamp: str
     triplets: list[Triplet]
+    categories: dict[str, list[str]]
 
 
 class DocsRequest(CamelModel):
@@ -114,22 +115,24 @@ def transform_orm_to_dto(doc_orm: DocumentOrm) -> Document:
                 subject=SpanEntity(
                     id=triplet_orm.subject_id,
                     start=triplet_orm.subj_span_start,
-                    end=triplet_orm.subj_span_end
+                    end=triplet_orm.subj_span_end,
                 ),
                 predicate=SpanEntity(
                     id=triplet_orm.relation_id,
                     start=triplet_orm.pred_span_start,
-                    end=triplet_orm.pred_span_end
+                    end=triplet_orm.pred_span_end,
                 ),
                 object=SpanEntity(
                     id=triplet_orm.object_id,
                     start=triplet_orm.obj_span_start,
-                    end=triplet_orm.obj_span_end
-                )
+                    end=triplet_orm.obj_span_end,
+                ),
             )
             for triplet_orm in doc_orm.triplets
-        ]
+        ],
+        categories=doc_orm.category_dict,
     )
+
 
 class Details(CamelModel):
     id: int
@@ -137,12 +140,15 @@ class Details(CamelModel):
     frequency: int
     doc_frequency: int
     alt_labels: list[str]
-    first_occurrence: Optional[datetime]
-    last_occurrence: Optional[datetime]
+    first_occurrence: Optional[date]
+    last_occurrence: Optional[date]
+    categories: dict[str, list[str]]
+
 
 class EntityLabel(CamelModel):
     id: int
     label: str
+
 
 class EntityLabelsRequest(CamelModel):
     ids: list[int]
@@ -158,8 +164,10 @@ def transform_entity_orm_to_details(entity: EntityOrm) -> Details:
         doc_frequency=entity.doc_frequency,
         alt_labels=[],  # Empty as in original
         first_occurrence=entity.first_occurrence,
-        last_occurrence=entity.last_occurrence
+        last_occurrence=entity.last_occurrence,
+        categories=entity.category_dict,
     )
+
 
 def transform_relation_orm_to_details(relation: RelationOrm) -> Details:
     """Transform RelationOrm to Details DTO"""
@@ -170,5 +178,6 @@ def transform_relation_orm_to_details(relation: RelationOrm) -> Details:
         doc_frequency=relation.doc_frequency,
         alt_labels=[],  # Empty as in original
         first_occurrence=relation.first_occurrence,
-        last_occurrence=relation.last_occurrence
+        last_occurrence=relation.last_occurrence,
+        categories=relation.category_dict,
     )

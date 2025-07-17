@@ -3,7 +3,7 @@ export interface DataBounds {
   maximumPossibleNodeFrequency: number;
   minimumPossibleEdgeFrequency: number;
   maximumPossibleEdgeFrequency: number;
-  categories?: string[];
+  categories?: { [key: string]: string[] };
   earliestDate?: Date;
   latestDate?: Date;
 }

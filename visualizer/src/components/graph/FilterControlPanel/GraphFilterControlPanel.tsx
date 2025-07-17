@@ -74,25 +74,31 @@ export const GraphFilterControlPanel: React.FC = () => {
       </div>
       {dataBounds.categories && (
         <div className={'flex-container'}>
-          <details>
-            <summary>
-              <span className={'option-span'}>Categories</span>
-            </summary>
-            <div>
-              {dataBounds.categories.map((category) => (
-                <div key={category}>
-                  <input
-                    type="checkbox"
-                    onChange={(event) => {
-                      console.log('Changed:', category);
-                      console.log('Event:', event);
-                    }}
-                  />
-                  {category}
+          <div>
+            <span className={'option-span'}>Categories:</span>
+            {Object.entries(dataBounds.categories).map((entry) => {
+              const [name, values] = entry;
+              return (
+                <div key={name}>
+                  <b className={'option-span'}>{name}</b>
+
+                  <select>
+                    {values.map((value) => (
+                      <option key={name + value} value={value}>
+                        <input
+                          type="checkbox"
+                          onChange={(event) => {
+                            console.log('Event:', event);
+                          }}
+                        />
+                        {value}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-              ))}
-            </div>
-          </details>
+              );
+            })}
+          </div>
         </div>
       )}
       {dataBounds.earliestDate && dataBounds.latestDate && (
