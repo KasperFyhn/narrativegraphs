@@ -33,7 +33,7 @@ export type GraphFilterAction =
     }
   | {
       type: 'ADD_BLACKLIST_ENTITY';
-      payload: string;
+      payload: string[];
     }
   | {
       type: 'REMOVE_BLACKLIST_ENTITY';
@@ -155,16 +155,20 @@ export function graphFilterReducer(
       };
 
     case 'ADD_BLACKLIST_ENTITY':
-      const entityId = action.payload;
-      if (
-        state.whitelistedEntityIds &&
-        state.whitelistedEntityIds.includes(entityId)
-      ) {
-        return state;
+      const entityIds = action.payload;
+      let result = state.blacklistedEntityIds;
+      for (const entityId of entityIds) {
+        if (
+          state.whitelistedEntityIds &&
+          state.whitelistedEntityIds.includes(entityId)
+        ) {
+          continue;
+        }
+        result = addToArray(entityId, result);
       }
       return {
         ...state,
-        blacklistedEntityIds: addToArray(entityId, state.blacklistedEntityIds),
+        blacklistedEntityIds: result,
       };
 
     case 'REMOVE_WHITELIST_ENTITY':

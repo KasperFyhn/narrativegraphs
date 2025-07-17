@@ -14,7 +14,7 @@ interface GraphFilterActions {
   toggleWhitelistedEntityId: (entityId: string) => void;
   addWhitelistedEntityId: (entityId: string) => void;
   removeWhitelistedEntityId: (entityId: string) => void;
-  addBlacklistedEntityId: (entityId: string) => void;
+  addBlacklistedEntityId: (...entityIds: string[]) => void;
   removeBlacklistedEntityId: (entityId: string) => void;
   clearWhitelist: () => void;
   clearBlacklist: () => void;
@@ -57,8 +57,8 @@ export function useGraphFilter(): GraphFilterAccessors {
         dispatch({ type: 'ADD_WHITELIST_ENTITY', payload: entityId }),
       removeWhitelistedEntityId: (entityId: string) =>
         dispatch({ type: 'REMOVE_WHITELIST_ENTITY', payload: entityId }),
-      addBlacklistedEntityId: (entityId: string) =>
-        dispatch({ type: 'ADD_BLACKLIST_ENTITY', payload: entityId }),
+      addBlacklistedEntityId: (...entityIds: string[]) =>
+        dispatch({ type: 'ADD_BLACKLIST_ENTITY', payload: entityIds }),
       removeBlacklistedEntityId: (entityId: string) =>
         dispatch({ type: 'REMOVE_BLACKLIST_ENTITY', payload: entityId }),
       clearWhitelist: () => dispatch({ type: 'CLEAR_WHITELIST' }),
