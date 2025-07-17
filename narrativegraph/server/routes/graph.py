@@ -1,11 +1,18 @@
 from collections import defaultdict
-from typing import List, Dict, Optional, Any
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import and_, between, func, not_, or_
+from sqlalchemy import and_, between, func, or_
 from sqlalchemy.orm import Session, selectinload
 
-from narrativegraph.db.orms import RelationOrm, EntityOrm, DocumentCategory
+from narrativegraph.db.orms import (
+    RelationOrm,
+    EntityOrm,
+    DocumentCategory,
+    EntityCategory,
+    RelationCategory,
+    DocumentOrm,
+)
 from narrativegraph.server.dtos import (
     GraphFilter,
     Edge,
@@ -18,31 +25,61 @@ from narrativegraph.server.routes.common import get_db_session
 router = APIRouter()
 
 
-def date_filter(graph_filter: GraphFilter) -> Dict[str, Any]:
+def date_filter(model_class, graph_filter: GraphFilter) -> list:
     """Create date filtering conditions for entities/relations"""
-    conditions = {}
+    conditions = []
     if graph_filter.earliest_date:
-        conditions["last_occurrence__gte"] = graph_filter.earliest_date
+        conditions.append(model_class.last_occurrence >= graph_filter.earliest_date)
     if graph_filter.latest_date:
-        conditions["first_occurrence__lte"] = graph_filter.latest_date
+        conditions.append(model_class.first_occurrence <= graph_filter.latest_date)
     return conditions
 
 
+# Map model classes to their category models
+_category_model_map = {
+    EntityOrm: EntityCategory,
+    RelationOrm: RelationCategory,
+    DocumentOrm: DocumentCategory,
+}
+
+def category_filter(model_class, graph_filter: GraphFilter) -> list:
+    """Create category filtering conditions"""
+    if graph_filter.categories is None:
+        return []
+
+    category_model_class = _category_model_map[model_class]
+
+    # Must have ANY of these categories (OR logic)
+    or_conditions = []
+    for cat_name, cat_values in graph_filter.categories.items():
+        for cat_value in cat_values:
+            or_conditions.append(
+                model_class.categories.any(
+                    and_(
+                        category_model_class.name == cat_name,
+                        category_model_class.value == cat_value,
+                    )
+                )
+            )
+
+    return [or_(*or_conditions)]
+
+
 def term_frequency_filter(
-    column_expr, min_freq: Optional[int], max_freq: Optional[int]
-) -> Dict[str, Any]:
+    model_class, min_freq: Optional[int], max_freq: Optional[int]
+) -> list:
     """Create term frequency filtering conditions"""
+    conditions = []
     if min_freq is not None and max_freq is not None:
-        return {"term_frequency": (min_freq, max_freq)}
+        conditions.append(between(model_class.term_frequency, min_freq, max_freq))
     elif min_freq is not None:
-        return {"term_frequency__gte": min_freq}
+        conditions.append(model_class.term_frequency >= min_freq)
     elif max_freq is not None:
-        return {"term_frequency__lte": max_freq}
-    else:
-        return {}
+        conditions.append(model_class.term_frequency <= max_freq)
+    return conditions
 
 
-def entity_term_frequency_filter(graph_filter: GraphFilter) -> Dict[str, Any]:
+def entity_term_frequency_filter(graph_filter: GraphFilter) -> list:
     """Create entity term frequency filter"""
     return term_frequency_filter(
         EntityOrm.term_frequency,
@@ -51,65 +88,44 @@ def entity_term_frequency_filter(graph_filter: GraphFilter) -> Dict[str, Any]:
     )
 
 
-def relation_term_frequency_filter(graph_filter: GraphFilter) -> Dict[str, Any]:
+def relation_term_frequency_filter(graph_filter: GraphFilter) -> list:
     """Create relation term frequency filter"""
     return term_frequency_filter(
-        RelationOrm.term_frequency,
+        RelationOrm,
         graph_filter.minimum_edge_frequency,
         graph_filter.maximum_edge_frequency,
     )
 
 
-def entity_blacklist_filter(graph_filter: GraphFilter) -> Dict[str, Any]:
+def entity_blacklist_filter(graph_filter: GraphFilter) -> list:
     """Filter out blacklisted entities"""
-    if graph_filter.blacklisted_entity_ids:
-        return {"id__not_in": graph_filter.blacklisted_entity_ids}
-    return {}
-
-
-def entity_whitelist_filter(graph_filter: GraphFilter) -> Dict[str, Any]:
-    """Filter for whitelisted entities only"""
-    if graph_filter.whitelisted_entity_ids:
-        return {"id__in": graph_filter.whitelisted_entity_ids}
-    return {}
-
-
-def entity_label_filter(graph_filter: GraphFilter) -> Dict[str, Any]:
-    """Filter entities by label search"""
-    if graph_filter.label_search:
-        return {"label__ilike": f"%{graph_filter.label_search}%"}
-    return {}
-
-
-def build_query_conditions(filters: List[Dict[str, Any]], model_class):
-    """Convert filter dictionaries to SQLAlchemy conditions"""
     conditions = []
-
-    for filter_dict in filters:
-        for key, value in filter_dict.items():
-            if key.endswith("__gte"):
-                attr_name = key.replace("__gte", "")
-                conditions.append(getattr(model_class, attr_name) >= value)
-            elif key.endswith("__lte"):
-                attr_name = key.replace("__lte", "")
-                conditions.append(getattr(model_class, attr_name) <= value)
-            elif key.endswith("__ilike"):
-                attr_name = key.replace("__ilike", "")
-                conditions.append(getattr(model_class, attr_name).ilike(value))
-            elif key.endswith("__in"):
-                attr_name = key.replace("__in", "")
-                conditions.append(getattr(model_class, attr_name).in_(value))
-            elif key.endswith("__not_in"):
-                attr_name = key.replace("__not_in", "")
-                conditions.append(not_(getattr(model_class, attr_name).in_(value)))
-            elif isinstance(value, tuple) and len(value) == 2:  # between condition
-                conditions.append(
-                    between(getattr(model_class, key), value[0], value[1])
-                )
-            else:
-                conditions.append(getattr(model_class, key) == value)
-
+    if graph_filter.blacklisted_entity_ids:
+        conditions.append(~EntityOrm.id.in_(graph_filter.blacklisted_entity_ids))
     return conditions
+
+
+def entity_whitelist_filter(graph_filter: GraphFilter) -> list:
+    """Filter for whitelisted entities only"""
+    conditions = []
+    if graph_filter.whitelisted_entity_ids:
+        conditions.append(EntityOrm.id.in_(graph_filter.whitelisted_entity_ids))
+    return conditions
+
+
+def entity_label_filter(graph_filter: GraphFilter) -> list:
+    """Filter entities by label search"""
+    conditions = []
+    if graph_filter.label_search:
+        conditions.append(EntityOrm.label.ilike(f"%{graph_filter.label_search}%"))
+    return conditions
+
+
+def combine_filters(*filter_lists: list) -> list:
+    result = []
+    for filter_list in filter_lists:
+        result += filter_list
+    return result
 
 
 def create_edge_groups(relations: List[RelationOrm]) -> List[Edge]:
@@ -164,17 +180,10 @@ def get_focus_entities(
 ) -> List[EntityOrm]:
     """Get focus entities based on whitelist or label search"""
     focus_conditions = []
-
     if graph_filter.whitelisted_entity_ids:
-        whitelist_filters = [entity_whitelist_filter(graph_filter)]
-        focus_conditions.extend(build_query_conditions(whitelist_filters, EntityOrm))
-
+        focus_conditions.extend(entity_whitelist_filter(graph_filter))
     if graph_filter.label_search:
-        label_filters = [entity_label_filter(graph_filter)]
-        focus_conditions.extend(build_query_conditions(label_filters, EntityOrm))
-    #
-    # if len(focus_conditions) > 1:
-    #     focus_conditions = or_(*focus_conditions)
+        focus_conditions.extend(entity_label_filter(graph_filter))
 
     focus_query = (
         db.query(EntityOrm)
@@ -239,19 +248,19 @@ async def get_graph(graph_filter: GraphFilter, db: Session = Depends(get_db_sess
     """Get graph data with entities and relations based on filters"""
 
     # Build entity filter conditions
-    entity_filters = [
-        date_filter(graph_filter),
+    entity_conditions = combine_filters(
+        date_filter(EntityOrm, graph_filter),
+        category_filter(EntityOrm, graph_filter),
         entity_term_frequency_filter(graph_filter),
         entity_blacklist_filter(graph_filter),
-    ]
-    entity_conditions = build_query_conditions(entity_filters, EntityOrm)
+    )
 
     # Build relation filter conditions
-    relation_filters = [
-        date_filter(graph_filter),
+    relation_conditions = combine_filters(
+        date_filter(RelationOrm, graph_filter),
+        category_filter(RelationOrm, graph_filter),
         relation_term_frequency_filter(graph_filter),
-    ]
-    relation_conditions = build_query_conditions(relation_filters, RelationOrm)
+    )
 
     focus_entity_ids = []
 

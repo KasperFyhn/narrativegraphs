@@ -30,6 +30,7 @@ class GraphFilter(CamelModel):
     latest_date: Optional[date] = None
     whitelisted_entity_ids: Optional[set[str]] = None
     blacklisted_entity_ids: Optional[set[str]] = None
+    categories: Optional[dict[str, list[str]]] = None
 
 
 class RelationGroup(CamelModel):

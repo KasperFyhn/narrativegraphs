@@ -20,6 +20,7 @@ export interface GraphFilter {
   latestDate?: Date;
   whitelistedEntityIds?: string[];
   blacklistedEntityIds?: string[];
+  categories?: { [key: string]: string[] | undefined };
 }
 
 export const initialGraphFilter: GraphFilter = {

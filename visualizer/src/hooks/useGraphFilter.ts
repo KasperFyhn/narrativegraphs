@@ -4,10 +4,7 @@ import { DataBounds, GraphFilter } from '../types/graphFilter';
 import { useGraphFilterContext } from '../contexts/GraphFilterContext';
 import { HistoryControls } from '../reducers/historyReducer';
 
-export interface GraphFilterAccessors {
-  dataBounds: DataBounds;
-  filter: GraphFilter;
-  historyControls: HistoryControls;
+interface GraphFilterActions {
   setNodeLimit: (limit: number) => void;
   setEdgeLimit: (limit: number) => void;
   setNodeFrequencyRange: (min: number, max: number) => void;
@@ -21,6 +18,17 @@ export interface GraphFilterAccessors {
   removeBlacklistedEntityId: (entityId: string) => void;
   clearWhitelist: () => void;
   clearBlacklist: () => void;
+  toggleCategoryValue: (name: string, value: string) => void;
+  addCategory: (name: string, value: string) => void;
+  removeCategory: (name: string, value: string) => void;
+  resetCategory: (name: string) => void;
+  resetFilter: () => void;
+}
+
+export interface GraphFilterAccessors extends GraphFilterActions {
+  dataBounds: DataBounds;
+  filter: GraphFilter;
+  historyControls: HistoryControls;
 }
 
 export function useGraphFilter(): GraphFilterAccessors {
@@ -30,7 +38,7 @@ export function useGraphFilter(): GraphFilterAccessors {
 
   // Memoized action creators
   const actions = useMemo(
-    () => ({
+    (): GraphFilterActions => ({
       setNodeLimit: (limit: number) =>
         dispatch({ type: 'SET_NODE_LIMIT', payload: limit }),
       setEdgeLimit: (limit: number) =>
@@ -55,11 +63,18 @@ export function useGraphFilter(): GraphFilterAccessors {
         dispatch({ type: 'REMOVE_BLACKLIST_ENTITY', payload: entityId }),
       clearWhitelist: () => dispatch({ type: 'CLEAR_WHITELIST' }),
       clearBlacklist: () => dispatch({ type: 'CLEAR_BLACKLIST' }),
+      toggleCategoryValue: (name: string, value: string) =>
+        dispatch({ type: 'TOGGLE_CATEGORY', payload: { name, value } }),
+      addCategory: (name: string, value: string) =>
+        dispatch({ type: 'ADD_CATEGORY', payload: { name, value } }),
+      removeCategory: (name: string, value: string) =>
+        dispatch({ type: 'REMOVE_CATEGORY', payload: { name, value } }),
+      resetCategory: (name: string) =>
+        dispatch({ type: 'RESET_CATEGORY', payload: name }),
       resetFilter: () => dispatch({ type: 'RESET_FILTER' }),
     }),
     [dispatch],
   );
-
   return {
     dataBounds,
     filter,
