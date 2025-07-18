@@ -35,4 +35,5 @@ export interface Details extends Identifiable {
   firstOccurrence?: Date | null;
   lastOccurrence?: Date | null;
   altLabels?: string[];
+  categories: { [key: string]: string[] };
 }

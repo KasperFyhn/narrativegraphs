@@ -4,6 +4,7 @@ import { useClickOutside } from '../../../hooks/useClickOutside';
 import { Identifiable } from '../../../types/graph';
 import { ClipLoader } from 'react-spinners';
 import { useGraphFilter } from '../../../hooks/useGraphFilter';
+import { FloatingWindow } from '../../common/FloatingWindow';
 
 interface EntityListEditorProps {
   ids: string[] | number[];
@@ -34,10 +35,7 @@ export const EntityListEditor: React.FC<EntityListEditorProps> = ({
   }, [entityService, ids, onCloseOrClickOutside]);
 
   return (
-    <div className={'panel list-editor flex-container'} ref={ref}>
-      <button className={'panel__close-button'} onClick={onCloseOrClickOutside}>
-        Close
-      </button>
+    <FloatingWindow onCloseOrClickOutside={onCloseOrClickOutside}>
       <ClipLoader loading={idsWithLabels === undefined} />
       {onClear !== undefined && (
         <button style={{ background: 'red' }} onClick={onClear}>
@@ -58,7 +56,7 @@ export const EntityListEditor: React.FC<EntityListEditorProps> = ({
             </button>
           </div>
         ))}
-    </div>
+    </FloatingWindow>
   );
 };
 
@@ -110,12 +108,6 @@ export const EntityBlacklistControl: React.FC = () => {
       <div>
         <b>Hold</b> or <b>shift+mark</b> to add nodes to blacklist.
       </div>
-      {/*<button*/}
-      {/*  disabled={isBlacklistEmpty}*/}
-      {/*  onClick={}*/}
-      {/*>*/}
-      {/*  &#8617;*/}
-      {/*</button>*/}
       <button
         disabled={
           filter.blacklistedEntityIds === undefined ||

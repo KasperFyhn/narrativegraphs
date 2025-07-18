@@ -3,7 +3,7 @@ export interface DataBounds {
   maximumPossibleNodeFrequency: number;
   minimumPossibleEdgeFrequency: number;
   maximumPossibleEdgeFrequency: number;
-  categories?: string[];
+  categories?: { [key: string]: string[] };
   earliestDate?: Date;
   latestDate?: Date;
 }
@@ -20,6 +20,7 @@ export interface GraphFilter {
   latestDate?: Date;
   whitelistedEntityIds?: string[];
   blacklistedEntityIds?: string[];
+  categories?: { [key: string]: string[] | undefined };
 }
 
 export const initialGraphFilter: GraphFilter = {

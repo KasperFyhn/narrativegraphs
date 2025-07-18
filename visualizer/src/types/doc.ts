@@ -9,9 +9,11 @@ export interface Triplet {
   predicate: TripletField;
   object: TripletField;
 }
+
 export interface Doc {
   id: string | number;
   text: string;
   timestamp?: Date;
   triplets: Triplet[];
+  categories: { [key: string]: string[] };
 }

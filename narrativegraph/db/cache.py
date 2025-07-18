@@ -1,13 +1,22 @@
 from sqlalchemy.orm import Session, InstrumentedAttribute
 from tqdm import tqdm
 
-from narrativegraph.db.orms import RelationOrm, EntityOrm
+from narrativegraph.db.orms import (
+    RelationOrm,
+    EntityOrm,
+    EntityCategory,
+    RelationCategory,
+)
 
 
 class EntityAndRelationCache:
 
-    def __init__(self, session: Session, entity_mappings: dict[str, str],
-                 predicate_mappings: dict[str, str]):
+    def __init__(
+        self,
+        session: Session,
+        entity_mappings: dict[str, str],
+        predicate_mappings: dict[str, str],
+    ):
         self._session = session
         self._entities = {str(e.label): e for e in session.query(EntityOrm).all()}
         self._relations = {
@@ -31,10 +40,10 @@ class EntityAndRelationCache:
         return entity.id
 
     def get_or_create_relation(
-            self,
-            subject_id: int,
-            object_id: int,
-            predicate_label: InstrumentedAttribute[str] | str,
+        self,
+        subject_id: int,
+        object_id: int,
+        predicate_label: InstrumentedAttribute[str] | str,
     ):
         """Fetch a relation by label, or create it if it doesn't exist."""
         mapped_predicate = self._predicate_mappings[predicate_label]
@@ -67,14 +76,11 @@ class EntityAndRelationCache:
             entity.doc_frequency = len(
                 set(t.doc_id for t in triplets),
             )
-            entity.categories = ','.join(
-                sorted(t.category for t in triplets
-                if t.category is not None)
-            )
-            dates = [
-                t.timestamp for t in triplets
-                if t.timestamp is not None
-            ]
+            dates = [t.timestamp for t in triplets if t.timestamp is not None]
+
+            category_orms = EntityCategory.from_triplets(entity.id, triplets)
+            self._session.add_all(category_orms)
+
             entity.first_occurrence = min(dates, default=None)
             entity.last_occurrence = max(dates, default=None)
             # super_entity = self._mappings.get_super_entity(entity.label)
@@ -85,17 +91,18 @@ class EntityAndRelationCache:
 
     def update_relation_info(self):
         for relation in tqdm(
-                self._relations.values(),
-                desc="Updating relation info",
+            self._relations.values(),
+            desc="Updating relation info",
         ):
             relation.term_frequency = len(relation.triplets)  # noqa
             relation.doc_frequency = len(set(t.doc_id for t in relation.triplets))
-            relation.categories = ','.join(
-                sorted(t.category for t in relation.triplets
-                if t.category is not None)
-            )
-            dates = [t.timestamp for t in relation.triplets
-                     if t.timestamp is not None]
+            dates = [t.timestamp for t in relation.triplets if t.timestamp is not None]
             relation.first_occurrence = min(dates, default=None)
             relation.last_occurrence = max(dates, default=None)
+
+            category_orms = RelationCategory.from_triplets(
+                relation.id, relation.triplets
+            )
+            self._session.add_all(category_orms)
+
         self._session.commit()

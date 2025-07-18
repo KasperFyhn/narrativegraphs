@@ -57,6 +57,15 @@ export const Info: React.FC<InfoProps> = ({ type, id }) => {
       {details.lastOccurrence && (
         <p>Latest date: {details.lastOccurrence.toString()}</p>
       )}
+      {Object.entries(details.categories).map((entry) => {
+        const [name, values] = entry;
+        return (
+          <p key={name}>
+            {String(name).charAt(0).toUpperCase() + String(name).slice(1)}:{' '}
+            {values.join(', ')}
+          </p>
+        );
+      })}
       {details.altLabels && details.altLabels.length > 0 && (
         <div>
           Alternative Labels:

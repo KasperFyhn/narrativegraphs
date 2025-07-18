@@ -77,7 +77,7 @@ export const GraphViewer: React.FC = () => {
     },
     select: ({ nodes }) => {
       if (nodes.length < 2) return;
-      nodes.forEach((v: number) => addBlacklistedEntityId(v.toString()));
+      addBlacklistedEntityId(...nodes.map((v: number) => v.toString()));
     },
     selectNode: ({ nodes }) => {
       setSelectedEdge(undefined);

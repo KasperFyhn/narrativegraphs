@@ -10,6 +10,7 @@ import {
   EntityBlacklistControl,
   EntityWhitelistControl,
 } from './EntityListControl';
+import { CategorySelector } from './CategorySelector';
 
 export const GraphFilterControlPanel: React.FC = () => {
   const {
@@ -73,26 +74,9 @@ export const GraphFilterControlPanel: React.FC = () => {
         <SubmittedTextInput onSubmit={setLabelSearch} />
       </div>
       {dataBounds.categories && (
-        <div className={'flex-container'}>
-          <details>
-            <summary>
-              <span className={'option-span'}>Categories</span>
-            </summary>
-            <div>
-              {dataBounds.categories.map((category) => (
-                <div key={category}>
-                  <input
-                    type="checkbox"
-                    onChange={(event) => {
-                      console.log('Changed:', category);
-                      console.log('Event:', event);
-                    }}
-                  />
-                  {category}
-                </div>
-              ))}
-            </div>
-          </details>
+        <div className={'flex-container--vertical'}>
+          <span className={'option-span'}>Categories:</span>
+          <CategorySelector />
         </div>
       )}
       {dataBounds.earliestDate && dataBounds.latestDate && (
