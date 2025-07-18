@@ -1,5 +1,6 @@
 import { useGraphFilter } from '../../../hooks/useGraphFilter';
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
+import { FloatingWindow } from '../../common/FloatingWindow';
 
 interface CategorySelectorInnerProps {
   name: string;
@@ -14,6 +15,11 @@ const CategorySelectorInner: React.FC<CategorySelectorInnerProps> = ({
 }) => {
   const { filter, toggleCategoryValue, resetCategory } = useGraphFilter();
 
+  const capitalizedName = useMemo(
+    () => name.charAt(0).toUpperCase() + name.slice(1),
+    [name],
+  );
+
   const selected = useMemo((): string[] => {
     if (filter.categories === undefined) {
       return [];
@@ -22,47 +28,68 @@ const CategorySelectorInner: React.FC<CategorySelectorInnerProps> = ({
     }
   }, [filter.categories, name]);
 
-  const hasManyValues = useMemo(() => values.length > 5, [values]);
+  const [editing, setEditing] = React.useState<boolean>(false);
 
-  const SelectBlock: React.FC = () => {
-    return (
-      <>
-        <button
-          onClick={() => resetCategory(name)}
-          style={{ backgroundColor: 'red' }}
-          disabled={selected.length === 0}
-        >
-          Reset
-        </button>
-        {values.sort().map((value) => (
-          <div key={value} style={{ margin: '2px' }}>
-            <label htmlFor={value}>
-              <input
-                type={'checkbox'}
-                name={value}
-                checked={selected.includes(value)}
-                onChange={() => toggleCategoryValue(name, value)}
-              />
-              {value}
-            </label>
-          </div>
-        ))}
-      </>
-    );
-  };
+  const [selectedExpanded, setSelectedExpanded] = React.useState(false);
+  useEffect(() => {
+    if (selected.length < 4) setSelectedExpanded(false);
+  }, [selected]);
 
   return (
-    <div className={'flex-container--vertical'}>
-      {hasManyValues ? (
+    <div className={'flex-container--vertical panel__sub-panel'}>
+      {showHeader && <>{capitalizedName}&nbsp;</>}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          setEditing((prev) => !prev);
+        }}
+      >
+        Edit
+      </button>
+      {editing && (
+        <FloatingWindow onCloseOrClickOutside={() => setEditing(false)}>
+          <div className={'flex-container'}>
+            <button
+              onClick={() => resetCategory(name)}
+              style={{ backgroundColor: 'red' }}
+              disabled={selected.length === 0}
+            >
+              Reset
+            </button>
+            {values.sort().map((value) => (
+              <div key={value} style={{ margin: '2px' }}>
+                <label htmlFor={value}>
+                  <input
+                    type={'checkbox'}
+                    name={value}
+                    checked={selected.includes(value)}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      toggleCategoryValue(name, value);
+                    }}
+                  />
+                  {value}
+                </label>
+              </div>
+            ))}
+          </div>
+        </FloatingWindow>
+      )}
+      {selected.length === 0 && (
+        <div>
+          <i>All included</i>
+        </div>
+      )}
+      {0 < selected.length && selected.length < 4 && (
+        <div>{selected.join(', ')}</div>
+      )}
+      {4 <= selected.length && (
         <details>
-          <summary>{showHeader ? name : ' '}</summary>
-          {<SelectBlock />}
+          <summary onClick={() => setSelectedExpanded((prev) => !prev)}>
+            {selectedExpanded ? '' : selected.slice(0, 3).join(', ') + ' ...'}
+          </summary>
+          {selected.join(', ')}
         </details>
-      ) : (
-        <>
-          {showHeader && <p>{name}</p>}
-          <SelectBlock />
-        </>
       )}
     </div>
   );
@@ -72,7 +99,7 @@ export const CategorySelector: React.FC = () => {
   const { dataBounds } = useGraphFilter();
 
   return (
-    <div>
+    <div className={'flex-container'}>
       {dataBounds.categories &&
         Object.entries(dataBounds.categories).map(([name, values]) => (
           <CategorySelectorInner
