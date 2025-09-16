@@ -28,7 +28,7 @@ function createExcerpt(
   subjectId?: string | number,
   predicateId?: string | number,
   objectId?: string | number,
-  minCutText: number = 200,
+  minCutText = 200,
 ): Doc {
   const triplets = document.triplets.filter(
     (t) =>
@@ -172,10 +172,27 @@ export const DocInfo: React.FC<DocInfoProps> = ({
 
   return (
     <div className={'panel__sub-panel'}>
-      <h3>
-        {document.id}{' '}
-        <i style={{ color: 'gray' }}>{document.timestamp?.toString()}</i>
-      </h3>
+      <b>{document.id}</b>
+      {document.timestamp && (
+        <>
+          <br />
+          <i style={{ color: 'gray' }}>{document.timestamp.toString()}</i>
+        </>
+      )}
+      {document.categories && (
+        <>
+          <br />
+          {Object.entries(document.categories).map((entry) => {
+            const [name, values] = entry;
+            return (
+              <i key={name} style={{ color: 'gray' }}>
+                {name}: {values.join(', ')}
+              </i>
+            );
+          })}
+        </>
+      )}
+      <hr />
 
       <HighlightedText
         text={showExcerpt ? excerpt.text : document.text}
