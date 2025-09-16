@@ -1,4 +1,5 @@
 from collections import defaultdict
+from datetime import date
 
 from sqlalchemy import (
     Column,
@@ -142,8 +143,6 @@ class DocumentCategory(Base, CategoryMixin):
 class TripletOrm(Base, CategorizableMixin):
     __tablename__ = "triplets"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    timestamp = Column(Date, nullable=True)
-    category = Column(String, nullable=True, index=True)
     doc_id = Column(Integer, ForeignKey("documents.id"), nullable=False, index=True)
 
     subject_id = Column(Integer, ForeignKey("entities.id"), nullable=True, index=True)
@@ -182,6 +181,10 @@ class TripletOrm(Base, CategorizableMixin):
     @property
     def categories(self) -> list[DocumentCategory]:
         return self.document.categories
+
+    @property
+    def timestamp(self) -> date:
+        return self.document.timestamp
 
 
 class DocumentOrm(Base, CategorizableMixin):

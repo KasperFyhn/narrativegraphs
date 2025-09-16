@@ -2,13 +2,17 @@ import logging
 import os
 from datetime import datetime, date
 
+import pandas as pd
 from tqdm import tqdm
 
-from narrativegraph.db.service import DbService
+from narrativegraph.db.dtos import Node
+from narrativegraph.db.service.common import DbService
+from narrativegraph.db.service.query import QueryService
 from narrativegraph.extraction.spacy.common import SpacyTripletExtractor
 from narrativegraph.extraction.spacy.dependencygraph import DependencyGraphExtractor
 from narrativegraph.mapping.common import Mapper
 from narrativegraph.mapping.linguistic import StemmingMapper, SubgramStemmingMapper
+from narrativegraph.pipeline.pipeline import Pipeline
 from narrativegraph.server.backgroundserver import BackgroundServer
 from narrativegraph.utils.transform import normalize_categories
 
@@ -26,11 +30,6 @@ class NarrativeGraph:
         sqlite_db_path: str = None,
         overwrite_db: bool = False,
     ):
-        # Analysis components
-        self._triplet_extractor = triplet_extractor or DependencyGraphExtractor()
-        self._entity_mapper = entity_mapper or StemmingMapper()
-        self._relation_mapper = relation_mapper or SubgramStemmingMapper()
-
         # Data storage
         if sqlite_db_path is not None and os.path.exists(sqlite_db_path):
             if overwrite_db:
@@ -40,10 +39,16 @@ class NarrativeGraph:
             else:
                 raise FileExistsError("SQLite database already exists")
         self._sql_db_path = sqlite_db_path or "sqlite:///:memory:"
-        self._db_service = DbService(db_filepath=sqlite_db_path)
+        self._db_service = QueryService(db_filepath=sqlite_db_path)
 
-        self.predicate_mapping = None
-        self.entity_mapping = None
+        self._pipeline = Pipeline(
+            triplet_extractor=triplet_extractor,
+            entity_mapper=entity_mapper,
+            relation_mapper=relation_mapper,
+            sqlite_db_path=sqlite_db_path
+        )
+
+
 
     def fit(
         self,
@@ -65,45 +70,21 @@ class NarrativeGraph:
 
         :return:
         """
-        _logger.info(f"Adding {len(docs)} documents to database")
-        self._db_service.add_documents(
+        self._pipeline.run(
             docs,
             doc_ids=doc_ids,
             timestamps=timestamps,
-            categories=normalize_categories(categories),
+            categories=categories,
         )
-
-        _logger.info("Extracting triplets")
-        doc_orms = self._db_service.get_docs()
-        extracted_triplets = self._triplet_extractor.batch_extract(
-            [d.text for d in doc_orms]
-        )
-        docs_and_triplets = zip(doc_orms, extracted_triplets)
-        if _logger.isEnabledFor(logging.INFO):
-            docs_and_triplets = tqdm(
-                docs_and_triplets, desc="Extracting triplets", total=len(docs)
-            )
-        for doc, doc_triplets in docs_and_triplets:
-            self._db_service.add_triplets(
-                doc.id, doc_triplets, category=doc.category, timestamp=doc.timestamp
-            )
-
-        _logger.info("Mapping entities and relations")
-        triplets = self._db_service.get_triplets()
-        entities = [
-            entity
-            for triplet in triplets
-            for entity in [triplet.subj_span_text, triplet.obj_span_text]
-        ]
-        self.entity_mapping = self._entity_mapper.create_mapping(entities)
-
-        predicates = [triplet.pred_span_text for triplet in triplets]
-        self.predicate_mapping = self._entity_mapper.create_mapping(predicates)
-
-        _logger.info("Mapping triplets")
-        self._db_service.map_triplets(self.entity_mapping, self.predicate_mapping)
-
         return self
+
+    @property
+    def entities(self) -> list[Node]:
+        return self._db_service.get_entities()
+
+    @property
+    def entities_df(self) -> pd.DataFrame:
+        return self._db_service.get_entities_df()
 
     def serve_visualizer(
         self, port: int = 8001, autostart: bool = True, block: bool = True

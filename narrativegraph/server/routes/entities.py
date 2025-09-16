@@ -4,7 +4,7 @@ from fastapi import Depends, HTTPException, APIRouter
 from sqlalchemy.orm import Session
 
 from narrativegraph.db.orms import EntityOrm, TripletOrm, DocumentOrm
-from narrativegraph.server.dtos import EntityLabelsRequest, EntityLabel, Details, transform_entity_orm_to_details
+from narrativegraph.db.dtos import EntityLabelsRequest, EntityLabel, Details, transform_entity_orm_to_details
 from narrativegraph.server.routes.common import get_db_session
 from narrativegraph.server.routes.docs import get_docs_by_ids
 

@@ -13,7 +13,7 @@ from narrativegraph.db.orms import (
     RelationCategory,
     DocumentOrm,
 )
-from narrativegraph.server.dtos import (
+from narrativegraph.db.dtos import (
     GraphFilter,
     Edge,
     Node,
