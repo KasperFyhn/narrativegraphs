@@ -1,0 +1,27 @@
+from typing import Optional
+
+from narrativegraph.db.dtos import transform_relation_orm_to_details, Details
+from narrativegraph.db.orms import RelationOrm, DocumentOrm, TripletOrm
+from narrativegraph.db.service.common import OrmAssociatedService
+
+
+class RelationService(OrmAssociatedService):
+    _orm = RelationOrm
+
+    def by_id(self, id_: int) -> Details:
+        return transform_relation_orm_to_details(super().by_id(id_))
+
+    def doc_ids_by_relation(
+        self, relation_id: int, limit: Optional[int] = None
+    ) -> list[int]:
+        with self.get_session_context() as sc:
+            query = (
+                sc.query(DocumentOrm.id)
+                .join(TripletOrm)
+                .filter(TripletOrm.relation_id == relation_id)
+                .distinct()
+            )
+            if limit:
+                query = query.limit(limit)
+
+        return [doc.id for doc in query.all()]

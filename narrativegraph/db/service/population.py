@@ -1,18 +1,12 @@
 from datetime import date
-from typing import Optional
 
-import pandas as pd
-from sqlalchemy.orm import Session
 from tqdm import tqdm
 
 from narrativegraph.db.cache import EntityAndRelationCache
-from narrativegraph.db.dtos import Document, transform_orm_to_dto, Node
 from narrativegraph.db.orms import (
     DocumentOrm,
     TripletOrm,
-    RelationOrm,
     DocumentCategory,
-    EntityOrm,
 )
 from narrativegraph.db.service.common import DbService
 from narrativegraph.extraction.common import Triplet
@@ -25,7 +19,7 @@ class PopulationService(DbService):
         bulk: list[DocumentOrm],
         categories: list[dict[str, list[str]]],
     ) -> None:
-        with self.open_session() as sc:
+        with self.get_session_context() as sc:
             sc.add_all(bulk)
             sc.flush()
             cat_bulk = []
@@ -64,7 +58,7 @@ class PopulationService(DbService):
 
         bulk = []
         doc_cats = []
-        with self.open_session() as sc:
+        with self.get_session_context() as sc:
             for doc_text, doc_id, timestamp, categorization in zip(
                 docs, doc_ids, timestamps, categories, strict=True
             ):
@@ -88,7 +82,7 @@ class PopulationService(DbService):
     def get_docs(
         self,
     ) -> list[DocumentOrm]:
-        with self.open_session() as sc:
+        with self.get_session_context() as sc:
             return sc.query(DocumentOrm).all()
 
     def add_triplets(
@@ -96,7 +90,7 @@ class PopulationService(DbService):
         doc_id: int,
         triplets: list[Triplet],
     ):
-        with self.open_session() as sc:
+        with self.get_session_context() as sc:
             triplet_orms = [
                 TripletOrm(
                     doc_id=doc_id,
@@ -119,7 +113,7 @@ class PopulationService(DbService):
         entity_mappings: dict[str, str],
         relation_mappings: dict[str, str],
     ):
-        with self.open_session() as sc:
+        with self.get_session_context() as sc:
             cache = EntityAndRelationCache(sc, entity_mappings, relation_mappings)
 
             for triplet in tqdm(sc.query(TripletOrm).all(), desc="Mapping triplets"):
@@ -143,5 +137,5 @@ class PopulationService(DbService):
     def get_triplets(
         self,
     ):
-        with self.open_session() as sc:
+        with self.get_session_context() as sc:
             return sc.query(TripletOrm).all()

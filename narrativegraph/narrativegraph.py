@@ -3,18 +3,13 @@ import os
 from datetime import datetime, date
 
 import pandas as pd
-from tqdm import tqdm
 
 from narrativegraph.db.dtos import Node
-from narrativegraph.db.service.common import DbService
 from narrativegraph.db.service.query import QueryService
 from narrativegraph.extraction.spacy.common import SpacyTripletExtractor
-from narrativegraph.extraction.spacy.dependencygraph import DependencyGraphExtractor
 from narrativegraph.mapping.common import Mapper
-from narrativegraph.mapping.linguistic import StemmingMapper, SubgramStemmingMapper
 from narrativegraph.pipeline.pipeline import Pipeline
 from narrativegraph.server.backgroundserver import BackgroundServer
-from narrativegraph.utils.transform import normalize_categories
 
 logging.basicConfig(level=logging.INFO)
 _logger = logging.getLogger("narrativegraph")
@@ -80,11 +75,11 @@ class NarrativeGraph:
 
     @property
     def entities(self) -> list[Node]:
-        return self._db_service.get_entities()
+        return self._db_service.entities.get_entities()
 
     @property
     def entities_df(self) -> pd.DataFrame:
-        return self._db_service.get_entities_df()
+        return self._db_service.entities.as_df()
 
     def serve_visualizer(
         self, port: int = 8001, autostart: bool = True, block: bool = True

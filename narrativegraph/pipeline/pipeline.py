@@ -3,7 +3,6 @@ from datetime import datetime, date
 
 from tqdm import tqdm
 
-from narrativegraph.db.engine import get_session, get_engine
 from narrativegraph.db.service.population import PopulationService
 from narrativegraph.extraction.common import TripletExtractor
 from narrativegraph.extraction.spacy import DependencyGraphExtractor
@@ -45,7 +44,7 @@ class Pipeline:
             | list[dict[str, str | list[str]]]
         ) = None,
     ):
-        with self._db_service.open_session():
+        with self._db_service.get_session_context():
             _logger.info(f"Adding {len(docs)} documents to database")
             self._db_service.add_documents(
                 docs,

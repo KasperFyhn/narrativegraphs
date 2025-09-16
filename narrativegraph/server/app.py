@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 
 from narrativegraph.db.engine import get_engine, get_session_factory
+from narrativegraph.db.service.query import QueryService
 from narrativegraph.server.routes.graph import router as graph_router
 from narrativegraph.server.routes.entities import router as entities_router
 from narrativegraph.server.routes.relations import router as relations_router
@@ -29,6 +30,7 @@ async def lifespan(app_arg: FastAPI):
     else:
         raise ValueError("No database engine provided. Set environment variable DB_PATH.")
     app_arg.state.create_session = get_session_factory(app_arg.state.db_engine)
+    app_arg.state.query_service = QueryService(engine=app_arg.state.db_engine)
 
     # Ensure the correct path to your build directory
     build_directory = Path(os.path.dirname(__file__)) / "../../visualizer/build/"
@@ -67,4 +69,4 @@ app.include_router(relations_router, prefix="/relations", tags=["Relations"])
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("narrativegraph.server.main:app", host="0.0.0.0", port=8001, reload=True)
+    uvicorn.run("narrativegraph.server.app:app", host="0.0.0.0", port=8001, reload=True)
