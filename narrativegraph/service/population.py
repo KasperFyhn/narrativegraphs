@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session, InstrumentedAttribute
 from tqdm import tqdm
 
 from narrativegraph.db.documents import DocumentCategory, DocumentOrm
+from narrativegraph.db.predicates import PredicateOrm, PredicateCategory
 from narrativegraph.db.triplets import TripletOrm
 from narrativegraph.db.relations import RelationCategory, RelationOrm
 from narrativegraph.db.entities import EntityCategory, EntityOrm
@@ -110,27 +111,32 @@ class PopulationService(DbService):
     def map_triplets(
         self,
         entity_mappings: dict[str, str],
-        relation_mappings: dict[str, str],
+        predicate_mappings: dict[str, str],
     ):
         with self.get_session_context() as sc:
-            cache = EntityAndRelationCache(sc, entity_mappings, relation_mappings)
+            cache = Cache(sc, entity_mappings, predicate_mappings)
 
             for triplet in tqdm(sc.query(TripletOrm).all(), desc="Mapping triplets"):
                 subject_id = cache.get_or_create_entity(triplet.subj_span_text)
+                predicate_id = cache.get_or_create_predicate(
+                    triplet.pred_span_text,
+                )
                 object_id = cache.get_or_create_entity(triplet.obj_span_text)
                 relation_id = cache.get_or_create_relation(
                     subject_id,
+                    predicate_id,
                     object_id,
-                    triplet.pred_span_text,
                 )
 
                 triplet.subject_id = subject_id
-                triplet.relation_id = relation_id
+                triplet.predicate_id = predicate_id
                 triplet.object_id = object_id
+                triplet.relation_id = relation_id
 
             sc.commit()
 
             cache.update_entity_info()
+            cache.update_predicate_info()
             cache.update_relation_info()
 
     def get_triplets(
@@ -140,7 +146,7 @@ class PopulationService(DbService):
             return sc.query(TripletOrm).all()
 
 
-class EntityAndRelationCache:
+class Cache:
 
     def __init__(
         self,
@@ -150,8 +156,9 @@ class EntityAndRelationCache:
     ):
         self._session = session
         self._entities = {str(e.label): e for e in session.query(EntityOrm).all()}
+        self._predicates = {str(p.label): p for p in session.query(PredicateOrm).all()}
         self._relations = {
-            (int(r.subject_id), str(r.label), int(r.object_id)): r  # noqa
+            (int(r.subject_id), int(r.predicate_id), int(r.object_id)): r  # noqa
             for r in session.query(RelationOrm).all()
         }
 
@@ -170,30 +177,42 @@ class EntityAndRelationCache:
             self._entities[mapped_entity] = entity  # noqa
         return entity.id
 
-    def get_or_create_relation(
+    def get_or_create_predicate(
         self,
-        subject_id: int,
-        object_id: int,
-        predicate_label: InstrumentedAttribute[str] | str,
+        label: InstrumentedAttribute[str] | str,
     ):
-        """Fetch a relation by label, or create it if it doesn't exist."""
-        mapped_predicate = self._predicate_mappings[predicate_label]
+        """Fetch a predicate by label, or create it if it doesn't exist."""
+        mapped_predicate = self._predicate_mappings[label]
+
+        predicate = self._predicates.get(mapped_predicate, None)
+        if predicate is None:
+            predicate = PredicateOrm(
+                label=mapped_predicate,
+            )
+            self._session.add(predicate)
+            self._session.flush()  # Get the ID immediately
+            self._predicates[mapped_predicate] = predicate  # noqa
+        return predicate.id
+
+    def get_or_create_relation(
+        self, subject_id: int, predicate_id: int, object_id: int
+    ):
         relation_key = (
             subject_id,
-            mapped_predicate,
+            predicate_id,
             object_id,
         )
 
         relation = self._relations.get(relation_key, None)
         if relation is None:
             relation = RelationOrm(
-                label=mapped_predicate,
                 subject_id=subject_id,
+                predicate_id=predicate_id,
                 object_id=object_id,
             )
             self._session.add(relation)
             self._session.flush()  # Get the ID immediately
-            self._relations[relation_key] = relation  # noqa
+            self._relations[relation_key] = relation
         return relation.id
 
     def update_entity_info(self):
@@ -214,10 +233,25 @@ class EntityAndRelationCache:
 
             entity.first_occurrence = min(dates, default=None)
             entity.last_occurrence = max(dates, default=None)
-            # super_entity = self._mappings.get_super_entity(entity.label)
-            # if super_entity is not None:
-            #     entity.supernode_id = self.get_or_create_entity(super_entity)
-            #     entity.is_supernode = entity.id == entity.supernode_id
+
+        self._session.commit()
+
+    def update_predicate_info(self):
+        for predicate in tqdm(
+            self._predicates.values(),
+            desc="Updating predicate info",
+        ):
+            predicate.term_frequency = len(predicate.triplets)
+            predicate.doc_frequency = len(set(t.doc_id for t in predicate.triplets))
+            dates = [t.timestamp for t in predicate.triplets if t.timestamp is not None]
+            predicate.first_occurrence = min(dates, default=None)
+            predicate.last_occurrence = max(dates, default=None)
+
+            category_orms = PredicateCategory.from_categorizable(
+                predicate.id, predicate.triplets
+            )
+            self._session.add_all(category_orms)
+
         self._session.commit()
 
     def update_relation_info(self):

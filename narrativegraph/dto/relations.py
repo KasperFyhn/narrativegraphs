@@ -6,11 +6,11 @@ class RelationDetails(Details):
     pass
 
 
-def transform_relation_orm_to_details(relation: RelationOrm) -> Details:
+def transform_relation_orm_to_details(relation: RelationOrm) -> RelationDetails:
     """Transform RelationOrm to Details DTO"""
     return RelationDetails(
         id=relation.id,
-        label=relation.label,
+        label=relation.predicate.label,
         frequency=relation.term_frequency,
         doc_frequency=relation.doc_frequency,
         first_occurrence=relation.first_occurrence,

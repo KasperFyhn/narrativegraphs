@@ -1,11 +1,10 @@
 from typing import Optional
 
-from fastapi import Depends, HTTPException, APIRouter
+from fastapi import Depends, APIRouter
 
-from narrativegraph.dto.relations import transform_relation_orm_to_details
 from narrativegraph.dto.common import Details
-from narrativegraph.service import QueryService
 from narrativegraph.server.routes.common import get_query_service
+from narrativegraph.service import QueryService
 
 # FastAPI app
 router = APIRouter()

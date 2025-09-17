@@ -1,17 +1,17 @@
 from collections import defaultdict
-from pathlib import Path
 
 from sqlalchemy import Engine, func
 
 from narrativegraph.db.documents import DocumentCategory, DocumentOrm
-from narrativegraph.db.relations import RelationOrm
 from narrativegraph.db.entities import EntityOrm
+from narrativegraph.db.relations import RelationOrm
+from narrativegraph.dto.filter import DataBounds
 from narrativegraph.service.common import DbService
 from narrativegraph.service.graph import GraphService
-from narrativegraph.service.orms.docs import DocService
-from narrativegraph.dto.filter import DataBounds
-from narrativegraph.service.orms.entities import EntityService
-from narrativegraph.service.orms.relations import RelationService
+from narrativegraph.service.docs import DocService
+from narrativegraph.service.entities import EntityService
+from narrativegraph.service.predicates import PredicateService
+from narrativegraph.service.relations import RelationService
 
 
 class QueryService(DbService):
@@ -21,6 +21,7 @@ class QueryService(DbService):
         self.docs = DocService(lambda: self.get_session_context())
         self.entities = EntityService(lambda: self.get_session_context())
         self.relations = RelationService(lambda: self.get_session_context())
+        self.predicates = PredicateService(lambda: self.get_session_context())
         self.graph = GraphService(lambda: self.get_session_context())
 
     def _compile_categories(self) -> dict[str, list[str]]:

@@ -13,8 +13,9 @@ class TripletOrm(Base, CategorizableMixin):
     doc_id = Column(Integer, ForeignKey("documents.id"), nullable=False, index=True)
 
     subject_id = Column(Integer, ForeignKey("entities.id"), nullable=True, index=True)
-    relation_id = Column(Integer, ForeignKey("relations.id"), nullable=True, index=True)
+    predicate_id = Column(Integer, ForeignKey("predicates.id"), nullable=True, index=True)
     object_id = Column(Integer, ForeignKey("entities.id"), nullable=True, index=True)
+    relation_id = Column(Integer, ForeignKey("relations.id"), nullable=True, index=True)
 
     subj_span_start = Column(Integer, nullable=False)
     subj_span_end = Column(Integer, nullable=False)
@@ -32,12 +33,16 @@ class TripletOrm(Base, CategorizableMixin):
         foreign_keys="TripletOrm.subject_id",
     )
     predicate = relationship(
-        "RelationOrm",
-        foreign_keys="TripletOrm.relation_id",
+        "PredicateOrm",
+        foreign_keys="TripletOrm.predicate_id",
     )
     object = relationship(
         "EntityOrm",
         foreign_keys="TripletOrm.object_id",
+    )
+    relation = relationship(
+        "RelationOrm",
+        foreign_keys="TripletOrm.relation_id",
     )
     document = relationship(
         "DocumentOrm",

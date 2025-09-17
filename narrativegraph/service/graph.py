@@ -8,7 +8,7 @@ from narrativegraph.db.relations import RelationOrm
 from narrativegraph.db.entities import EntityOrm
 from narrativegraph.dto.filter import GraphFilter
 from narrativegraph.service.common import SubService
-from narrativegraph.dto.graph import Node, Edge, Predicate
+from narrativegraph.dto.graph import Node, Edge, Relation
 from narrativegraph.service.filter import (
     create_relation_conditions,
     create_entity_conditions,
@@ -35,7 +35,7 @@ class GraphService(SubService):
             representative = group[0]
 
             # Create label from top 3 relations
-            labels = [e.label for e in group[:3]]
+            labels = [e.predicate.label for e in group[:3]]
             if len(group) > 3:
                 labels.append("...")
             label = ", ".join(labels)
@@ -51,13 +51,11 @@ class GraphService(SubService):
                 label=label,
                 total_term_frequency=total_frequency,
                 group=[
-                    Predicate(
-                        **{
-                            "id": r.id,
-                            "label": r.label,
-                            "subject_label": r.subject.label,
-                            "object_label": r.object.label,
-                        }
+                    Relation(
+                        id=r.id,
+                        label=r.predicate.label,
+                        subject_label=r.subject.label,
+                        object_label=r.object.label,
                     )
                     for r in group
                 ],
@@ -194,7 +192,7 @@ class GraphService(SubService):
                 )
             ]
 
-            relations = (
+            relations: list[RelationOrm] = (
                 db.query(RelationOrm)
                 .options(
                     selectinload(RelationOrm.subject), selectinload(RelationOrm.object)

@@ -1,11 +1,14 @@
 from typing import Optional
 
-from narrativegraph.dto.entities import EntityLabel, transform_entity_orm_to_details
-from narrativegraph.dto.graph import Node
-from narrativegraph.dto.common import Details
 from narrativegraph.db.documents import DocumentOrm
-from narrativegraph.db.triplets import TripletOrm
 from narrativegraph.db.entities import EntityOrm
+from narrativegraph.db.triplets import TripletOrm
+from narrativegraph.dto.common import Details
+from narrativegraph.dto.entities import (
+    EntityLabel,
+    transform_entity_orm_to_details,
+    EntityDetails,
+)
 from narrativegraph.service.common import OrmAssociatedService
 
 
@@ -16,7 +19,18 @@ class EntityService(OrmAssociatedService):
         with self.get_session_context():
             return transform_entity_orm_to_details(super().by_id(id_))
 
-    def doc_ids_by_entity(self, entity_id: int, limit: Optional[int] = None) -> list[int]:
+    def by_ids(
+        self, ids: list[int], limit: Optional[int] = None
+    ) -> list[EntityDetails]:
+        with self.get_session_context():
+            return [
+                transform_entity_orm_to_details(doc_orm)
+                for doc_orm in super().by_ids(ids, limit=limit)
+            ]
+
+    def doc_ids_by_entity(
+        self, entity_id: int, limit: Optional[int] = None
+    ) -> list[int]:
         with self.get_session_context() as sc:
             query = (
                 sc.query(DocumentOrm.id)
@@ -32,9 +46,7 @@ class EntityService(OrmAssociatedService):
 
         return [doc.id for doc in query.all()]
 
-    def labels_by_ids(
-        self, entity_ids: list[int]
-    ) -> list[EntityLabel]:
+    def labels_by_ids(self, entity_ids: list[int]) -> list[EntityLabel]:
         with self.get_session_context() as sc:
             entities = (
                 sc.query(EntityOrm.id, EntityOrm.label)
@@ -42,4 +54,6 @@ class EntityService(OrmAssociatedService):
                 .all()
             )
 
-            return [EntityLabel(id=entity.id, label=entity.label) for entity in entities]
+            return [
+                EntityLabel(id=entity.id, label=entity.label) for entity in entities
+            ]

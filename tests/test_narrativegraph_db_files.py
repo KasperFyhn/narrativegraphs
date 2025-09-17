@@ -1,7 +1,8 @@
-import pytest
 import tempfile
-import os
 from unittest.mock import Mock, patch
+
+import pytest
+
 from narrativegraph import NarrativeGraph
 from tests.mocks import MockTripletExtractor, MockMapper
 

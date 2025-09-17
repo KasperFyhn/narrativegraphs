@@ -16,7 +16,7 @@ class EntityLabelsRequest(CamelModel):
 class EntityDetails(Details):
     pass
 
-def transform_entity_orm_to_details(entity: EntityOrm) -> Details:
+def transform_entity_orm_to_details(entity: EntityOrm) -> EntityDetails:
     """Transform EntityOrm to Details DTO"""
     return EntityDetails(
         id=entity.id,

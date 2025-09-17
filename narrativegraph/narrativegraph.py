@@ -74,12 +74,20 @@ class NarrativeGraph:
         return self._db_service.entities.as_df()
 
     @property
+    def predicates_(self) -> pd.DataFrame:
+        return self._db_service.predicates.as_df()
+
+    @property
     def relations_(self) -> pd.DataFrame:
         return self._db_service.relations.as_df()
 
     @property
     def documents_(self) -> pd.DataFrame:
         return self._db_service.docs.as_df()
+
+    @property
+    def triplets_(self) -> pd.DataFrame:
+        raise NotImplementedError()
 
     def serve_visualizer(
         self,
@@ -119,7 +127,6 @@ class NarrativeGraph:
                 session.execute(text(f"VACUUM main INTO '{file_path}'"))
         else:
             raise ValueError("Database is already file-based.")
-
 
     @classmethod
     def load(cls, sqlite_db_path: str):

@@ -1,14 +1,13 @@
 import threading
-from abc import ABC
+from abc import ABC, abstractmethod
 from contextlib import contextmanager, _GeneratorContextManager
-from pathlib import Path
 from typing import Callable, Optional
 
 import pandas as pd
 from sqlalchemy import Engine
 from sqlalchemy.orm import Session
 
-from narrativegraph.db.engine import get_engine, setup_database, get_session_factory, Base
+from narrativegraph.db.engine import setup_database, get_session_factory, Base
 from narrativegraph.errors import EntryNotFoundError
 
 
@@ -54,7 +53,7 @@ class SubService:
         self.get_session_context = get_session_context
 
 
-class OrmAssociatedService(SubService):
+class OrmAssociatedService(SubService, ABC):
     _orm: type[Base] = None
 
     def as_df(self) -> pd.DataFrame:
@@ -69,17 +68,18 @@ class OrmAssociatedService(SubService):
 
     def by_id(self, id_: int):
         with self.get_session_context() as sc:
-            entry = sc.query(self._orm).filter(self._orm.id == id_).first()
+            entry = sc.query(self._orm).filter(self._orm.id == id_).first()  # noqa; the id ref works
             if entry is None:
                 raise EntryNotFoundError(
                     f"No entry with id '{id_}' in table {self._orm.__tablename__}"
                 )
             return entry
 
+    @abstractmethod
     def by_ids(self, ids: list[int], limit: Optional[int] = None):
         with self.get_session_context() as sc:
             # FIXME: Error handling in case of missing docs?
-            query = sc.query(self._orm).filter(self._orm.id.in_(ids))
+            query = sc.query(self._orm).filter(self._orm.id.in_(ids))  # noqa; the id ref works
             if limit:
                 query = query.limit(limit)
             return query.all()

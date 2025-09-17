@@ -4,12 +4,11 @@ from datetime import datetime, date
 from sqlalchemy import Engine
 from tqdm import tqdm
 
-from narrativegraph.db.engine import get_engine
-from narrativegraph.service import PopulationService
-from narrativegraph.nlp.extraction import TripletExtractor
 from narrativegraph.nlp.extraction import DependencyGraphExtractor
+from narrativegraph.nlp.extraction import TripletExtractor
 from narrativegraph.nlp.mapping import Mapper
 from narrativegraph.nlp.mapping.linguistic import StemmingMapper, SubgramStemmingMapper
+from narrativegraph.service import PopulationService
 from narrativegraph.utils.transform import normalize_categories
 
 logging.basicConfig(level=logging.INFO)
