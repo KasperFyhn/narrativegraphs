@@ -10,13 +10,16 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 
-from narrativegraph.db.engine import get_engine
+from narrativegraph.db.engine import get_engine, get_session_factory
+from narrativegraph.service import QueryService
+from narrativegraph.errors import EntryNotFoundError
 from narrativegraph.server.routes.graph import router as graph_router
 from narrativegraph.server.routes.entities import router as entities_router
 from narrativegraph.server.routes.relations import router as relations_router
 from narrativegraph.server.routes.docs import router as docs_router
 
 import os
+
 
 @asynccontextmanager
 async def lifespan(app_arg: FastAPI):
@@ -27,15 +30,22 @@ async def lifespan(app_arg: FastAPI):
         app_arg.state.db_engine = get_engine(os.environ["DB_PATH"])
         logging.info("Database engine initialized from environment variable.")
     else:
-        raise ValueError("No database engine provided. Set environment variable DB_PATH.")
+        raise ValueError(
+            "No database engine provided. Set environment variable DB_PATH."
+        )
+    app_arg.state.create_session = get_session_factory(app_arg.state.db_engine)
+    app_arg.state.query_service = QueryService(engine=app_arg.state.db_engine)
 
     # Ensure the correct path to your build directory
     build_directory = Path(os.path.dirname(__file__)) / "../../visualizer/build/"
     if not os.path.isdir(build_directory):
         raise ValueError(f"Build directory '{build_directory}' does not exist.")
-    app_arg.mount("/vis", StaticFiles(directory=build_directory, html=True), name="static")
+    app_arg.mount(
+        "/vis", StaticFiles(directory=build_directory, html=True), name="static"
+    )
 
     yield
+
 
 app = FastAPI(lifespan=lifespan)
 
@@ -47,16 +57,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.get("/", include_in_schema=False)
 async def root():
     return RedirectResponse(url="/vis")
 
-@app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    exc_str = f'{exc}'.replace('\n', ' ').replace('   ', ' ')
-    logging.error(f"{request}: {exc_str}")
-    content = {'status_code': 10422, 'message': exc_str, 'data': None}
-    return JSONResponse(content=content, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
+
+@app.exception_handler(EntryNotFoundError)
+async def entry_not_found(request, exc):
+    return JSONResponse(status_code=404, content={"detail": str(exc)})
 
 
 app.include_router(graph_router, prefix="/graph", tags=["Graph"])
@@ -66,4 +75,5 @@ app.include_router(relations_router, prefix="/relations", tags=["Relations"])
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("narrativegraph.server.main:app", host="0.0.0.0", port=8001, reload=True)
+
+    uvicorn.run("narrativegraph.server.app:app", host="0.0.0.0", port=8001, reload=True)

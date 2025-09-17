@@ -1,16 +1,19 @@
 import logging
 import os
 from datetime import datetime, date
+from typing import Literal
 
-from tqdm import tqdm
+import pandas as pd
+from sqlalchemy import text
 
-from narrativegraph.db.service import DbService
-from narrativegraph.extraction.spacy.common import SpacyTripletExtractor
-from narrativegraph.extraction.spacy.dependencygraph import DependencyGraphExtractor
-from narrativegraph.mapping.common import Mapper
-from narrativegraph.mapping.linguistic import StemmingMapper, SubgramStemmingMapper
+from narrativegraph.db.engine import (
+    get_engine,
+)
+from narrativegraph.nlp.extraction import TripletExtractor
+from narrativegraph.nlp.mapping import Mapper
+from narrativegraph.nlp.pipeline import Pipeline
 from narrativegraph.server.backgroundserver import BackgroundServer
-from narrativegraph.utils.transform import normalize_categories
+from narrativegraph.service import QueryService
 
 logging.basicConfig(level=logging.INFO)
 _logger = logging.getLogger("narrativegraph")
@@ -20,30 +23,32 @@ _logger.setLevel(logging.INFO)
 class NarrativeGraph:
     def __init__(
         self,
-        triplet_extractor: SpacyTripletExtractor = None,
+        triplet_extractor: TripletExtractor = None,
         entity_mapper: Mapper = None,
         relation_mapper: Mapper = None,
         sqlite_db_path: str = None,
-        overwrite_db: bool = False,
+        on_existing_db: Literal["stop", "overwrite", "reuse"] = "stop",
     ):
-        # Analysis components
-        self._triplet_extractor = triplet_extractor or DependencyGraphExtractor()
-        self._entity_mapper = entity_mapper or StemmingMapper()
-        self._relation_mapper = relation_mapper or SubgramStemmingMapper()
-
-        # Data storage
-        if sqlite_db_path is not None and os.path.exists(sqlite_db_path):
-            if overwrite_db:
-                # TODO: should not happen here because one cannot re-use the DB in a new object
-                _logger.info("Overwriting SQLite DB %s", sqlite_db_path)
+        # Check if DB exists and has data
+        if sqlite_db_path and os.path.exists(sqlite_db_path):
+            if on_existing_db == "overwrite":
                 os.remove(sqlite_db_path)
-            else:
-                raise FileExistsError("SQLite database already exists")
-        self._sql_db_path = sqlite_db_path or "sqlite:///:memory:"
-        self._db_service = DbService(db_filepath=sqlite_db_path)
+            elif on_existing_db == "stop":
+                temp_service = QueryService(get_engine(sqlite_db_path))
+                if len(temp_service.docs.get_docs(limit=1)) > 0:
+                    raise FileExistsError(
+                        "Database contains data. Use NarrativeGraph.load() or set "
+                        "on_existing_db to 'overwrite' or 'reuse'."
+                    )
 
-        self.predicate_mapping = None
-        self.entity_mapping = None
+        self._engine = get_engine(sqlite_db_path)
+        self._db_service = QueryService(self._engine)
+        self._pipeline = Pipeline(
+            self._engine,
+            triplet_extractor=triplet_extractor,
+            entity_mapper=entity_mapper,
+            relation_mapper=relation_mapper,
+        )
 
     def fit(
         self,
@@ -56,64 +61,41 @@ class NarrativeGraph:
             | list[dict[str, str | list[str]]]
         ) = None,
     ) -> "NarrativeGraph":
-        """
-
-        :param docs:
-        :param doc_ids:
-        :param timestamps:
-        :param categories: Categories that the documents belong to. They be provided in multiple ways.
-
-        :return:
-        """
-        _logger.info(f"Adding {len(docs)} documents to database")
-        self._db_service.add_documents(
+        self._pipeline.run(
             docs,
             doc_ids=doc_ids,
             timestamps=timestamps,
-            categories=normalize_categories(categories),
+            categories=categories,
         )
-
-        _logger.info("Extracting triplets")
-        doc_orms = self._db_service.get_docs()
-        extracted_triplets = self._triplet_extractor.batch_extract(
-            [d.text for d in doc_orms]
-        )
-        docs_and_triplets = zip(doc_orms, extracted_triplets)
-        if _logger.isEnabledFor(logging.INFO):
-            docs_and_triplets = tqdm(
-                docs_and_triplets, desc="Extracting triplets", total=len(docs)
-            )
-        for doc, doc_triplets in docs_and_triplets:
-            self._db_service.add_triplets(
-                doc.id, doc_triplets, category=doc.category, timestamp=doc.timestamp
-            )
-
-        _logger.info("Mapping entities and relations")
-        triplets = self._db_service.get_triplets()
-        entities = [
-            entity
-            for triplet in triplets
-            for entity in [triplet.subj_span_text, triplet.obj_span_text]
-        ]
-        self.entity_mapping = self._entity_mapper.create_mapping(entities)
-
-        predicates = [triplet.pred_span_text for triplet in triplets]
-        self.predicate_mapping = self._entity_mapper.create_mapping(predicates)
-
-        _logger.info("Mapping triplets")
-        self._db_service.map_triplets(self.entity_mapping, self.predicate_mapping)
-
         return self
 
+    @property
+    def entities_(self) -> pd.DataFrame:
+        return self._db_service.entities.as_df()
+
+    @property
+    def relations_(self) -> pd.DataFrame:
+        return self._db_service.relations.as_df()
+
+    @property
+    def documents_(self) -> pd.DataFrame:
+        return self._db_service.docs.as_df()
+
     def serve_visualizer(
-        self, port: int = 8001, autostart: bool = True, block: bool = True
+        self,
+        port: int = 8001,
+        block: bool = True,
+        autostart: bool = True,
     ):
         """
         Serve the visualizer application.
 
-        :param port: The port number on which the visualizer should be served. Defaults to 8001.
-        :param autostart: If True, the server is started automatically. Defaults to True.
-        :param block: If True, the function will block until the server is stopped. If False, the server will run in the background. Defaults to True.
+        :param port: The port number on which the visualizer should be served.
+        :param block: If True (default), the function will block until the server is stopped.
+        If False, the server will run in the background.
+        :param autostart: If True (default), the server is started automatically. Only relevant
+        for background servers.
+
 
         :return: None
         """
@@ -124,3 +106,23 @@ class NarrativeGraph:
             return server
         else:
             return None
+
+    def save_to_file(self, file_path: str, overwrite: bool = True):
+        """Save in-memory database to file"""
+        if os.path.exists(file_path) and not overwrite:
+            raise FileExistsError(
+                f"File exists: {file_path}. Set overwrite=True to replace."
+            )
+
+        if str(self._engine.url) == "sqlite:///:memory:":
+            with self._db_service.get_session_context() as session:
+                session.execute(text(f"VACUUM main INTO '{file_path}'"))
+        else:
+            raise ValueError("Database is already file-based.")
+
+
+    @classmethod
+    def load(cls, sqlite_db_path: str):
+        if not os.path.exists(sqlite_db_path):
+            raise FileNotFoundError(f"Database not found: {sqlite_db_path}")
+        return cls(sqlite_db_path=sqlite_db_path, on_existing_db="reuse")

@@ -1,58 +1,29 @@
 from typing import Optional
 
 from fastapi import Depends, HTTPException, APIRouter
-from sqlalchemy.orm import Session
 
-from narrativegraph.db.orms import DocumentOrm, TripletOrm, RelationOrm
-from narrativegraph.server.dtos import transform_relation_orm_to_details, Details
-from narrativegraph.server.routes.common import get_db_session
-from narrativegraph.server.routes.docs import get_docs_by_ids
-
-
-def get_relation_by_id(db: Session, relation_id: int) -> Optional[RelationOrm]:
-    """Get relation by ID"""
-    return db.query(RelationOrm).filter(RelationOrm.id == relation_id).first()
-
-
-def get_document_ids_by_relation(db: Session, relation_id: int, limit: Optional[int] = None) -> list[int]:
-    """Get document IDs that contain the relation"""
-    query = db.query(DocumentOrm.id).join(TripletOrm).filter(
-        TripletOrm.relation_id == relation_id
-    ).distinct()
-
-    if limit:
-        query = query.limit(limit)
-
-    return [doc.id for doc in query.all()]
-
+from narrativegraph.dto.relations import transform_relation_orm_to_details
+from narrativegraph.dto.common import Details
+from narrativegraph.service import QueryService
+from narrativegraph.server.routes.common import get_query_service
 
 # FastAPI app
 router = APIRouter()
 
-
 # API Endpoints
 @router.get("/{relation_id}", response_model=Details)
-async def get_relation(relation_id: int, db: Session = Depends(get_db_session)):
+async def get_relation(relation_id: int, service: QueryService = Depends(get_query_service)):
     """Get relation details by ID"""
-    relation = get_relation_by_id(db, relation_id)
-    if not relation:
-        raise HTTPException(status_code=404, detail="Relation not found.")
-
-    return transform_relation_orm_to_details(relation)
+    relation = service.relations.by_id(relation_id)
+    return relation
 
 
 @router.get("/{relation_id}/docs")
 async def get_docs_by_relation(
         relation_id: int,
         limit: Optional[int] = None,
-        db: Session = Depends(get_db_session)
+        service: QueryService = Depends(get_query_service)
 ):
-    """Get documents that contain the relation"""
-    doc_ids = get_document_ids_by_relation(db, relation_id, limit)
-
-    if len(doc_ids) == 0:
-        raise HTTPException(status_code=404, detail="No documents found.")
-
-    # Call your existing getDocs function
-    docs = get_docs_by_ids(db, doc_ids, None)
+    doc_ids = service.relations.doc_ids_by_relation(relation_id, limit=limit)
+    docs = service.docs.by_ids(doc_ids)
     return docs

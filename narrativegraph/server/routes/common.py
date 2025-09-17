@@ -3,12 +3,20 @@ from typing import Generator
 from fastapi import Request
 from sqlalchemy.orm import Session
 
-from narrativegraph.db.engine import get_session
+from narrativegraph.service import QueryService
 
 
 def get_db_session(request: Request) -> Generator[Session, None, None]:
-    db = get_session(request.app.state.db_engine)
+    session = request.app.state.create_session()
     try:
-        yield db
+        yield session
+        session.commit()
+    except Exception:
+        session.rollback()
+        raise
     finally:
-        db.close()
+        session.close()
+
+
+def get_query_service(request: Request) -> Generator[QueryService, None, None]:
+    return request.app.state.query_service

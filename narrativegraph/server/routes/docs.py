@@ -1,16 +1,19 @@
-from typing import Optional, Any
+from typing import Optional
 
 from fastapi import Depends, HTTPException, APIRouter
 from sqlalchemy.orm import Session
 
-from narrativegraph.db.orms import DocumentOrm
-from narrativegraph.server.dtos import transform_orm_to_dto, Document
-from narrativegraph.server.routes.common import get_db_session
-
+from narrativegraph.db.documents import DocumentOrm
+from narrativegraph.dto.documents import Document, transform_orm_to_dto
+from narrativegraph.service import QueryService
+from narrativegraph.server.routes.common import get_query_service
 
 router = APIRouter()
 
-def get_docs_by_ids(db: Session, doc_ids: list[int], limit: Optional[int] = None) -> list[Document]:
+
+def get_docs_by_ids(
+    db: Session, doc_ids: list[int], limit: Optional[int] = None
+) -> list[Document]:
     """Get multiple documents by IDs"""
     query = db.query(DocumentOrm).filter(DocumentOrm.id.in_(doc_ids))
     if limit:
@@ -21,19 +24,21 @@ def get_docs_by_ids(db: Session, doc_ids: list[int], limit: Optional[int] = None
 
 
 @router.get("/{doc_id}", response_model=Document)
-async def get_doc(doc_id: int, db: Session = Depends(get_db_session)):
+async def get_doc(
+    doc_id: int,
+    service: QueryService = Depends(get_query_service),
+):
     """Get a single document by ID"""
-    doc_orm = db.query(DocumentOrm).filter(DocumentOrm.id == doc_id).first()
-
-    if doc_orm is None:
+    doc = service.docs.by_id(doc_id)
+    if doc is None:
         raise HTTPException(status_code=404, detail="Could not find document!")
-    doc = transform_orm_to_dto(doc_orm)
     return doc
 
 
 @router.post("/", response_model=list[Document])
-async def get_docs(doc_request: Any, limit: Optional[int] = None,
-                   db: Session = Depends(get_db_session)):
-    """Get multiple documents by IDs"""
-    doc_ids = doc_request.doc_ids
-    return get_docs_by_ids(db, doc_ids, limit)
+async def get_docs(
+    doc_ids: list[int],
+    limit: Optional[int] = None,
+    service: QueryService = Depends(get_query_service),
+):
+    return service.docs.by_ids(doc_ids, limit=limit)

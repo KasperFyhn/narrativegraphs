@@ -1,11 +1,7 @@
-import multiprocessing
-
-import spacy
-
-from narrativegraph.extraction.common import Triplet, TripletPart
-from narrativegraph.extraction.spacy.common import SpacyTripletExtractor
-from typing import List, Tuple, Optional, Generator
-from spacy.tokens import Doc, Span, Token
+from narrativegraph.nlp.extraction.common import Triplet, TripletPart
+from narrativegraph.nlp.extraction.spacy.common import SpacyTripletExtractor
+from typing import List, Tuple, Optional
+from spacy.tokens import Span, Token
 
 
 class DependencyGraphExtractor(SpacyTripletExtractor):

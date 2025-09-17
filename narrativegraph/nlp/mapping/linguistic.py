@@ -4,7 +4,7 @@ from typing import Literal, Counter
 import nltk
 from nltk import PorterStemmer, pos_tag, word_tokenize
 
-from narrativegraph.mapping.common import Mapper
+from narrativegraph.nlp.mapping.common import Mapper
 
 
 class StemmingMapper(Mapper):

@@ -6,7 +6,7 @@ import uvicorn
 from IPython.lib.display import IFrame
 from sqlalchemy import Engine
 
-from narrativegraph.server.main import app
+from narrativegraph.server.app import app
 
 
 class BackgroundServer:
