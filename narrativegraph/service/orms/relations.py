@@ -2,7 +2,9 @@ from typing import Optional
 
 from narrativegraph.dto.relations import transform_relation_orm_to_details
 from narrativegraph.dto.common import Details
-from narrativegraph.db.orms import RelationOrm, DocumentOrm, TripletOrm
+from narrativegraph.db.documents import DocumentOrm
+from narrativegraph.db.triplets import TripletOrm
+from narrativegraph.db.relations import RelationOrm
 from narrativegraph.service.common import OrmAssociatedService
 
 

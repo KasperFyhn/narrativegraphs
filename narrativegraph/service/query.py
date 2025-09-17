@@ -3,7 +3,9 @@ from pathlib import Path
 
 from sqlalchemy import Engine, func
 
-from narrativegraph.db.orms import EntityOrm, RelationOrm, DocumentCategory, DocumentOrm
+from narrativegraph.db.documents import DocumentCategory, DocumentOrm
+from narrativegraph.db.relations import RelationOrm
+from narrativegraph.db.entities import EntityOrm
 from narrativegraph.service.common import DbService
 from narrativegraph.service.graph import GraphService
 from narrativegraph.service.orms.docs import DocService
@@ -14,8 +16,8 @@ from narrativegraph.service.orms.relations import RelationService
 
 class QueryService(DbService):
 
-    def __init__(self, db_filepath: str | Path = None, engine: Engine = None):
-        super().__init__(db_filepath=db_filepath, engine=engine)
+    def __init__(self, engine: Engine):
+        super().__init__(engine)
         self.docs = DocService(lambda: self.get_session_context())
         self.entities = EntityService(lambda: self.get_session_context())
         self.relations = RelationService(lambda: self.get_session_context())

@@ -3,11 +3,10 @@ from datetime import date
 from sqlalchemy.orm import Session, InstrumentedAttribute
 from tqdm import tqdm
 
-from narrativegraph.db.orms import (
-    DocumentOrm,
-    TripletOrm,
-    DocumentCategory, EntityOrm, RelationOrm, EntityCategory, RelationCategory,
-)
+from narrativegraph.db.documents import DocumentCategory, DocumentOrm
+from narrativegraph.db.triplets import TripletOrm
+from narrativegraph.db.relations import RelationCategory, RelationOrm
+from narrativegraph.db.entities import EntityCategory, EntityOrm
 from narrativegraph.nlp.extraction.common import Triplet
 from narrativegraph.service.common import DbService
 
@@ -50,7 +49,7 @@ class PopulationService(DbService):
         if timestamps is None:
             timestamps = [None] * len(docs)
         if categories is None:
-            categories = [None] * len(docs)
+            categories = [{}] * len(docs)
 
         assert (
             len(doc_ids) == len(timestamps) == len(categories) == len(docs)
@@ -210,7 +209,7 @@ class EntityAndRelationCache:
             )
             dates = [t.timestamp for t in triplets if t.timestamp is not None]
 
-            category_orms = EntityCategory.from_triplets(entity.id, triplets)
+            category_orms = EntityCategory.from_categorizable(entity.id, triplets)
             self._session.add_all(category_orms)
 
             entity.first_occurrence = min(dates, default=None)
@@ -232,7 +231,7 @@ class EntityAndRelationCache:
             relation.first_occurrence = min(dates, default=None)
             relation.last_occurrence = max(dates, default=None)
 
-            category_orms = RelationCategory.from_triplets(
+            category_orms = RelationCategory.from_categorizable(
                 relation.id, relation.triplets
             )
             self._session.add_all(category_orms)

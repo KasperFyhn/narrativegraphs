@@ -1,8 +1,11 @@
 from typing import Optional
 
-from narrativegraph.dto.entities import Node, EntityLabel, transform_entity_orm_to_details
+from narrativegraph.dto.entities import EntityLabel, transform_entity_orm_to_details
+from narrativegraph.dto.graph import Node
 from narrativegraph.dto.common import Details
-from narrativegraph.db.orms import EntityOrm, DocumentOrm, TripletOrm
+from narrativegraph.db.documents import DocumentOrm
+from narrativegraph.db.triplets import TripletOrm
+from narrativegraph.db.entities import EntityOrm
 from narrativegraph.service.common import OrmAssociatedService
 
 

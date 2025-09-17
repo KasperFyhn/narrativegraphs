@@ -1,11 +1,41 @@
 from fastapi_camelcase import CamelModel
-
-from narrativegraph.dto.entities import Node
-from narrativegraph.dto.relations import Edge
+from pydantic import Field
 
 
-class GraphResponse(CamelModel):
+class Node(CamelModel):
+    """Node in the graph"""
+
+    id: int
+    label: str
+    term_frequency: int
+    focus: bool = False
+
+
+class Predicate(CamelModel):
+    """Individual relation within an edge group"""
+
+    id: int
+    label: str
+    subject_label: str
+    object_label: str
+
+
+class Edge(CamelModel):
+    """Edge in the graph representing grouped relations"""
+
+    id: str
+    from_id: int = Field(serialization_alias="from", validation_alias="from_id")
+    to_id: int = Field(serialization_alias="to", validation_alias="to_id")
+    subject_label: str
+    object_label: str
+    label: str
+    total_term_frequency: int
+    group: list[Predicate]
+
+
+class Graph(CamelModel):
     """Response containing graph data"""
 
     edges: list[Edge]
     nodes: list[Node]
+

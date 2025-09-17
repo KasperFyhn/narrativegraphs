@@ -1,8 +1,9 @@
 from typing import Optional
 
 from sqlalchemy import and_, or_, between
-from narrativegraph.db.orms import EntityOrm, EntityCategory, RelationOrm, RelationCategory, DocumentOrm, \
-    DocumentCategory
+from narrativegraph.db.documents import DocumentCategory, DocumentOrm
+from narrativegraph.db.relations import RelationCategory, RelationOrm
+from narrativegraph.db.entities import EntityCategory, EntityOrm
 from narrativegraph.dto.filter import GraphFilter
 
 

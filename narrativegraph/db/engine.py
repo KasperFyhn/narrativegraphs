@@ -1,9 +1,9 @@
 from pathlib import Path
 
 from sqlalchemy import create_engine, Engine
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import sessionmaker, declarative_base, DeclarativeMeta
 
-from narrativegraph.db.orms import Base
+Base = declarative_base()
 
 
 def get_engine(filepath: str | Path = None) -> Engine:
@@ -23,7 +23,3 @@ def setup_database(engine: Engine):
 
 def get_session_factory(engine: Engine = None) -> sessionmaker:
     return sessionmaker(bind=engine)
-
-def get_session(engine: Engine = None) -> Session:
-    session = Session(bind=engine)
-    return session

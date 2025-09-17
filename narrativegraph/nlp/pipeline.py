@@ -1,8 +1,10 @@
 import logging
 from datetime import datetime, date
 
+from sqlalchemy import Engine
 from tqdm import tqdm
 
+from narrativegraph.db.engine import get_engine
 from narrativegraph.service import PopulationService
 from narrativegraph.nlp.extraction import TripletExtractor
 from narrativegraph.nlp.extraction import DependencyGraphExtractor
@@ -18,18 +20,18 @@ _logger.setLevel(logging.INFO)
 class Pipeline:
     def __init__(
         self,
+        engine: Engine,
         triplet_extractor: TripletExtractor = None,
         entity_mapper: Mapper = None,
         relation_mapper: Mapper = None,
-        sqlite_db_path: str = None,
+
     ):
         # Analysis components
         self._triplet_extractor = triplet_extractor or DependencyGraphExtractor()
         self._entity_mapper = entity_mapper or StemmingMapper()
         self._relation_mapper = relation_mapper or SubgramStemmingMapper()
 
-        self._db_service = PopulationService(sqlite_db_path)
-
+        self._db_service = PopulationService(engine)
         self.predicate_mapping = None
         self.entity_mapping = None
 
@@ -46,11 +48,14 @@ class Pipeline:
     ):
         with self._db_service.get_session_context():
             _logger.info(f"Adding {len(docs)} documents to database")
+            if categories:
+                categories = normalize_categories(categories)
+
             self._db_service.add_documents(
                 docs,
                 doc_ids=doc_ids,
                 timestamps=timestamps,
-                categories=normalize_categories(categories),
+                categories=categories,
                 
             )
 

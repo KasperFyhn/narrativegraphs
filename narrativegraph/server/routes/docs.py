@@ -3,7 +3,7 @@ from typing import Optional
 from fastapi import Depends, HTTPException, APIRouter
 from sqlalchemy.orm import Session
 
-from narrativegraph.db.orms import DocumentOrm
+from narrativegraph.db.documents import DocumentOrm
 from narrativegraph.dto.documents import Document, transform_orm_to_dto
 from narrativegraph.service import QueryService
 from narrativegraph.server.routes.common import get_query_service

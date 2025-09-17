@@ -8,19 +8,15 @@ import pandas as pd
 from sqlalchemy import Engine
 from sqlalchemy.orm import Session
 
-from narrativegraph.db.engine import get_engine, setup_database, get_session_factory
-from narrativegraph.db.orms import Base
+from narrativegraph.db.engine import get_engine, setup_database, get_session_factory, Base
 from narrativegraph.errors import EntryNotFoundError
 
 
 class DbService:
     _local = threading.local()
 
-    def __init__(self, db_filepath: str | Path = None, engine: Engine = None):
-        # Setup
-        if db_filepath is None and engine is None:
-            raise ValueError("db_filepath or engine must be provided.")
-        self._engine = engine or get_engine(db_filepath)
+    def __init__(self, engine: Engine):
+        self._engine = engine
         setup_database(self._engine)
         self._session_factory = get_session_factory(self._engine)
         self._engine_id = str(id(self._engine))

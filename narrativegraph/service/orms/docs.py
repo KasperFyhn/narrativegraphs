@@ -1,7 +1,7 @@
 from typing import Optional
 
 from narrativegraph.dto.documents import Document, transform_orm_to_dto
-from narrativegraph.db.orms import DocumentOrm
+from narrativegraph.db.documents import DocumentOrm
 from narrativegraph.service.common import OrmAssociatedService
 
 
@@ -21,6 +21,10 @@ class DocService(OrmAssociatedService):
 
     def get_docs(
         self,
+        limit: Optional[int] = None,
     ) -> list[Document]:
         with self.get_session_context() as sc:
-            return [transform_orm_to_dto(d) for d in sc.query(DocumentOrm).all()]
+            query = sc.query(DocumentOrm)
+            if limit:
+                query = query.limit(limit)
+            return [transform_orm_to_dto(d) for d in query.all()]

@@ -1,6 +1,6 @@
 from fastapi_camelcase import CamelModel
 
-from narrativegraph.db.orms import DocumentOrm
+from narrativegraph.db.documents import DocumentOrm
 from narrativegraph.dto.triplets import Triplet, SpanEntity
 
 

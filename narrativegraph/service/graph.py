@@ -4,11 +4,11 @@ from typing import List
 from sqlalchemy import or_, and_
 from sqlalchemy.orm import selectinload
 
-from narrativegraph.db.orms import EntityOrm, RelationOrm
+from narrativegraph.db.relations import RelationOrm
+from narrativegraph.db.entities import EntityOrm
 from narrativegraph.dto.filter import GraphFilter
 from narrativegraph.service.common import SubService
-from narrativegraph.dto.relations import Predicate, Edge
-from narrativegraph.dto.entities import Node
+from narrativegraph.dto.graph import Node, Edge, Predicate
 from narrativegraph.service.filter import (
     create_relation_conditions,
     create_entity_conditions,
