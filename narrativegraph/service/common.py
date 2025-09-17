@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from narrativegraph.db.engine import get_engine, setup_database, get_session_factory
 from narrativegraph.db.orms import Base
+from narrativegraph.errors import EntryNotFoundError
 
 
 class DbService:
@@ -52,9 +53,7 @@ class DbService:
 class SubService:
     def __init__(
         self,
-        get_session_context: Callable[
-            [], _GeneratorContextManager[Session]
-        ],
+        get_session_context: Callable[[], _GeneratorContextManager[Session]],
     ):
         self.get_session_context = get_session_context
 
@@ -74,10 +73,16 @@ class OrmAssociatedService(SubService):
 
     def by_id(self, id_: int):
         with self.get_session_context() as sc:
-            return sc.query(self._orm).filter(self._orm.id == id_).first()
+            entry = sc.query(self._orm).filter(self._orm.id == id_).first()
+            if entry is None:
+                raise EntryNotFoundError(
+                    f"No entry with id '{id_}' in table {self._orm.__tablename__}"
+                )
+            return entry
 
     def by_ids(self, ids: list[int], limit: Optional[int] = None):
         with self.get_session_context() as sc:
+            # FIXME: Error handling in case of missing docs?
             query = sc.query(self._orm).filter(self._orm.id.in_(ids))
             if limit:
                 query = query.limit(limit)

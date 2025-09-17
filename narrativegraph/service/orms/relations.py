@@ -1,15 +1,17 @@
 from typing import Optional
 
-from narrativegraph.db.dtos import transform_relation_orm_to_details, Details
+from narrativegraph.dto.relations import transform_relation_orm_to_details
+from narrativegraph.dto.common import Details
 from narrativegraph.db.orms import RelationOrm, DocumentOrm, TripletOrm
-from narrativegraph.db.service.common import OrmAssociatedService
+from narrativegraph.service.common import OrmAssociatedService
 
 
 class RelationService(OrmAssociatedService):
     _orm = RelationOrm
 
     def by_id(self, id_: int) -> Details:
-        return transform_relation_orm_to_details(super().by_id(id_))
+        with self.get_session_context() as sc:
+            return transform_relation_orm_to_details(super().by_id(id_))
 
     def doc_ids_by_relation(
         self, relation_id: int, limit: Optional[int] = None

@@ -1,12 +1,12 @@
-from typing import Optional, Any
+from typing import Optional
 
 from fastapi import Depends, HTTPException, APIRouter
 from sqlalchemy.orm import Session
 
 from narrativegraph.db.orms import DocumentOrm
-from narrativegraph.db.dtos import transform_orm_to_dto, Document
-from narrativegraph.db.service.query import QueryService
-from narrativegraph.server.routes.common import get_db_session, get_query_service
+from narrativegraph.dto.documents import Document, transform_orm_to_dto
+from narrativegraph.service import QueryService
+from narrativegraph.server.routes.common import get_query_service
 
 router = APIRouter()
 

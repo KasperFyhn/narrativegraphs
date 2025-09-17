@@ -3,8 +3,7 @@ from typing import Generator
 from fastapi import Request
 from sqlalchemy.orm import Session
 
-from narrativegraph.db.engine import get_session
-from narrativegraph.db.service.query import QueryService
+from narrativegraph.service import QueryService
 
 
 def get_db_session(request: Request) -> Generator[Session, None, None]:

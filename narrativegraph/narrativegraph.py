@@ -4,11 +4,10 @@ from datetime import datetime, date
 
 import pandas as pd
 
-from narrativegraph.db.dtos import Node
-from narrativegraph.db.service.query import QueryService
-from narrativegraph.extraction.spacy.common import SpacyTripletExtractor
-from narrativegraph.mapping.common import Mapper
-from narrativegraph.pipeline.pipeline import Pipeline
+from narrativegraph.nlp.mapping import Mapper
+from narrativegraph.service import QueryService
+from narrativegraph.nlp.extraction.spacy.common import SpacyTripletExtractor
+from narrativegraph.nlp.pipeline import Pipeline
 from narrativegraph.server.backgroundserver import BackgroundServer
 
 logging.basicConfig(level=logging.INFO)
@@ -72,10 +71,6 @@ class NarrativeGraph:
             categories=categories,
         )
         return self
-
-    @property
-    def entities(self) -> list[Node]:
-        return self._db_service.entities.get_entities()
 
     @property
     def entities_df(self) -> pd.DataFrame:

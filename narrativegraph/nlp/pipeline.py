@@ -3,11 +3,11 @@ from datetime import datetime, date
 
 from tqdm import tqdm
 
-from narrativegraph.db.service.population import PopulationService
-from narrativegraph.extraction.common import TripletExtractor
-from narrativegraph.extraction.spacy import DependencyGraphExtractor
-from narrativegraph.mapping.common import Mapper
-from narrativegraph.mapping.linguistic import StemmingMapper, SubgramStemmingMapper
+from narrativegraph.service import PopulationService
+from narrativegraph.nlp.extraction import TripletExtractor
+from narrativegraph.nlp.extraction import DependencyGraphExtractor
+from narrativegraph.nlp.mapping import Mapper
+from narrativegraph.nlp.mapping.linguistic import StemmingMapper, SubgramStemmingMapper
 from narrativegraph.utils.transform import normalize_categories
 
 logging.basicConfig(level=logging.INFO)

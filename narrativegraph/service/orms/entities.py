@@ -1,24 +1,17 @@
 from typing import Optional
 
-from narrativegraph.db.dtos import (
-    Node,
-    Details,
-    transform_entity_orm_to_details,
-    EntityLabel,
-)
+from narrativegraph.dto.entities import Node, EntityLabel, transform_entity_orm_to_details
+from narrativegraph.dto.common import Details
 from narrativegraph.db.orms import EntityOrm, DocumentOrm, TripletOrm
-from narrativegraph.db.service.common import OrmAssociatedService
+from narrativegraph.service.common import OrmAssociatedService
 
 
 class EntityService(OrmAssociatedService):
     _orm = EntityOrm
 
-    def by_id(self, id_: int) -> Optional[Details]:
+    def by_id(self, id_: int) -> Details:
         with self.get_session_context():
-            orm = super().by_id(id_)
-            if orm:
-                return transform_entity_orm_to_details(orm)
-            return None
+            return transform_entity_orm_to_details(super().by_id(id_))
 
     def doc_ids_by_entity(self, entity_id: int, limit: Optional[int] = None) -> list[int]:
         with self.get_session_context() as sc:
@@ -35,15 +28,6 @@ class EntityService(OrmAssociatedService):
                 query = query.limit(limit)
 
         return [doc.id for doc in query.all()]
-
-    def get_entities(
-        self,
-    ) -> list[Node]:
-        with self.get_session_context() as sc:
-            return [
-                Node(id=e.id, label=e.label, term_frequency=e.term_frequency)
-                for e in sc.query(EntityOrm).all()
-            ]
 
     def labels_by_ids(
         self, entity_ids: list[int]

@@ -5,7 +5,7 @@ import psutil
 import spacy
 from spacy.tokens import Doc, Span
 
-from narrativegraph.extraction.common import TripletExtractor, Triplet
+from narrativegraph.nlp.extraction.common import TripletExtractor, Triplet
 
 
 def _calculate_batch_size(texts: list[str], n_cpu: int = -1) -> int:

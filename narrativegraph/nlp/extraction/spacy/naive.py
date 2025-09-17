@@ -2,8 +2,8 @@ from typing import Iterable
 
 from spacy.tokens import Span
 
-from narrativegraph.extraction.common import Triplet, TripletPart
-from narrativegraph.extraction.spacy.common import SpacyTripletExtractor
+from narrativegraph.nlp.extraction.common import Triplet, TripletPart
+from narrativegraph.nlp.extraction.spacy.common import SpacyTripletExtractor
 
 
 class NaiveSpacyTripletExtractor(SpacyTripletExtractor):

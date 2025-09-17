@@ -1,25 +1,19 @@
 from typing import Optional
 
 from fastapi import Depends, HTTPException, APIRouter
-from sqlalchemy.orm import Session
 
-from narrativegraph.db.orms import EntityOrm, TripletOrm, DocumentOrm
-from narrativegraph.db.dtos import EntityLabelsRequest, EntityLabel, Details, transform_entity_orm_to_details
-from narrativegraph.db.service.query import QueryService
-from narrativegraph.server.routes.common import get_db_session, get_query_service
-from narrativegraph.server.routes.docs import get_docs_by_ids, get_docs
+from narrativegraph.dto.entities import EntityLabel, EntityLabelsRequest
+from narrativegraph.dto.common import Details
+from narrativegraph.service import QueryService
+from narrativegraph.server.routes.common import get_query_service
 
 # FastAPI app
 router = APIRouter()
 
 
-# API Endpoints
 @router.get("/{entity_id}", response_model=Details)
 async def get_entity(entity_id: int, service: QueryService = Depends(get_query_service),):
     entity = service.entities.by_id(entity_id)
-    if not entity:
-        raise HTTPException(status_code=404, detail="Node/Entity not found.")
-
     return entity
 
 
@@ -29,7 +23,6 @@ async def get_docs_by_entity(
         limit: Optional[int] = None,
         service: QueryService = Depends(get_query_service),
 ):
-    """Get documents that contain the entity"""
     doc_ids = service.entities.doc_ids_by_entity(entity_id, limit=limit)
 
     if len(doc_ids) == 0:
