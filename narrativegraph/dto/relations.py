@@ -13,6 +13,8 @@ def transform_relation_orm_to_details(relation: RelationOrm) -> RelationDetails:
         label=relation.predicate.label,
         frequency=relation.frequency,
         doc_frequency=relation.doc_frequency,
+        adjusted_tf_idf=relation.adjusted_tf_idf,
+        alt_labels=relation.alt_labels,
         first_occurrence=relation.first_occurrence,
         last_occurrence=relation.last_occurrence,
         categories=relation.category_dict,

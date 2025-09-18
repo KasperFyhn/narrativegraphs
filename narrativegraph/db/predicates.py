@@ -1,7 +1,13 @@
-from sqlalchemy import Column, Integer, ForeignKey, String, Date
+from sqlalchemy import Column, Integer, ForeignKey, String, Date, select, func
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship, Mapped
 
-from narrativegraph.db.common import CategoryMixin, CategorizableMixin, TextOccurrenceMixin
+from narrativegraph.db.common import (
+    CategoryMixin,
+    CategorizableMixin,
+    TextStatsMixin,
+    HasAltLabels,
+)
 from narrativegraph.db.engine import Base
 from narrativegraph.db.relations import RelationOrm
 from narrativegraph.db.triplets import TripletOrm
@@ -12,10 +18,27 @@ class PredicateCategory(Base, CategoryMixin):
     target_id = Column(Integer, ForeignKey("predicates.id"), nullable=False, index=True)
 
 
-class PredicateOrm(Base, TextOccurrenceMixin, CategorizableMixin):
+class PredicateOrm(Base, TextStatsMixin, CategorizableMixin, HasAltLabels):
     __tablename__ = "predicates"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    label = Column(String, nullable=False, index=True)
+    label: str = Column(String, nullable=False, index=True)
+
+    @hybrid_property
+    def alt_labels(self) -> list[str]:
+        """Python version"""
+        return list(set(triplet.pred_span_text for triplet in self.triplets))
+
+    @alt_labels.expression
+    def alt_labels(cls):  # noqa
+        """SQL version - returns comma-separated string that pandas can split"""
+        return (
+            select(func.json_group_array(TripletOrm.pred_span_text.distinct()))
+            .select_from(TripletOrm)
+            .where(
+                TripletOrm.predicate_id == cls.id
+            )
+            .scalar_subquery()
+        )
 
     triplets: Mapped[list["TripletOrm"]] = relationship(
         "TripletOrm",

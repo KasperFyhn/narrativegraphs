@@ -12,6 +12,8 @@ def transform_predicate_orm_to_details(predicate: PredicateDetails) -> Predicate
         label=predicate.label,
         frequency=predicate.frequency,
         doc_frequency=predicate.doc_frequency,
+        adjusted_tf_idf=predicate.adjusted_tf_idf,
+        alt_labels=predicate.alt_labels,
         first_occurrence=predicate.first_occurrence,
         last_occurrence=predicate.last_occurrence,
         categories=predicate.category_dict,

@@ -23,7 +23,9 @@ def transform_entity_orm_to_details(entity: EntityOrm) -> EntityDetails:
         label=entity.label,
         frequency=entity.frequency,
         doc_frequency=entity.doc_frequency,
+        adjusted_tf_idf=entity.adjusted_tf_idf,
+        alt_labels=entity.alt_labels,
         first_occurrence=entity.first_occurrence,
         last_occurrence=entity.last_occurrence,
-        categories=entity.category_dict,
+        categories=entity.category_dict
     )

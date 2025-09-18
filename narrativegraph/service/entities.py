@@ -1,9 +1,11 @@
 from typing import Optional
 
+import pandas as pd
+from sqlalchemy import select
+
 from narrativegraph.db.documents import DocumentOrm
-from narrativegraph.db.entities import EntityOrm
+from narrativegraph.db.entities import EntityOrm, EntityCategory
 from narrativegraph.db.triplets import TripletOrm
-from narrativegraph.dto.common import Details
 from narrativegraph.dto.entities import (
     EntityLabel,
     transform_entity_orm_to_details,
@@ -14,19 +16,37 @@ from narrativegraph.service.common import OrmAssociatedService
 
 class EntityService(OrmAssociatedService):
     _orm = EntityOrm
+    _category_orm = EntityCategory
 
-    def by_id(self, id_: int) -> Details:
-        with self.get_session_context():
-            return transform_entity_orm_to_details(super().by_id(id_))
+    def as_df(self) -> pd.DataFrame:
+        with self.get_session_context() as session:
+            engine = session.get_bind()
+
+            entities_df = pd.read_sql(
+                select(
+                    EntityOrm.id.label("id"),
+                    EntityOrm.label.label("label"),
+                    *EntityOrm.stats_columns(),
+                    EntityOrm.alt_labels.label("alt_labels")
+                ),
+                engine,
+            )
+
+            with_categories = self._add_category_columns(entities_df)
+
+        cleaned = with_categories.dropna(axis=1, how="all")
+
+        return cleaned
+
+    def by_id(self, id_: int) -> EntityDetails:
+        return self._get_by_id_and_transform(id_, transform_entity_orm_to_details)
 
     def by_ids(
         self, ids: list[int], limit: Optional[int] = None
     ) -> list[EntityDetails]:
-        with self.get_session_context():
-            return [
-                transform_entity_orm_to_details(doc_orm)
-                for doc_orm in super().by_ids(ids, limit=limit)
-            ]
+        return self._get_multiple_by_ids_and_transform(
+            ids, transform_entity_orm_to_details, limit=limit
+        )
 
     def doc_ids_by_entity(
         self, entity_id: int, limit: Optional[int] = None

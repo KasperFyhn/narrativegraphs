@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from collections import defaultdict
 
 from sqlalchemy import Column, Integer, String, Date, Float
@@ -5,7 +6,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped
 
 
-class TextOccurrenceMixin:
+class TextStatsMixin:
     frequency = Column(Integer, default=-1, nullable=False)
     doc_frequency = Column(Integer, default=-1, nullable=False)
     adjusted_tf_idf = Column(Float, default=-1, nullable=False)
@@ -13,7 +14,7 @@ class TextOccurrenceMixin:
     last_occurrence = Column(Date, nullable=True)
 
     @staticmethod
-    def set_from_triplets(orm: "TextOccurrenceMixin", triplets: list["TripletOrm"],
+    def set_from_triplets(orm: "TextStatsMixin", triplets: list["TripletOrm"],
                           n_docs: int = None):
 
         orm.frequency = len(triplets)
@@ -23,6 +24,13 @@ class TextOccurrenceMixin:
         dates = [t.timestamp for t in triplets if t.timestamp is not None]
         orm.first_occurrence = min(dates, default=None)
         orm.last_occurrence = max(dates, default=None)
+
+    @classmethod
+    def stats_columns(cls):
+        return [
+            cls.frequency, cls.doc_frequency, cls.adjusted_tf_idf,
+            cls.first_occurrence, cls.last_occurrence,
+        ]
 
 
 def combine_category_dicts(*dicts: dict[str, list[str]]) -> dict[str, list[str]]:
@@ -64,3 +72,10 @@ class CategorizableMixin:
         for cat in self.categories:
             result[cat.name].add(cat.value)
         return {name: list(values) for name, values in result.items()}
+
+
+class HasAltLabels:
+
+    @property
+    def alt_labels(self) -> list[str]:
+        return []

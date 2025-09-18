@@ -19,8 +19,6 @@ class DocumentOrm(Base, CategorizableMixin):
     str_id = Column(String, nullable=True, index=True)
     timestamp = Column(Date, nullable=True)
 
-    category = Column(String, nullable=True)
-
     # Relationships
     triplets: Mapped[list[TripletOrm]] = relationship(
         "TripletOrm", back_populates="document"

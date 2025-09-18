@@ -9,7 +9,8 @@ class Details(CamelModel):
     label: str
     frequency: int
     doc_frequency: int
-    # alt_labels: list[str]
+    adjusted_tf_idf: float
+    alt_labels: list[str]
     first_occurrence: Optional[date]
     last_occurrence: Optional[date]
     categories: dict[str, list[str]]

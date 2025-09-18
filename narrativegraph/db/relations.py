@@ -1,10 +1,12 @@
-from sqlalchemy import Column, Integer, ForeignKey, Date, Float
+from sqlalchemy import Column, Integer, ForeignKey, select, func
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship, Mapped
 
 from narrativegraph.db.common import (
     CategoryMixin,
     CategorizableMixin,
-    TextOccurrenceMixin,
+    TextStatsMixin,
+    HasAltLabels,
 )
 from narrativegraph.db.engine import Base
 from narrativegraph.db.entities import EntityOrm
@@ -16,13 +18,34 @@ class RelationCategory(Base, CategoryMixin):
     target_id = Column(Integer, ForeignKey("relations.id"), nullable=False, index=True)
 
 
-class RelationOrm(Base, TextOccurrenceMixin, CategorizableMixin):
+class RelationOrm(Base, TextStatsMixin, CategorizableMixin, HasAltLabels):
     __tablename__ = "relations"
     id = Column(Integer, primary_key=True, autoincrement=True)
     subject_id = Column(Integer, ForeignKey("entities.id"), nullable=False, index=True)
     predicate_id = Column(Integer, ForeignKey("predicates.id"), nullable=False, index=True)
     object_id = Column(Integer, ForeignKey("entities.id"), nullable=False, index=True)
     co_occurrence_id = Column(Integer, ForeignKey("co_occurrences.id"), nullable=False, index=True)
+
+    @property
+    def label(self) -> str:
+        return self.predicate.label
+
+    @hybrid_property
+    def alt_labels(self) -> list[str]:
+        """Python version"""
+        return list(set(triplet.pred_span_text for triplet in self.triplets))
+
+    @alt_labels.expression
+    def alt_labels(self):
+        """SQL version - returns comma-separated string that pandas can split"""
+        return (
+            select(func.json_group_array(TripletOrm.pred_span_text.distinct()))
+            .select_from(TripletOrm)
+            .where(
+                TripletOrm.relation_id == self.id
+            )
+            .scalar_subquery()
+        )
 
     # Relationships
     subject: Mapped["EntityOrm"] = relationship(
@@ -50,43 +73,4 @@ class RelationOrm(Base, TextOccurrenceMixin, CategorizableMixin):
 
     categories: Mapped[list[RelationCategory]] = relationship(
         "RelationCategory", foreign_keys=[RelationCategory.target_id]
-    )
-
-
-class CoOccurrenceCategory(Base, CategoryMixin):
-    __tablename__ = "co_occurrence_categories"
-    target_id = Column(Integer, ForeignKey("co_occurrences.id"), nullable=False, index=True)
-
-
-class CoOccurrenceOrm(Base, TextOccurrenceMixin, CategorizableMixin):
-    __tablename__ = "co_occurrences"
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    entity_one_id = Column(Integer, ForeignKey("entities.id"), nullable=False, index=True)
-    entity_two_id = Column(Integer, ForeignKey("entities.id"), nullable=False, index=True)
-
-    pmi = Column(Float, default=-1, nullable=False)
-
-    entity_one: Mapped["EntityOrm"] = relationship(
-        "EntityOrm",
-        foreign_keys="CoOccurrenceOrm.entity_one_id",
-    )
-    entity_two: Mapped["EntityOrm"] = relationship(
-        "EntityOrm",
-        foreign_keys="CoOccurrenceOrm.entity_two_id",
-    )
-
-    relations: Mapped[list[RelationOrm]] = relationship(
-        "RelationOrm",
-        back_populates="co_occurrence",
-        foreign_keys="RelationOrm.co_occurrence_id",
-    )
-    triplets: Mapped[list["TripletOrm"]] = relationship(
-        "TripletOrm",
-        back_populates="co_occurrence",
-        foreign_keys="TripletOrm.co_occurrence_id",
-    )
-
-    categories: Mapped[list[CoOccurrenceCategory]] = relationship(
-        "CoOccurrenceCategory",
-        foreign_keys="CoOccurrenceCategory.target_id",
     )

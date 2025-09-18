@@ -1,12 +1,13 @@
 import threading
 from abc import ABC, abstractmethod
 from contextlib import contextmanager, _GeneratorContextManager
-from typing import Callable, Optional
+from typing import Callable, Optional, Any
 
 import pandas as pd
-from sqlalchemy import Engine
+from sqlalchemy import Engine, select
 from sqlalchemy.orm import Session
 
+from narrativegraph.db.common import CategoryMixin
 from narrativegraph.db.engine import setup_database, get_session_factory, Base
 from narrativegraph.errors import EntryNotFoundError
 
@@ -55,31 +56,62 @@ class SubService:
 
 class OrmAssociatedService(SubService, ABC):
     _orm: type[Base] = None
+    _category_orm: type[CategoryMixin] = None
 
+    def _add_category_columns(self, df: pd.DataFrame = None):
+        with self.get_session_context() as session:
+            categories_df = pd.read_sql(
+                select(
+                    self._category_orm.target_id,
+                    self._category_orm.name,
+                    self._category_orm.value,
+                ),
+                session.get_bind(),
+            )
+            pivot = (
+                categories_df.groupby(["target_id", "name"])["value"]
+                .apply(list)
+                .unstack(fill_value=[])
+                .reset_index()
+            )
+            if df is None:
+                return pivot
+            else:
+                return df.merge(
+                    pivot, left_on="id", right_on="target_id", how="left"
+                ).drop(columns="target_id")
+
+    @abstractmethod
     def as_df(self) -> pd.DataFrame:
-        """Generic method that works with any ORM class"""
-        with self.get_session_context() as sc:
-            columns = [col.name for col in self._orm.__table__.columns.values()]
-            column_list = ", ".join(columns)
-            table_name = self._orm.__table__.name  # noqa
+        pass
 
-            query = f"SELECT {column_list} FROM {table_name}"
-            return pd.read_sql(query, sc.connection())
-
-    def by_id(self, id_: int):
+    def _get_by_id_and_transform(self, id_: int, transform: Callable[[Any], Any]):
         with self.get_session_context() as sc:
-            entry = sc.query(self._orm).filter(self._orm.id == id_).first()  # noqa; the id ref works
+            entry = (
+                sc.query(self._orm).filter(self._orm.id == id_).first()
+            )  # noqa; the id ref works
             if entry is None:
                 raise EntryNotFoundError(
                     f"No entry with id '{id_}' in table {self._orm.__tablename__}"
                 )
-            return entry
+            return transform(entry)
+
+    @abstractmethod
+    def by_id(self, id_: int):
+        pass
+
+
+    def _get_multiple_by_ids_and_transform(self, ids: list[int], transform: Callable[[Any], Any], limit: int = None):
+        with self.get_session_context() as sc:
+            # FIXME: Error handling in case of missing entries?
+            query = sc.query(self._orm).filter(
+                self._orm.id.in_(ids)
+            )  # noqa; the id ref works
+            if limit:
+                query = query.limit(limit)
+            entries = query.all()
+            return [transform(entry) for entry in entries]
 
     @abstractmethod
     def by_ids(self, ids: list[int], limit: Optional[int] = None):
-        with self.get_session_context() as sc:
-            # FIXME: Error handling in case of missing docs?
-            query = sc.query(self._orm).filter(self._orm.id.in_(ids))  # noqa; the id ref works
-            if limit:
-                query = query.limit(limit)
-            return query.all()
+        pass

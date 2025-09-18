@@ -5,16 +5,15 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session, InstrumentedAttribute
 from tqdm import tqdm
 
-from narrativegraph.db.common import TextOccurrenceMixin
+from narrativegraph.db.common import TextStatsMixin
 from narrativegraph.db.documents import DocumentCategory, DocumentOrm
 from narrativegraph.db.predicates import PredicateOrm, PredicateCategory
 from narrativegraph.db.triplets import TripletOrm
 from narrativegraph.db.relations import (
     RelationCategory,
     RelationOrm,
-    CoOccurrenceOrm,
-    CoOccurrenceCategory,
 )
+from narrativegraph.db.cooccurrences import CoOccurrenceCategory, CoOccurrenceOrm
 from narrativegraph.db.entities import EntityCategory, EntityOrm
 from narrativegraph.nlp.extraction.common import Triplet
 from narrativegraph.service.common import DbService
@@ -257,7 +256,7 @@ class Cache:
         if n_docs is None:
             n_docs = self._session.query(DocumentOrm).count()
         for entity in tqdm(self._entities.values(), desc="Updating entity info"):
-            TextOccurrenceMixin.set_from_triplets(
+            TextStatsMixin.set_from_triplets(
                 entity, entity.triplets, n_docs=n_docs
             )
             category_orms = EntityCategory.from_categorizable(
@@ -274,7 +273,7 @@ class Cache:
             self._predicates.values(),
             desc="Updating predicate info",
         ):
-            TextOccurrenceMixin.set_from_triplets(
+            TextStatsMixin.set_from_triplets(
                 predicate, predicate.triplets, n_docs=n_docs
             )
 
@@ -292,7 +291,7 @@ class Cache:
             self._relations.values(),
             desc="Updating relation info",
         ):
-            TextOccurrenceMixin.set_from_triplets(
+            TextStatsMixin.set_from_triplets(
                 relation, relation.triplets, n_docs=n_docs
             )
 
@@ -313,7 +312,7 @@ class Cache:
             self._co_occurrences.values(),
             desc="Updating co-occurrence info",
         ):
-            TextOccurrenceMixin.set_from_triplets(
+            TextStatsMixin.set_from_triplets(
                 co_occurrence, co_occurrence.triplets, n_docs=n_docs
             )
 

@@ -82,6 +82,10 @@ class NarrativeGraph:
         return self._db_service.relations.as_df()
 
     @property
+    def co_occurrences_(self) -> pd.DataFrame:
+        return self._db_service.co_occurrences.as_df()
+
+    @property
     def documents_(self) -> pd.DataFrame:
         return self._db_service.docs.as_df()
 
