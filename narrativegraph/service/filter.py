@@ -49,32 +49,32 @@ def category_filter(model_class, graph_filter: GraphFilter) -> list:
     return conditions
 
 
-def term_frequency_filter(
+def frequency_filter(
     model_class, min_freq: Optional[int], max_freq: Optional[int]
 ) -> list:
     """Create term frequency filtering conditions"""
     conditions = []
     if min_freq is not None and max_freq is not None:
-        conditions.append(between(model_class.term_frequency, min_freq, max_freq))
+        conditions.append(between(model_class.frequency, min_freq, max_freq))
     elif min_freq is not None:
-        conditions.append(model_class.term_frequency >= min_freq)
+        conditions.append(model_class.frequency >= min_freq)
     elif max_freq is not None:
-        conditions.append(model_class.term_frequency <= max_freq)
+        conditions.append(model_class.frequency <= max_freq)
     return conditions
 
 
-def entity_term_frequency_filter(graph_filter: GraphFilter) -> list:
+def entity_frequency_filter(graph_filter: GraphFilter) -> list:
     """Create entity term frequency filter"""
-    return term_frequency_filter(
+    return frequency_filter(
         EntityOrm,
         graph_filter.minimum_node_frequency,
         graph_filter.maximum_node_frequency,
     )
 
 
-def relation_term_frequency_filter(graph_filter: GraphFilter) -> list:
+def relation_frequency_filter(graph_filter: GraphFilter) -> list:
     """Create relation term frequency filter"""
-    return term_frequency_filter(
+    return frequency_filter(
         RelationOrm,
         graph_filter.minimum_edge_frequency,
         graph_filter.maximum_edge_frequency,
@@ -115,7 +115,7 @@ def create_entity_conditions(graph_filter: GraphFilter) -> list:
     return combine_filters(
         date_filter(EntityOrm, graph_filter),
         category_filter(EntityOrm, graph_filter),
-        entity_term_frequency_filter(graph_filter),
+        entity_frequency_filter(graph_filter),
         entity_blacklist_filter(graph_filter),
     )
 
@@ -123,5 +123,5 @@ def create_relation_conditions(graph_filter: GraphFilter) -> list:
     return combine_filters(
         date_filter(RelationOrm, graph_filter),
         category_filter(RelationOrm, graph_filter),
-        relation_term_frequency_filter(graph_filter),
+        relation_frequency_filter(graph_filter),
     )

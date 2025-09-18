@@ -21,7 +21,7 @@ def transform_entity_orm_to_details(entity: EntityOrm) -> EntityDetails:
     return EntityDetails(
         id=entity.id,
         label=entity.label,
-        frequency=entity.term_frequency,
+        frequency=entity.frequency,
         doc_frequency=entity.doc_frequency,
         first_occurrence=entity.first_occurrence,
         last_occurrence=entity.last_occurrence,

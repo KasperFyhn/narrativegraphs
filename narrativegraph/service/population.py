@@ -1,12 +1,20 @@
+import math
 from datetime import date
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session, InstrumentedAttribute
 from tqdm import tqdm
 
+from narrativegraph.db.common import TextOccurrenceMixin
 from narrativegraph.db.documents import DocumentCategory, DocumentOrm
 from narrativegraph.db.predicates import PredicateOrm, PredicateCategory
 from narrativegraph.db.triplets import TripletOrm
-from narrativegraph.db.relations import RelationCategory, RelationOrm
+from narrativegraph.db.relations import (
+    RelationCategory,
+    RelationOrm,
+    CoOccurrenceOrm,
+    CoOccurrenceCategory,
+)
 from narrativegraph.db.entities import EntityCategory, EntityOrm
 from narrativegraph.nlp.extraction.common import Triplet
 from narrativegraph.service.common import DbService
@@ -127,17 +135,20 @@ class PopulationService(DbService):
                     predicate_id,
                     object_id,
                 )
+                co_occurrence_id = cache.get_or_create_co_occurrence(
+                    subject_id,
+                    object_id,
+                )
 
                 triplet.subject_id = subject_id
                 triplet.predicate_id = predicate_id
                 triplet.object_id = object_id
                 triplet.relation_id = relation_id
+                triplet.co_occurrence_id = co_occurrence_id
 
             sc.commit()
 
-            cache.update_entity_info()
-            cache.update_predicate_info()
-            cache.update_relation_info()
+            cache.calculate_stats()
 
     def get_triplets(
         self,
@@ -160,6 +171,10 @@ class Cache:
         self._relations = {
             (int(r.subject_id), int(r.predicate_id), int(r.object_id)): r  # noqa
             for r in session.query(RelationOrm).all()
+        }
+        self._co_occurrences = {
+            (int(co.entity_one_id), int(co.entity_two_id)): co  # noqa
+            for co in session.query(CoOccurrenceOrm).all()
         }
 
         self._entity_mappings = entity_mappings
@@ -203,49 +218,65 @@ class Cache:
             object_id,
         )
 
+        co_occurrence_id = self.get_or_create_co_occurrence(subject_id, object_id)
+
         relation = self._relations.get(relation_key, None)
         if relation is None:
             relation = RelationOrm(
                 subject_id=subject_id,
                 predicate_id=predicate_id,
                 object_id=object_id,
+                co_occurrence_id=co_occurrence_id,
             )
             self._session.add(relation)
             self._session.flush()  # Get the ID immediately
             self._relations[relation_key] = relation
         return relation.id
 
-    def update_entity_info(self):
-        for entity in tqdm(self._entities.values(), desc="Updating entity info"):
-            as_subject = len(entity.subject_triplets)  # noqa
-            as_object = len(entity.object_triplets)  # noqa
-
-            entity.term_frequency = as_subject + as_object
-
-            triplets = entity.subject_triplets + entity.object_triplets
-            entity.doc_frequency = len(
-                set(t.doc_id for t in triplets),
+    def get_or_create_co_occurrence(
+        self,
+        entity_id_1: int,
+        entity_id_2: int,
+    ):
+        if entity_id_1 < entity_id_2:
+            key = entity_id_1, entity_id_2
+        else:
+            key = entity_id_2, entity_id_1
+        co_occurrence = self._co_occurrences.get(key, None)
+        if co_occurrence is None:
+            co_occurrence = CoOccurrenceOrm(
+                entity_one_id=entity_id_1,
+                entity_two_id=entity_id_2,
             )
-            dates = [t.timestamp for t in triplets if t.timestamp is not None]
+            self._session.add(co_occurrence)
+            self._session.flush()  # Get the ID immediately
+            self._co_occurrences[key] = co_occurrence
+        return co_occurrence.id
 
-            category_orms = EntityCategory.from_categorizable(entity.id, triplets)
+    def update_entity_info(self, n_docs: int = None):
+        if n_docs is None:
+            n_docs = self._session.query(DocumentOrm).count()
+        for entity in tqdm(self._entities.values(), desc="Updating entity info"):
+            TextOccurrenceMixin.set_from_triplets(
+                entity, entity.triplets, n_docs=n_docs
+            )
+            category_orms = EntityCategory.from_categorizable(
+                entity.id, entity.triplets
+            )
             self._session.add_all(category_orms)
-
-            entity.first_occurrence = min(dates, default=None)
-            entity.last_occurrence = max(dates, default=None)
 
         self._session.commit()
 
-    def update_predicate_info(self):
+    def update_predicate_info(self, n_docs: int = None):
+        if n_docs is None:
+            n_docs = self._session.query(DocumentOrm).count()
         for predicate in tqdm(
             self._predicates.values(),
             desc="Updating predicate info",
         ):
-            predicate.term_frequency = len(predicate.triplets)
-            predicate.doc_frequency = len(set(t.doc_id for t in predicate.triplets))
-            dates = [t.timestamp for t in predicate.triplets if t.timestamp is not None]
-            predicate.first_occurrence = min(dates, default=None)
-            predicate.last_occurrence = max(dates, default=None)
+            TextOccurrenceMixin.set_from_triplets(
+                predicate, predicate.triplets, n_docs=n_docs
+            )
 
             category_orms = PredicateCategory.from_categorizable(
                 predicate.id, predicate.triplets
@@ -254,16 +285,16 @@ class Cache:
 
         self._session.commit()
 
-    def update_relation_info(self):
+    def update_relation_info(self, n_docs: int = None):
+        if n_docs is None:
+            n_docs = self._session.query(DocumentOrm).count()
         for relation in tqdm(
             self._relations.values(),
             desc="Updating relation info",
         ):
-            relation.term_frequency = len(relation.triplets)  # noqa
-            relation.doc_frequency = len(set(t.doc_id for t in relation.triplets))
-            dates = [t.timestamp for t in relation.triplets if t.timestamp is not None]
-            relation.first_occurrence = min(dates, default=None)
-            relation.last_occurrence = max(dates, default=None)
+            TextOccurrenceMixin.set_from_triplets(
+                relation, relation.triplets, n_docs=n_docs
+            )
 
             category_orms = RelationCategory.from_categorizable(
                 relation.id, relation.triplets
@@ -271,3 +302,39 @@ class Cache:
             self._session.add_all(category_orms)
 
         self._session.commit()
+
+    def update_co_occurrence_info(self, n_docs: int = None):
+        if n_docs is None:
+            n_docs = self._session.query(DocumentOrm).count()
+        total_entity_occurrences = self._session.query(
+            func.sum(EntityOrm.frequency)
+        ).scalar()
+        for co_occurrence in tqdm(
+            self._co_occurrences.values(),
+            desc="Updating co-occurrence info",
+        ):
+            TextOccurrenceMixin.set_from_triplets(
+                co_occurrence, co_occurrence.triplets, n_docs=n_docs
+            )
+
+            co_occurrence.pmi = (
+                math.log(co_occurrence.frequency)
+                + math.log(total_entity_occurrences)
+                - math.log(co_occurrence.entity_one.frequency)
+                - math.log(co_occurrence.entity_two.frequency)
+            )
+
+            category_orms = CoOccurrenceCategory.from_categorizable(
+                co_occurrence.id, co_occurrence.triplets
+            )
+            self._session.add_all(category_orms)
+
+        self._session.commit()
+
+    def calculate_stats(self):
+        n_docs = self._session.query(DocumentOrm).count()
+
+        self.update_entity_info(n_docs=n_docs)
+        self.update_predicate_info()
+        self.update_relation_info()
+        self.update_co_occurrence_info()

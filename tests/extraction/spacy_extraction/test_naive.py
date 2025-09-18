@@ -153,8 +153,32 @@ class TestNaiveSpacyTripletExtractor(ExtractorTest):
         extractor = NaiveSpacyTripletExtractor(
             named_entities=False, noun_chunks=(3, 5)  # Only noun chunks with 3-4 tokens
         )
-        text = "The very large red car hit the small bike."
+        text = "The large red car hit the green bike in the street."
         triplets = extractor.extract(text)
 
-        expected_triplets = []
+        expected_triplets = [
+            Triplet(
+                subj=TripletPart(
+                    text="The very large red car",
+                    start_char=0,
+                    end_char=22,
+                ),
+                pred=TripletPart(text="hit", start_char=23, end_char=26),
+                obj=TripletPart(
+                    text="the small green bike", start_char=27, end_char=47
+                ),
+            )
+        ]
         self.assertTripletsEqual(expected_triplets, triplets)
+
+    def test_stray_predicate(self):
+        extractor = NaiveSpacyTripletExtractor(
+        named_entities=(2, None),
+        noun_chunks=(3, None),
+    )
+
+        text = ("I Asked Trump A Policy Question. Then He Called Me ‘Beautiful.’\n\n"
+
+"Donald Trump, the Republican front-runner for the presidential nomination,met with The Washington Post’s editorial board")
+        triplets = extractor.extract(text)
+        print(triplets)

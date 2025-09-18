@@ -19,7 +19,7 @@ export interface Edge extends Identifiable {
   to: number;
   subjectLabel: string;
   objectLabel: string;
-  totalTermFrequency?: number;
+  totalfrequency?: number;
   group: LabeledEdge[];
 }
 

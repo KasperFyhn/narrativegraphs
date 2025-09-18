@@ -35,16 +35,16 @@ class QueryService(DbService):
         with self.get_session_context() as db:
             return DataBounds(
                 minimum_possible_node_frequency=db.query(
-                    func.min(EntityOrm.term_frequency)
+                    func.min(EntityOrm.frequency)
                 ).scalar(),
                 maximum_possible_node_frequency=db.query(
-                    func.max(EntityOrm.term_frequency)
+                    func.max(EntityOrm.frequency)
                 ).scalar(),
                 minimum_possible_edge_frequency=db.query(
-                    func.min(RelationOrm.term_frequency)
+                    func.min(RelationOrm.frequency)
                 ).scalar(),
                 maximum_possible_edge_frequency=db.query(
-                    func.max(RelationOrm.term_frequency)
+                    func.max(RelationOrm.frequency)
                 ).scalar(),
                 categories=self._compile_categories(),
                 earliest_date=db.query(func.min(DocumentOrm.timestamp)).scalar()

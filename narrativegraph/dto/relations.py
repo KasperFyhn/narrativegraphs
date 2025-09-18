@@ -11,7 +11,7 @@ def transform_relation_orm_to_details(relation: RelationOrm) -> RelationDetails:
     return RelationDetails(
         id=relation.id,
         label=relation.predicate.label,
-        frequency=relation.term_frequency,
+        frequency=relation.frequency,
         doc_frequency=relation.doc_frequency,
         first_occurrence=relation.first_occurrence,
         last_occurrence=relation.last_occurrence,

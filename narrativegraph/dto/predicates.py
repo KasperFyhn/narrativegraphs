@@ -1,4 +1,3 @@
-from narrativegraph.db.relations import RelationOrm
 from narrativegraph.dto.common import Details
 
 
@@ -11,7 +10,7 @@ def transform_predicate_orm_to_details(predicate: PredicateDetails) -> Predicate
     return PredicateDetails(
         id=predicate.id,
         label=predicate.label,
-        frequency=predicate.term_frequency,
+        frequency=predicate.frequency,
         doc_frequency=predicate.doc_frequency,
         first_occurrence=predicate.first_occurrence,
         last_occurrence=predicate.last_occurrence,

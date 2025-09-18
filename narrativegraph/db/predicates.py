@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, ForeignKey, String, Date
 from sqlalchemy.orm import relationship, Mapped
 
-from narrativegraph.db.common import CategoryMixin, CategorizableMixin
+from narrativegraph.db.common import CategoryMixin, CategorizableMixin, TextOccurrenceMixin
 from narrativegraph.db.engine import Base
 from narrativegraph.db.relations import RelationOrm
 from narrativegraph.db.triplets import TripletOrm
@@ -12,14 +12,10 @@ class PredicateCategory(Base, CategoryMixin):
     target_id = Column(Integer, ForeignKey("predicates.id"), nullable=False, index=True)
 
 
-class PredicateOrm(Base, CategorizableMixin):
+class PredicateOrm(Base, TextOccurrenceMixin, CategorizableMixin):
     __tablename__ = "predicates"
     id = Column(Integer, primary_key=True, autoincrement=True)
     label = Column(String, nullable=False, index=True)
-    term_frequency = Column(Integer, default=-1, nullable=False)
-    doc_frequency = Column(Integer, default=-1, nullable=False)
-    first_occurrence = Column(Date, nullable=True)
-    last_occurrence = Column(Date, nullable=True)
 
     triplets: Mapped[list["TripletOrm"]] = relationship(
         "TripletOrm",

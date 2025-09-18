@@ -7,7 +7,7 @@ class Node(CamelModel):
 
     id: int
     label: str
-    term_frequency: int
+    frequency: int
     focus: bool = False
 
 
@@ -29,7 +29,7 @@ class Edge(CamelModel):
     to_id: int = Field(serialization_alias="to", validation_alias="to_id")
     subject_label: str
     object_label: str
-    total_term_frequency: int
+    total_frequency: int
     group: list[Relation]
 
 

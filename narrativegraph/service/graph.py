@@ -31,7 +31,7 @@ class GraphService(SubService):
         edges = []
         for group in grouped_edges.values():
             # Sort by term frequency descending
-            group.sort(key=lambda x: x.term_frequency, reverse=True)
+            group.sort(key=lambda x: x.frequency, reverse=True)
             representative = group[0]
 
             # Create label from top 3 relations
@@ -40,7 +40,7 @@ class GraphService(SubService):
                 labels.append("...")
             label = ", ".join(labels)
 
-            total_frequency = sum(e.term_frequency for e in group)
+            total_frequency = sum(e.frequency for e in group)
 
             edge = Edge(
                 id=f"{representative.subject.id}->{representative.object.id}",
@@ -49,7 +49,7 @@ class GraphService(SubService):
                 subject_label=representative.subject.label,
                 object_label=representative.object.label,
                 label=label,
-                total_term_frequency=total_frequency,
+                total_frequency=total_frequency,
                 group=[
                     Relation(
                         id=r.id,
@@ -79,7 +79,7 @@ class GraphService(SubService):
             focus_query = (
                 db.query(EntityOrm)
                 .filter(or_(*focus_conditions), *entity_conditions)
-                .order_by(EntityOrm.term_frequency.desc())
+                .order_by(EntityOrm.frequency.desc())
                 .limit(graph_filter.limit_nodes)
             )
 
@@ -129,7 +129,7 @@ class GraphService(SubService):
             extra_query = (
                 db.query(EntityOrm)
                 .filter(and_(*extra_conditions))
-                .order_by(EntityOrm.term_frequency.desc())
+                .order_by(EntityOrm.frequency.desc())
                 .limit(graph_filter.limit_nodes - len(focus_entity_ids))
             )
 
@@ -175,7 +175,7 @@ class GraphService(SubService):
                 query = (
                     db.query(EntityOrm)
                     .filter(and_(*entity_conditions))
-                    .order_by(EntityOrm.term_frequency.desc())
+                    .order_by(EntityOrm.frequency.desc())
                     .limit(graph_filter.limit_nodes)
                 )
                 top_entities = query.all()
@@ -209,7 +209,7 @@ class GraphService(SubService):
                 connects_focus = (
                     edge.from_id in focus_entity_ids and edge.to_id in focus_entity_ids
                 )
-                return not connects_focus, -edge.total_term_frequency
+                return not connects_focus, -edge.total_frequency
 
             edges.sort(key=edge_sort_key)
             edges = edges[: graph_filter.limit_edges]
@@ -219,7 +219,7 @@ class GraphService(SubService):
                 Node(
                     id=item["entity"].id,
                     label=item["entity"].label,
-                    term_frequency=item["entity"].term_frequency,
+                    frequency=item["entity"].frequency,
                     focus=item["focus"],
                 )
                 for item in entities

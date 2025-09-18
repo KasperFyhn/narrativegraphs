@@ -42,10 +42,14 @@ def _calculate_batch_size(texts: list[str], n_cpu: int = -1) -> int:
 
 class SpacyTripletExtractor(TripletExtractor):
 
-    def __init__(self, model_name: str = None):
+    def __init__(self, model_name: str = None, split_on_double_line_break: bool = True):
         if model_name is None:
             model_name = "en_core_web_sm"
         self.nlp = spacy.load(model_name)
+        if split_on_double_line_break:
+            self.nlp.add_pipe(
+                "sentencizer", config={"punct_chars": ["\n\n"]}, before="parser"
+            )
         pass
 
     @abstractmethod

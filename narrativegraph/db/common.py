@@ -1,8 +1,28 @@
 from collections import defaultdict
 
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, Date, Float
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped
+
+
+class TextOccurrenceMixin:
+    frequency = Column(Integer, default=-1, nullable=False)
+    doc_frequency = Column(Integer, default=-1, nullable=False)
+    adjusted_tf_idf = Column(Float, default=-1, nullable=False)
+    first_occurrence = Column(Date, nullable=True)
+    last_occurrence = Column(Date, nullable=True)
+
+    @staticmethod
+    def set_from_triplets(orm: "TextOccurrenceMixin", triplets: list["TripletOrm"],
+                          n_docs: int = None):
+
+        orm.frequency = len(triplets)
+        orm.doc_frequency = len(set(t.doc_id for t in triplets))
+        if n_docs:
+            orm.adjusted_tf_idf = (orm.frequency - 1) * (n_docs / (orm.doc_frequency + 1))
+        dates = [t.timestamp for t in triplets if t.timestamp is not None]
+        orm.first_occurrence = min(dates, default=None)
+        orm.last_occurrence = max(dates, default=None)
 
 
 def combine_category_dicts(*dicts: dict[str, list[str]]) -> dict[str, list[str]]:

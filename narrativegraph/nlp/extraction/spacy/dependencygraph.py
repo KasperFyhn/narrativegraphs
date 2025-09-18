@@ -15,7 +15,7 @@ class DependencyGraphExtractor(SpacyTripletExtractor):
             passive_sentences: bool = True,
             copula_attribute: bool = True,
             xcomp_as_objects: bool = True,
-
+            split_on_double_line_break: bool = True
     ):
         super().__init__(model_name)
 

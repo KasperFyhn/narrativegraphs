@@ -14,6 +14,7 @@ class NaiveSpacyTripletExtractor(SpacyTripletExtractor):
         named_entities: bool | tuple[int, int | None] = (1, None),
         noun_chunks: bool | tuple[int, int | None] = (2, None),
         max_tokens_between: int = 4,
+            split_on_double_line_break: bool = True
     ):
         super().__init__(model_name)
         if not named_entities and not noun_chunks:
@@ -76,7 +77,7 @@ class NaiveSpacyTripletExtractor(SpacyTripletExtractor):
             if obj.start - subj.end > self.max_tokens_between:
                 continue
 
-            pred = sent[subj.end : obj.start]
+            pred = sent.doc[subj.end : obj.start]
 
             # skip if no predicate
             if len(pred) == 0:
