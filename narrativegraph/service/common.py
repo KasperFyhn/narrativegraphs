@@ -101,17 +101,19 @@ class OrmAssociatedService(SubService, ABC):
         pass
 
 
-    def _get_multiple_by_ids_and_transform(self, ids: list[int], transform: Callable[[Any], Any], limit: int = None):
+    def _get_multiple_by_ids_and_transform(self, transform: Callable[[Any], Any], ids: list[int] = None, limit: int = None):
         with self.get_session_context() as sc:
-            # FIXME: Error handling in case of missing entries?
-            query = sc.query(self._orm).filter(
-                self._orm.id.in_(ids)
-            )  # noqa; the id ref works
+            query = sc.query(self._orm)
+            if ids is not None:
+                query = query.filter(
+                    self._orm.id.in_(ids)  # noqa; the id ref works
+                )
+                # FIXME: what to do in case of missing entries?
             if limit:
                 query = query.limit(limit)
             entries = query.all()
             return [transform(entry) for entry in entries]
 
     @abstractmethod
-    def by_ids(self, ids: list[int], limit: Optional[int] = None):
+    def get_multiple(self, ids: list[int] = None, limit: Optional[int] = None):
         pass

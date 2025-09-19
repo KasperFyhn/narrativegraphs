@@ -24,5 +24,5 @@ async def get_docs_by_predicate(
         service: QueryService = Depends(get_query_service)
 ):
     doc_ids = service.predicates.doc_ids_by_predicate(predicate_id, limit=limit)
-    docs = service.docs.by_ids(doc_ids)
+    docs = service.documents.get_multiple(doc_ids)
     return docs

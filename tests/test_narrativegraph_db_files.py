@@ -35,7 +35,7 @@ class TestNarrativeGraphFileHandling:
         """Test initialization with existing database containing data raises error"""
         with tempfile.NamedTemporaryFile() as tmp:
             mock_service = Mock()
-            mock_service.docs.get_docs.return_value = [Mock()]
+            mock_service.documents.get_docs.return_value = [Mock()]
             mock_query_service.return_value = mock_service
 
             with pytest.raises(FileExistsError, match="Database contains data"):

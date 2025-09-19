@@ -16,7 +16,7 @@ class DocService(OrmAssociatedService):
         with self.get_session_context() as session:
             engine = session.get_bind()
 
-            entities_df = pd.read_sql(
+            df = pd.read_sql(
                 select(
                     DocumentOrm.id.label("id"),
                     DocumentOrm.str_id.label("str_id"),
@@ -26,7 +26,7 @@ class DocService(OrmAssociatedService):
                 engine,
             )
 
-            with_categories = self._add_category_columns(entities_df)
+            with_categories = self._add_category_columns(df)
         cleaned = with_categories.dropna(axis=1, how="all")
 
         return cleaned
@@ -34,9 +34,11 @@ class DocService(OrmAssociatedService):
     def by_id(self, id_: int) -> Document:
         return self._get_by_id_and_transform(id_, Document.from_orm)
 
-    def by_ids(self, ids: list[int], limit: Optional[int] = None) -> list[Document]:
+    def get_multiple(
+        self, ids: list[int] = None, limit: Optional[int] = None
+    ) -> list[Document]:
         return self._get_multiple_by_ids_and_transform(
-            ids, Document.from_orm, limit=limit
+            Document.from_orm, ids=ids, limit=limit
         )
 
     def get_docs(

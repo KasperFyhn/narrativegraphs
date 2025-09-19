@@ -27,7 +27,7 @@ async def get_docs_by_entity(
     if len(doc_ids) == 0:
         raise HTTPException(status_code=404, detail="No documents found.")
 
-    docs = service.docs.by_ids(doc_ids, limit=limit)
+    docs = service.documents.get_multiple(doc_ids, limit=limit)
     return docs
 
 

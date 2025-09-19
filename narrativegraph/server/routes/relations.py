@@ -24,5 +24,5 @@ async def get_docs_by_relation(
         service: QueryService = Depends(get_query_service)
 ):
     doc_ids = service.relations.doc_ids_by_relation(relation_id, limit=limit)
-    docs = service.docs.by_ids(doc_ids)
+    docs = service.documents.get_multiple(doc_ids)
     return docs

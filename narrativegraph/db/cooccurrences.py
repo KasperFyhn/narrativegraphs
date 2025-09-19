@@ -9,7 +9,7 @@ from narrativegraph.db.triplets import TripletOrm
 
 
 class CoOccurrenceCategory(Base, CategoryMixin):
-    __tablename__ = "co_occurrence_categories"
+    __tablename__ = "co_occurrences_categories"
     target_id = Column(Integer, ForeignKey("co_occurrences.id"), nullable=False, index=True)
 
 

@@ -27,7 +27,7 @@ class RelationService(OrmAssociatedService):
             subject_entity = aliased(EntityOrm)
             object_entity = aliased(EntityOrm)
 
-            entities_df = pd.read_sql(
+            df = pd.read_sql(
                 select(
                     RelationOrm.id.label("id"),
                     subject_entity.label.label("subject"),
@@ -51,7 +51,7 @@ class RelationService(OrmAssociatedService):
                 engine,
             )
 
-            with_categories = self._add_category_columns(entities_df)
+            with_categories = self._add_category_columns(df)
 
         cleaned = with_categories.dropna(axis=1, how="all")
 
@@ -60,10 +60,12 @@ class RelationService(OrmAssociatedService):
     def by_id(self, id_: int) -> RelationDetails:
         return self._get_by_id_and_transform(id_, RelationDetails.from_orm)
 
-    def by_ids(
-        self, ids: list[int], limit: Optional[int] = None
+    def get_multiple(
+        self, ids: list[int] = None, limit: Optional[int] = None
     ) -> list[RelationDetails]:
-        return self._get_multiple_by_ids_and_transform(ids, RelationDetails.from_orm)
+        return self._get_multiple_by_ids_and_transform(
+            RelationDetails.from_orm, ids=ids, limit=limit
+        )
 
     def doc_ids_by_relation(
         self, relation_id: int, limit: Optional[int] = None

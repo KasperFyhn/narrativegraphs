@@ -186,7 +186,9 @@ export const DocInfo: React.FC<DocInfoProps> = ({
             const [name, values] = entry;
             return (
               <i key={name} style={{ color: 'gray' }}>
-                {name}: {values.join(', ')}
+                {name.charAt(0).toUpperCase() + name.slice(1)}:{' '}
+                {values.join(', ')}
+                <br />
               </i>
             );
           })}

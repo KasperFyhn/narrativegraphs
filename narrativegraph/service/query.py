@@ -13,17 +13,19 @@ from narrativegraph.service.documents import DocService
 from narrativegraph.service.entities import EntityService
 from narrativegraph.service.predicates import PredicateService
 from narrativegraph.service.relations import RelationService
+from narrativegraph.service.triplets import TripletService
 
 
 class QueryService(DbService):
 
     def __init__(self, engine: Engine):
         super().__init__(engine)
-        self.docs = DocService(lambda: self.get_session_context())
+        self.documents = DocService(lambda: self.get_session_context())
         self.entities = EntityService(lambda: self.get_session_context())
         self.relations = RelationService(lambda: self.get_session_context())
         self.predicates = PredicateService(lambda: self.get_session_context())
         self.co_occurrences = CoOccurrencesService(lambda: self.get_session_context())
+        self.triplets = TripletService(lambda: self.get_session_context())
         self.graph = GraphService(lambda: self.get_session_context())
 
     def _compile_categories(self) -> dict[str, list[str]]:

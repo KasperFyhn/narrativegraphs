@@ -20,7 +20,7 @@ class PredicateService(OrmAssociatedService):
         with self.get_session_context() as session:
             engine = session.get_bind()
 
-            entities_df = pd.read_sql(
+            df = pd.read_sql(
                 select(
                     PredicateOrm.id.label("id"),
                     PredicateOrm.label.label("label"),
@@ -30,7 +30,7 @@ class PredicateService(OrmAssociatedService):
                 engine,
             )
 
-            with_categories = self._add_category_columns(entities_df)
+            with_categories = self._add_category_columns(df)
         cleaned = with_categories.dropna(axis=1, how="all")
 
         return cleaned
@@ -38,11 +38,11 @@ class PredicateService(OrmAssociatedService):
     def by_id(self, id_: int) -> PredicateDetails:
         return self._get_by_id_and_transform(id_, PredicateDetails.from_orm)
 
-    def by_ids(
-        self, ids: list[int], limit: Optional[int] = None
+    def get_multiple(
+        self, ids: list[int] = None, limit: Optional[int] = None
     ) -> list[PredicateDetails]:
         return self._get_multiple_by_ids_and_transform(
-            ids, PredicateDetails.from_orm, limit=limit
+            PredicateDetails.from_orm, ids=ids, limit=limit
         )
 
     def doc_ids_by_predicate(
