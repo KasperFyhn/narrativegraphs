@@ -1,60 +1,37 @@
 import unittest
+from typing import Literal
 
-from narrativegraph.nlp.extraction.common import Triplet
+from narrativegraph.nlp.extraction.common import Triplet, TripletPart
 
 
 class ExtractorTest(unittest.TestCase):
 
-    def assertTripletEqual(self, expected: Triplet, actual: Triplet):
+
+    def assert_triplet_equal(self, expected: Triplet, actual: Triplet):
         """
         Custom assertion to compare Triplet NamedTuples.
         Compares text, start_char, and end_char for each part.
+        Fails only at the end if there is at least one error.
         """
-        self.assertEqual(
-            expected.subj.text, actual.subj.text, f"Subject text mismatch. {actual}"
-        )
-        self.assertEqual(
-            expected.subj.start_char,
-            actual.subj.start_char,
-            f"Subject start_char mismatch. {actual}",
-        )
-        self.assertEqual(
-            expected.subj.end_char,
-            actual.subj.end_char,
-            f"Subject end_char mismatch. {actual}",
-        )
+        errors = []
 
-        self.assertEqual(
-            expected.pred.text, actual.pred.text, f"Predicate text mismatch. {actual}"
-        )
-        self.assertEqual(
-            expected.pred.start_char,
-            actual.pred.start_char,
-            f"Predicate start_char mismatch. {actual}",
-        )
-        self.assertEqual(
-            expected.pred.end_char,
-            actual.pred.end_char,
-            f"Predicate end_char mismatch. {actual}",
-        )
+        for part_name in ["subj", "pred", "obj"]:
+            expected_part = getattr(expected, part_name)
+            actual_part = getattr(actual, part_name)
+            for field_name in ["text", "start_char", "end_char"]:
+                expected_field = getattr(expected_part, field_name)
+                actual_field = getattr(actual_part, field_name)
+                if expected_field != actual_field:
+                    errors.append(
+                        f"{part_name} {field_name} mismatch. "
+                        f"Expected: {expected_field}, Got: {actual_field}"
+                    )
 
-        self.assertEqual(
-            expected.obj.text, actual.obj.text, f"Object text mismatch. {actual}"
-        )
-        self.assertEqual(
-            expected.obj.start_char,
-            actual.obj.start_char,
-            f"Object start_char mismatch. {actual}",
-        )
-        self.assertEqual(
-            expected.obj.end_char,
-            actual.obj.end_char,
-            f"Object end_char mismatch. {actual}",
-        )
+        self.assertTrue(len(errors) == 0, "\n".join(errors))
 
-    def assertTripletsEqual(self, expected: list[Triplet], actual: list[Triplet]):
+    def assert_triplets_equal(self, expected: list[Triplet], actual: list[Triplet]):
         assert len(expected) == len(
             actual
         ), f"Expected {len(expected)}, got {len(actual)}: {actual}"
         for e, a in zip(expected, actual):
-            self.assertTripletEqual(e, a)
+            self.assert_triplet_equal(e, a)

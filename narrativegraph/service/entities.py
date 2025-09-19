@@ -8,7 +8,6 @@ from narrativegraph.db.entities import EntityOrm, EntityCategory
 from narrativegraph.db.triplets import TripletOrm
 from narrativegraph.dto.entities import (
     EntityLabel,
-    transform_entity_orm_to_details,
     EntityDetails,
 )
 from narrativegraph.service.common import OrmAssociatedService
@@ -39,13 +38,13 @@ class EntityService(OrmAssociatedService):
         return cleaned
 
     def by_id(self, id_: int) -> EntityDetails:
-        return self._get_by_id_and_transform(id_, transform_entity_orm_to_details)
+        return self._get_by_id_and_transform(id_, EntityDetails.from_orm)
 
     def by_ids(
         self, ids: list[int], limit: Optional[int] = None
     ) -> list[EntityDetails]:
         return self._get_multiple_by_ids_and_transform(
-            ids, transform_entity_orm_to_details, limit=limit
+            ids, EntityDetails.from_orm, limit=limit
         )
 
     def doc_ids_by_entity(

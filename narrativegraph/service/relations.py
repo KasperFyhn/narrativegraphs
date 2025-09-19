@@ -1,19 +1,17 @@
 from typing import Optional
 
 import pandas as pd
-from sqlalchemy import select, ClauseElement
+from sqlalchemy import select
 from sqlalchemy.orm import aliased
 
+from narrativegraph.db.documents import DocumentOrm
 from narrativegraph.db.entities import EntityOrm
 from narrativegraph.db.predicates import PredicateOrm
+from narrativegraph.db.relations import RelationOrm, RelationCategory
+from narrativegraph.db.triplets import TripletOrm
 from narrativegraph.dto.relations import (
-    transform_relation_orm_to_details,
     RelationDetails,
 )
-from narrativegraph.dto.common import Details
-from narrativegraph.db.documents import DocumentOrm
-from narrativegraph.db.triplets import TripletOrm
-from narrativegraph.db.relations import RelationOrm, RelationCategory
 from narrativegraph.service.common import OrmAssociatedService
 
 
@@ -60,12 +58,12 @@ class RelationService(OrmAssociatedService):
         return cleaned
 
     def by_id(self, id_: int) -> RelationDetails:
-        return self._get_by_id_and_transform(id_, transform_relation_orm_to_details)
+        return self._get_by_id_and_transform(id_, RelationDetails.from_orm)
 
     def by_ids(
         self, ids: list[int], limit: Optional[int] = None
     ) -> list[RelationDetails]:
-        return self._get_multiple_by_ids_and_transform(ids, transform_relation_orm_to_details)
+        return self._get_multiple_by_ids_and_transform(ids, RelationDetails.from_orm)
 
     def doc_ids_by_relation(
         self, relation_id: int, limit: Optional[int] = None

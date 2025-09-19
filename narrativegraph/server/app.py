@@ -16,7 +16,7 @@ from narrativegraph.errors import EntryNotFoundError
 from narrativegraph.server.routes.graph import router as graph_router
 from narrativegraph.server.routes.entities import router as entities_router
 from narrativegraph.server.routes.relations import router as relations_router
-from narrativegraph.server.routes.docs import router as docs_router
+from narrativegraph.server.routes.documents import router as docs_router
 
 import os
 

@@ -1,21 +1,18 @@
 from narrativegraph.db.relations import RelationOrm
-from narrativegraph.dto.common import Details
+from narrativegraph.dto.common import (
+    LabeledTextOccurrence,
+    TextOccurrenceStats,
+)
 
 
-class RelationDetails(Details):
-    pass
+class RelationDetails(LabeledTextOccurrence):
 
-
-def transform_relation_orm_to_details(relation: RelationOrm) -> RelationDetails:
-    """Transform RelationOrm to Details DTO"""
-    return RelationDetails(
-        id=relation.id,
-        label=relation.predicate.label,
-        frequency=relation.frequency,
-        doc_frequency=relation.doc_frequency,
-        adjusted_tf_idf=relation.adjusted_tf_idf,
-        alt_labels=relation.alt_labels,
-        first_occurrence=relation.first_occurrence,
-        last_occurrence=relation.last_occurrence,
-        categories=relation.category_dict,
-    )
+    @classmethod
+    def from_orm(cls, relation_orm: RelationOrm) -> "RelationDetails":
+        return cls(
+            id=relation_orm.id,
+            label=relation_orm.label,
+            stats=TextOccurrenceStats.from_mixin(relation_orm),
+            alt_labels=relation_orm.alt_labels,
+            categories=relation_orm.category_dict,
+        )

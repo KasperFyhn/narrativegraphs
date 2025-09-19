@@ -26,7 +26,7 @@ class TestNaiveSpacyTripletExtractor(ExtractorTest):
                 obj=TripletPart(text="Paris", start_char=13, end_char=18),
             )
         ]
-        self.assertTripletsEqual(expected_triplets, triplets)
+        self.assert_triplets_equal(expected_triplets, triplets)
 
     def test_noun_chunks_only(self):
         """Test extraction using only noun chunks."""
@@ -41,7 +41,7 @@ class TestNaiveSpacyTripletExtractor(ExtractorTest):
                 obj=TripletPart(text="the small cat", start_char=19, end_char=32),
             )
         ]
-        self.assertTripletsEqual(expected_triplets, triplets)
+        self.assert_triplets_equal(expected_triplets, triplets)
 
     def test_mixed_entities_and_chunks(self):
         """Test extraction with both named entities and noun chunks."""
@@ -55,7 +55,7 @@ class TestNaiveSpacyTripletExtractor(ExtractorTest):
                 obj=TripletPart(text="a new iPhone", start_char=20, end_char=32),
             )
         ]
-        self.assertTripletsEqual(expected_triplets, triplets)
+        self.assert_triplets_equal(expected_triplets, triplets)
 
     def test_max_tokens_between_filtering(self):
         """Test that triplets are filtered based on max_tokens_between."""
@@ -84,7 +84,7 @@ class TestNaiveSpacyTripletExtractor(ExtractorTest):
                 obj=TripletPart(text="New York City", start_char=23, end_char=36),
             )
         ]
-        self.assertTripletsEqual(expected_triplets, triplets)
+        self.assert_triplets_equal(expected_triplets, triplets)
 
     def test_multiple_triplets_same_sentence(self):
         """Test extraction of multiple triplets from the same sentence."""
@@ -110,9 +110,14 @@ class TestNaiveSpacyTripletExtractor(ExtractorTest):
                 subj=TripletPart(text="John", start_char=0, end_char=4),
                 pred=TripletPart(text="visited", start_char=5, end_char=12),
                 obj=TripletPart(text="Paris", start_char=13, end_char=18),
-            )
+            ),
+            Triplet(
+                subj=TripletPart(text="Mary", start_char=20, end_char=24),
+                pred=TripletPart(text="went to", start_char=25, end_char=32),
+                obj=TripletPart(text="London", start_char=33, end_char=39),
+            ),
         ]
-        self.assertTripletsEqual(expected_triplets, triplets)
+        self.assert_triplets_equal(expected_triplets, triplets)
 
     def test_no_valid_entities(self):
         """Test with text that has no valid entities."""
@@ -159,26 +164,25 @@ class TestNaiveSpacyTripletExtractor(ExtractorTest):
         expected_triplets = [
             Triplet(
                 subj=TripletPart(
-                    text="The very large red car",
+                    text="The large red car",
                     start_char=0,
-                    end_char=22,
+                    end_char=17,
                 ),
-                pred=TripletPart(text="hit", start_char=23, end_char=26),
-                obj=TripletPart(
-                    text="the small green bike", start_char=27, end_char=47
-                ),
+                pred=TripletPart(text="hit", start_char=18, end_char=21),
+                obj=TripletPart(text="the green bike", start_char=22, end_char=36),
             )
         ]
-        self.assertTripletsEqual(expected_triplets, triplets)
+        self.assert_triplets_equal(expected_triplets, triplets)
 
     def test_stray_predicate(self):
         extractor = NaiveSpacyTripletExtractor(
-        named_entities=(2, None),
-        noun_chunks=(3, None),
-    )
+            named_entities=(2, None),
+            noun_chunks=(3, None),
+        )
 
-        text = ("I Asked Trump A Policy Question. Then He Called Me ‘Beautiful.’\n\n"
-
-"Donald Trump, the Republican front-runner for the presidential nomination,met with The Washington Post’s editorial board")
+        text = (
+            "I Asked Trump A Policy Question. Then He Called Me ‘Beautiful.’\n\n"
+            "Donald Trump, the Republican front-runner for the presidential nomination,met with The Washington Post’s editorial board"
+        )
         triplets = extractor.extract(text)
         print(triplets)

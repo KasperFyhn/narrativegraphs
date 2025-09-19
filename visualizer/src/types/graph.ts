@@ -19,7 +19,7 @@ export interface Edge extends Identifiable {
   to: number;
   subjectLabel: string;
   objectLabel: string;
-  totalfrequency?: number;
+  totalFrequency?: number;
   group: LabeledEdge[];
 }
 
@@ -28,12 +28,17 @@ export interface GraphData {
   edges: Edge[];
 }
 
-export interface Details extends Identifiable {
+export interface TextStats {
   frequency: number;
   docFrequency: number;
-  docs?: string[] | number[];
+  adjustedTfIdf: number;
   firstOccurrence?: Date | null;
   lastOccurrence?: Date | null;
+}
+
+export interface Details extends Identifiable {
+  stats: TextStats;
+  docs?: string[] | number[];
   altLabels?: string[];
   categories: { [key: string]: string[] };
 }

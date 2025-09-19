@@ -43,7 +43,7 @@ export const GraphViewer: React.FC = () => {
     return {
       edges: graphData.edges.map((e) => ({
         ...e,
-        width: Math.log10(e.totalfrequency || 10),
+        width: Math.log10(e.totalFrequency || 10),
       })),
       nodes: graphData.nodes.map((n) => ({
         ...n,

@@ -1,26 +1,12 @@
 from typing import Optional
 
 from fastapi import Depends, HTTPException, APIRouter
-from sqlalchemy.orm import Session
 
-from narrativegraph.db.documents import DocumentOrm
-from narrativegraph.dto.documents import Document, transform_orm_to_dto
-from narrativegraph.service import QueryService
+from narrativegraph.dto.documents import Document
 from narrativegraph.server.routes.common import get_query_service
+from narrativegraph.service import QueryService
 
 router = APIRouter()
-
-
-def get_docs_by_ids(
-    db: Session, doc_ids: list[int], limit: Optional[int] = None
-) -> list[Document]:
-    """Get multiple documents by IDs"""
-    query = db.query(DocumentOrm).filter(DocumentOrm.id.in_(doc_ids))
-    if limit:
-        query = query.limit(limit)
-
-    doc_orms = query.all()
-    return [transform_orm_to_dto(doc_orm) for doc_orm in doc_orms]
 
 
 @router.get("/{doc_id}", response_model=Document)

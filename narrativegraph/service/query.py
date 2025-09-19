@@ -9,7 +9,7 @@ from narrativegraph.dto.filter import DataBounds
 from narrativegraph.service.common import DbService
 from narrativegraph.service.cooccurrences import CoOccurrencesService
 from narrativegraph.service.graph import GraphService
-from narrativegraph.service.docs import DocService
+from narrativegraph.service.documents import DocService
 from narrativegraph.service.entities import EntityService
 from narrativegraph.service.predicates import PredicateService
 from narrativegraph.service.relations import RelationService

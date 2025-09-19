@@ -1,7 +1,10 @@
 from fastapi_camelcase import CamelModel
 
 from narrativegraph.db.entities import EntityOrm
-from narrativegraph.dto.common import Details
+from narrativegraph.dto.common import (
+    LabeledTextOccurrence,
+    TextOccurrenceStats,
+)
 
 
 class EntityLabel(CamelModel):
@@ -13,19 +16,14 @@ class EntityLabelsRequest(CamelModel):
     ids: list[int]
 
 
-class EntityDetails(Details):
-    pass
+class EntityDetails(LabeledTextOccurrence):
 
-def transform_entity_orm_to_details(entity: EntityOrm) -> EntityDetails:
-    """Transform EntityOrm to Details DTO"""
-    return EntityDetails(
-        id=entity.id,
-        label=entity.label,
-        frequency=entity.frequency,
-        doc_frequency=entity.doc_frequency,
-        adjusted_tf_idf=entity.adjusted_tf_idf,
-        alt_labels=entity.alt_labels,
-        first_occurrence=entity.first_occurrence,
-        last_occurrence=entity.last_occurrence,
-        categories=entity.category_dict
-    )
+    @classmethod
+    def from_orm(cls, entity_orm: EntityOrm) -> "EntityDetails":
+        return cls(
+            id=entity_orm.id,
+            label=entity_orm.label,
+            stats=TextOccurrenceStats.from_mixin(entity_orm),
+            alt_labels=entity_orm.alt_labels,
+            categories=entity_orm.category_dict,
+        )

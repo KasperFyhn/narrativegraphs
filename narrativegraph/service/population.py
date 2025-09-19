@@ -65,7 +65,7 @@ class PopulationService(DbService):
 
         bulk = []
         doc_cats = []
-        with self.get_session_context() as sc:
+        with self.get_session_context():
             for doc_text, doc_id, timestamp, categorization in zip(
                 docs, doc_ids, timestamps, categories, strict=True
             ):

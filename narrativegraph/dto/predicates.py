@@ -1,20 +1,18 @@
-from narrativegraph.dto.common import Details
+from narrativegraph.db.predicates import PredicateOrm
+from narrativegraph.dto.common import (
+    LabeledTextOccurrence,
+    TextOccurrenceStats,
+)
 
 
-class PredicateDetails(Details):
-    pass
+class PredicateDetails(LabeledTextOccurrence):
 
-
-def transform_predicate_orm_to_details(predicate: PredicateDetails) -> PredicateDetails:
-    """Transform RelationOrm to Details DTO"""
-    return PredicateDetails(
-        id=predicate.id,
-        label=predicate.label,
-        frequency=predicate.frequency,
-        doc_frequency=predicate.doc_frequency,
-        adjusted_tf_idf=predicate.adjusted_tf_idf,
-        alt_labels=predicate.alt_labels,
-        first_occurrence=predicate.first_occurrence,
-        last_occurrence=predicate.last_occurrence,
-        categories=predicate.category_dict,
-    )
+    @classmethod
+    def from_orm(cls, predicate_orm: PredicateOrm) -> "PredicateDetails":
+        return cls(
+            id=predicate_orm.id,
+            label=predicate_orm.label,
+            stats=TextOccurrenceStats.from_mixin(predicate_orm),
+            alt_labels=predicate_orm.alt_labels,
+            categories=predicate_orm.category_dict,
+        )

@@ -3,6 +3,7 @@ from typing import Generator
 
 import psutil
 import spacy
+from spacy import Language
 from spacy.tokens import Doc, Span
 
 from narrativegraph.nlp.extraction.common import TripletExtractor, Triplet
@@ -40,15 +41,24 @@ def _calculate_batch_size(texts: list[str], n_cpu: int = -1) -> int:
     return max(10, min(scaled_size, 2000))
 
 
+@Language.component("custom_sentencizer")
+def custom_sentencizer(doc):
+    for i, token in enumerate(doc[:-1]):
+        if token.text == "\n\n":
+            doc[i + 1].is_sent_start = True
+
+    return doc
+
+
 class SpacyTripletExtractor(TripletExtractor):
 
-    def __init__(self, model_name: str = None, split_on_double_line_break: bool = True):
+    def __init__(self, model_name: str = None, split_sentence_on_double_line_break: bool = True):
         if model_name is None:
             model_name = "en_core_web_sm"
         self.nlp = spacy.load(model_name)
-        if split_on_double_line_break:
+        if split_sentence_on_double_line_break:
             self.nlp.add_pipe(
-                "sentencizer", config={"punct_chars": ["\n\n"]}, before="parser"
+                "custom_sentencizer", before="parser"
             )
         pass
 

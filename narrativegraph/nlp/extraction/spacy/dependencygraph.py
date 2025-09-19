@@ -15,9 +15,9 @@ class DependencyGraphExtractor(SpacyTripletExtractor):
             passive_sentences: bool = True,
             copula_attribute: bool = True,
             xcomp_as_objects: bool = True,
-            split_on_double_line_break: bool = True
+            split_sentence_on_double_line_break: bool = True
     ):
-        super().__init__(model_name)
+        super().__init__(model_name, split_sentence_on_double_line_break=split_sentence_on_double_line_break)
 
         self.remove_pronoun_entities = remove_pronoun_entities
         self.direct_objects = direct_objects

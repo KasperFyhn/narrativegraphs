@@ -3,8 +3,6 @@ from sqlalchemy import (
     Integer,
     ForeignKey,
     String,
-    Boolean,
-    Date,
     select,
     func,
     case,

@@ -3,7 +3,7 @@ from typing import Optional
 import pandas as pd
 from sqlalchemy import select
 
-from narrativegraph.dto.documents import Document, transform_orm_to_dto
+from narrativegraph.dto.documents import Document
 from narrativegraph.db.documents import DocumentOrm, DocumentCategory
 from narrativegraph.service.common import OrmAssociatedService
 
@@ -32,11 +32,11 @@ class DocService(OrmAssociatedService):
         return cleaned
 
     def by_id(self, id_: int) -> Document:
-        return self._get_by_id_and_transform(id_, transform_orm_to_dto)
+        return self._get_by_id_and_transform(id_, Document.from_orm)
 
     def by_ids(self, ids: list[int], limit: Optional[int] = None) -> list[Document]:
         return self._get_multiple_by_ids_and_transform(
-            ids, transform_orm_to_dto, limit=limit
+            ids, Document.from_orm, limit=limit
         )
 
     def get_docs(

@@ -2,8 +2,7 @@ from typing import Optional
 
 from fastapi import Depends, HTTPException, APIRouter
 
-from narrativegraph.dto.entities import EntityLabel, EntityLabelsRequest
-from narrativegraph.dto.common import Details
+from narrativegraph.dto.entities import EntityLabel, EntityLabelsRequest, EntityDetails
 from narrativegraph.service import QueryService
 from narrativegraph.server.routes.common import get_query_service
 
@@ -11,7 +10,7 @@ from narrativegraph.server.routes.common import get_query_service
 router = APIRouter()
 
 
-@router.get("/{entity_id}", response_model=Details)
+@router.get("/{entity_id}", response_model=EntityDetails)
 async def get_entity(entity_id: int, service: QueryService = Depends(get_query_service),):
     entity = service.entities.by_id(entity_id)
     return entity

@@ -2,7 +2,7 @@ from typing import Optional
 
 from fastapi import Depends, APIRouter
 
-from narrativegraph.dto.common import Details
+from narrativegraph.dto.relations import RelationDetails
 from narrativegraph.server.routes.common import get_query_service
 from narrativegraph.service import QueryService
 
@@ -10,7 +10,7 @@ from narrativegraph.service import QueryService
 router = APIRouter()
 
 # API Endpoints
-@router.get("/{relation_id}", response_model=Details)
+@router.get("/{relation_id}", response_model=RelationDetails)
 async def get_relation(relation_id: int, service: QueryService = Depends(get_query_service)):
     """Get relation details by ID"""
     relation = service.relations.by_id(relation_id)
