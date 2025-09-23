@@ -12,7 +12,7 @@ fastapi~=0.115.12
 ipython~=9.2.0
 ipywidgets
 nest-asyncio~=1.6.0
-kagglehub~=0.3.12
+kagglehub~=0.3.13
 fastapi_camelcase~=2.0.0
 psutil~=7.0.0
 pytest~=8.4.1

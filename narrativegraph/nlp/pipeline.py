@@ -4,8 +4,8 @@ from datetime import datetime, date
 from sqlalchemy import Engine
 from tqdm import tqdm
 
-from narrativegraph.nlp.extraction import DependencyGraphExtractor
 from narrativegraph.nlp.extraction import TripletExtractor
+from narrativegraph.nlp.extraction.spacy import NaiveSpacyTripletExtractor
 from narrativegraph.nlp.mapping import Mapper
 from narrativegraph.nlp.mapping.linguistic import StemmingMapper, SubgramStemmingMapper
 from narrativegraph.service import PopulationService
@@ -23,10 +23,12 @@ class Pipeline:
         triplet_extractor: TripletExtractor = None,
         entity_mapper: Mapper = None,
         relation_mapper: Mapper = None,
-
     ):
         # Analysis components
-        self._triplet_extractor = triplet_extractor or DependencyGraphExtractor()
+        self._triplet_extractor = triplet_extractor or NaiveSpacyTripletExtractor(
+            named_entities=(2, None),
+            noun_chunks=(2, None),
+        )
         self._entity_mapper = entity_mapper or StemmingMapper()
         self._relation_mapper = relation_mapper or SubgramStemmingMapper()
 
@@ -47,7 +49,7 @@ class Pipeline:
     ):
         with self._db_service.get_session_context():
             _logger.info(f"Adding {len(docs)} documents to database")
-            if categories:
+            if categories is not None:
                 categories = normalize_categories(categories)
 
             self._db_service.add_documents(
@@ -55,10 +57,10 @@ class Pipeline:
                 doc_ids=doc_ids,
                 timestamps=timestamps,
                 categories=categories,
-                
             )
 
             _logger.info("Extracting triplets")
+            # TODO: use generators instead of lists here
             doc_orms = self._db_service.get_docs()
             extracted_triplets = self._triplet_extractor.batch_extract(
                 [d.text for d in doc_orms]
@@ -69,7 +71,10 @@ class Pipeline:
                     docs_and_triplets, desc="Extracting triplets", total=len(docs)
                 )
             for doc, doc_triplets in docs_and_triplets:
-                self._db_service.add_triplets(doc.id, doc_triplets, )
+                self._db_service.add_triplets(
+                    doc.id,
+                    doc_triplets,
+                )
 
             _logger.info("Mapping entities and relations")
             triplets = self._db_service.get_triplets()
@@ -85,7 +90,8 @@ class Pipeline:
 
             _logger.info("Mapping triplets")
             self._db_service.map_triplets(
-                self.entity_mapping, self.predicate_mapping, 
+                self.entity_mapping,
+                self.predicate_mapping,
             )
 
             return self

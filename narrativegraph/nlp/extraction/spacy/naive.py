@@ -14,9 +14,12 @@ class NaiveSpacyTripletExtractor(SpacyTripletExtractor):
         named_entities: bool | tuple[int, int | None] = (1, None),
         noun_chunks: bool | tuple[int, int | None] = (2, None),
         max_tokens_between: int = 4,
-            split_sentence_on_double_line_break: bool = True
+        split_sentence_on_double_line_break: bool = True,
     ):
-        super().__init__(model_name, split_sentence_on_double_line_break=split_sentence_on_double_line_break)
+        super().__init__(
+            model_name,
+            split_sentence_on_double_line_break=split_sentence_on_double_line_break,
+        )
         if not named_entities and not noun_chunks:
             raise NotImplementedError(
                 "Naive spacy requires at least named_entities or noun_chunks."
