@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import NamedTuple, Generator, Iterable, Optional
+from typing import Generator, Iterable, Optional
 
 from pydantic import BaseModel
 from spacy.tokens import Span, Token

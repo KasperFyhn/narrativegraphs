@@ -1,4 +1,3 @@
-from abc import ABC, abstractmethod
 from collections import defaultdict
 
 from sqlalchemy import Column, Integer, String, Date, Float

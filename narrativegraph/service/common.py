@@ -88,7 +88,7 @@ class OrmAssociatedService(SubService, ABC):
     def _get_by_id_and_transform(self, id_: int, transform: Callable[[Any], Any]):
         with self.get_session_context() as sc:
             entry = (
-                sc.query(self._orm).filter(self._orm.id == id_).first()
+                sc.query(self._orm).filter(self._orm.id == id_).first()  # noqa; id must be there
             )  # noqa; the id ref works
             if entry is None:
                 raise EntryNotFoundError(

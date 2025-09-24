@@ -49,4 +49,4 @@ class DocService(OrmAssociatedService):
             query = sc.query(DocumentOrm)
             if limit:
                 query = query.limit(limit)
-            return [transform_orm_to_dto(d) for d in query.all()]
+            return [Document.from_orm(d) for d in query.all()]

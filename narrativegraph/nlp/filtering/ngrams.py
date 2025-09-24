@@ -1,5 +1,5 @@
 import math
-from collections import defaultdict, Counter
+from collections import Counter
 from typing import Iterable
 
 import nltk
