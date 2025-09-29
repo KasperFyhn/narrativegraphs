@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import NamedTuple, Generator, Iterable, Optional
+from typing import Generator, Iterable, Optional
 
 from pydantic import BaseModel
 from spacy.tokens import Span, Token
@@ -34,7 +34,7 @@ class TripletExtractor(ABC):
     def extract(self, text: str) -> list[Triplet]:
         pass
 
-    def batch_extract(self, texts: Iterable[str], **kwargs) \
+    def batch_extract(self, texts: Iterable[str], n_cpu: int = 1, **kwargs) \
             -> Generator[list[Triplet], None, None]:
         for text in texts:
             yield self.extract(text)

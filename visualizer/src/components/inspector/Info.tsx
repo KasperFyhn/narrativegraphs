@@ -49,13 +49,13 @@ export const Info: React.FC<InfoProps> = ({ type, id }) => {
 
   return (
     <div>
-      <p>Frequency: {details.frequency}</p>
-      <p>Document hits: {details.docFrequency}</p>
-      {details.firstOccurrence && (
-        <p>Earliest date: {details.firstOccurrence.toString()}</p>
+      <p>Frequency: {details.stats.frequency}</p>
+      <p>Document hits: {details.stats.docFrequency}</p>
+      {details.stats.firstOccurrence && (
+        <p>Earliest date: {details.stats.firstOccurrence.toString()}</p>
       )}
-      {details.lastOccurrence && (
-        <p>Latest date: {details.lastOccurrence.toString()}</p>
+      {details.stats.lastOccurrence && (
+        <p>Latest date: {details.stats.lastOccurrence.toString()}</p>
       )}
       {Object.entries(details.categories).map((entry) => {
         const [name, values] = entry;

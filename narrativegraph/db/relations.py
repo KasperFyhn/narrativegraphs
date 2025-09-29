@@ -1,9 +1,21 @@
-from sqlalchemy import Column, Integer, ForeignKey, String, Date
+from typing import TYPE_CHECKING
+
+from sqlalchemy import Column, Integer, ForeignKey, select, func
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship, Mapped
 
-from narrativegraph.db.common import CategoryMixin, CategorizableMixin
+from narrativegraph.db.common import (
+    CategoryMixin,
+    CategorizableMixin,
+    HasAltLabels,
+)
 from narrativegraph.db.engine import Base
-from narrativegraph.db.triplets import TripletOrm
+from narrativegraph.db.entities import EntityOrm
+from narrativegraph.db.predicates import PredicateOrm
+from narrativegraph.db.triplets import TripletOrm, TripletBackedTextStatsMixin
+
+if TYPE_CHECKING:
+    from narrativegraph.db.cooccurrences import CoOccurrenceOrm
 
 
 class RelationCategory(Base, CategoryMixin):
@@ -11,30 +23,59 @@ class RelationCategory(Base, CategoryMixin):
     target_id = Column(Integer, ForeignKey("relations.id"), nullable=False, index=True)
 
 
-class RelationOrm(Base, CategorizableMixin):
+class RelationOrm(Base, TripletBackedTextStatsMixin, CategorizableMixin, HasAltLabels):
     __tablename__ = "relations"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    label = Column(String, nullable=False, index=True)
     subject_id = Column(Integer, ForeignKey("entities.id"), nullable=False, index=True)
+    predicate_id = Column(
+        Integer, ForeignKey("predicates.id"), nullable=False, index=True
+    )
     object_id = Column(Integer, ForeignKey("entities.id"), nullable=False, index=True)
-    term_frequency = Column(Integer, default=-1, nullable=False)
-    doc_frequency = Column(Integer, default=-1, nullable=False)
-    first_occurrence = Column(Date, nullable=True)
-    last_occurrence = Column(Date, nullable=True)
+    co_occurrence_id = Column(
+        Integer, ForeignKey("co_occurrences.id"), nullable=False, index=True
+    )
+
+    @property
+    def label(self) -> str:
+        return self.predicate.label
+
+    @hybrid_property
+    def alt_labels(self) -> list[str]:
+        """Python version"""
+        return list(set(triplet.pred_span_text for triplet in self.triplets))
+
+    @alt_labels.expression
+    def alt_labels(self):
+        """SQL version - returns comma-separated string that pandas can split"""
+        return (
+            select(func.json_group_array(TripletOrm.pred_span_text.distinct()))
+            .select_from(TripletOrm)
+            .where(TripletOrm.relation_id == self.id)
+            .scalar_subquery()
+        )
 
     # Relationships
-    subject = relationship(
+    subject: Mapped["EntityOrm"] = relationship(
         "EntityOrm",
         foreign_keys="RelationOrm.subject_id",
     )
-    object = relationship(
+    predicate: Mapped["PredicateOrm"] = relationship(
+        "PredicateOrm",
+        foreign_keys="RelationOrm.predicate_id",
+    )
+    object: Mapped["EntityOrm"] = relationship(
         "EntityOrm",
         foreign_keys="RelationOrm.object_id",
     )
     triplets: Mapped[list["TripletOrm"]] = relationship(
         "TripletOrm",
-        back_populates="predicate",
+        back_populates="relation",
         foreign_keys="TripletOrm.relation_id",
+    )
+    co_occurrence: Mapped["CoOccurrenceOrm"] = relationship(
+        "CoOccurrenceOrm",
+        back_populates="relations",
+        foreign_keys="RelationOrm.co_occurrence_id",
     )
 
     categories: Mapped[list[RelationCategory]] = relationship(

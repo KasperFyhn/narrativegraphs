@@ -28,12 +28,16 @@ class StemmingMapper(Mapper):
                              if w[1] != "DT")
         return self._stemmer.stem(label)
 
+    @staticmethod
+    def _negative_length(label: str) -> int:
+        return -len(label.split())
+
     def create_mapping(self, labels: list[str]) -> dict[str, str]:
         if self._ranking == "shortest":
-            ranker = lambda x: -len(x.split())
+            ranker = self._negative_length
         elif self._ranking == "most_frequent":
             counter = Counter(labels)
-            ranker = lambda x: counter[x]
+            ranker = counter.__getitem__
         else:
             raise NotImplementedError("Unknown ranking")
 

@@ -1,3 +1,5 @@
+from datetime import date
+
 from sqlalchemy import Column, Integer, ForeignKey, Text, String, Date
 from sqlalchemy.orm import Mapped, relationship
 
@@ -18,7 +20,6 @@ class DocumentOrm(Base, CategorizableMixin):
 
     str_id = Column(String, nullable=True, index=True)
     timestamp = Column(Date, nullable=True)
-    category = Column(String, nullable=True)
 
     # Relationships
     triplets: Mapped[list[TripletOrm]] = relationship(
@@ -28,3 +29,21 @@ class DocumentOrm(Base, CategorizableMixin):
     categories: Mapped[list[DocumentCategory]] = relationship(
         "DocumentCategory", foreign_keys=[DocumentCategory.target_id]
     )
+
+
+class DocumentAnchoredAnnotationMixin:
+    doc_id = Column(Integer, ForeignKey("documents.id"), nullable=False, index=True)
+
+    document = relationship(
+        "DocumentOrm",
+        foreign_keys="TripletOrm.doc_id",
+        back_populates="triplets",
+    )
+
+    @property
+    def categories(self) -> list[CategoryMixin]:
+        return self.document.categories
+
+    @property
+    def timestamp(self) -> date:
+        return self.document.timestamp

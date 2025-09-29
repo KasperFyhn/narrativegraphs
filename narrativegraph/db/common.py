@@ -23,7 +23,9 @@ class CategoryMixin:
     def from_categorizable(
         cls, item_id, categorizable_objs: list["CategorizableMixin"]
     ) -> list["CategoryMixin"]:
-        categories = combine_category_dicts(*[cat_obj.category_dict for cat_obj in categorizable_objs])
+        categories = combine_category_dicts(
+            *[cat_obj.category_dict for cat_obj in categorizable_objs]
+        )
         return [
             cls(
                 target_id=item_id,  # noqa
@@ -44,3 +46,10 @@ class CategorizableMixin:
         for cat in self.categories:
             result[cat.name].add(cat.value)
         return {name: list(values) for name, values in result.items()}
+
+
+class HasAltLabels:
+
+    @property
+    def alt_labels(self) -> list[str]:
+        return []

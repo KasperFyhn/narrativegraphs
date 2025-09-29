@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from sqlalchemy import create_engine, Engine
-from sqlalchemy.orm import sessionmaker, declarative_base, DeclarativeMeta
+from sqlalchemy.orm import sessionmaker, declarative_base
 
 Base = declarative_base()
 

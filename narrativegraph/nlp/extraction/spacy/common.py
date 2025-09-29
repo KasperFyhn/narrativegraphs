@@ -6,6 +6,7 @@ import spacy
 from spacy.tokens import Doc, Span
 
 from narrativegraph.nlp.extraction.common import TripletExtractor, Triplet
+from narrativegraph.nlp.utils.spacysegmentation import custom_sentencizer  # noqa
 
 
 def _calculate_batch_size(texts: list[str], n_cpu: int = -1) -> int:
@@ -42,11 +43,14 @@ def _calculate_batch_size(texts: list[str], n_cpu: int = -1) -> int:
 
 class SpacyTripletExtractor(TripletExtractor):
 
-    def __init__(self, model_name: str = None):
+    def __init__(
+        self, model_name: str = None, split_sentence_on_double_line_break: bool = True
+    ):
         if model_name is None:
             model_name = "en_core_web_sm"
         self.nlp = spacy.load(model_name)
-        pass
+        if split_sentence_on_double_line_break:
+            self.nlp.add_pipe("custom_sentencizer", before="parser")
 
     @abstractmethod
     def extract_triplets_from_sent(self, sent: Span) -> list[Triplet]:
@@ -65,7 +69,7 @@ class SpacyTripletExtractor(TripletExtractor):
         return self.extract_triplets_from_doc(text)
 
     def batch_extract(
-        self, texts: list[str], n_cpu: int = -1, batch_size: int = None
+        self, texts: list[str], n_cpu: int = 1, batch_size: int = None
     ) -> Generator[list[Triplet], None, None]:
         if batch_size is None:
             batch_size = _calculate_batch_size(texts, n_cpu)

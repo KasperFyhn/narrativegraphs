@@ -20,7 +20,7 @@ class TestDependencyGraphExtractor(ExtractorTest):
                 obj=TripletPart(text="the ball", start_char=9, end_char=17),
             )
         ]
-        self.assertTripletsEqual(expected_triplets, triplets)
+        self.assert_triplets_equal(expected_triplets, triplets)
 
     def test_active_voice_with_adjuncts(self):
         text = "The dog chased the cat quickly in the barn."
@@ -33,7 +33,7 @@ class TestDependencyGraphExtractor(ExtractorTest):
                 obj=TripletPart(text="the cat", start_char=15, end_char=22),
             )
         ]
-        self.assertTripletsEqual(expected_triplets, triplets)
+        self.assert_triplets_equal(expected_triplets, triplets)
 
     def test_prepositional_object(self):
         text = "The dog looked at the sky"
@@ -46,7 +46,7 @@ class TestDependencyGraphExtractor(ExtractorTest):
                 obj=TripletPart(text="the sky", start_char=18, end_char=25),
             )
         ]
-        self.assertTripletsEqual(expected_triplets, triplets)
+        self.assert_triplets_equal(expected_triplets, triplets)
 
     def test_copula_verb_attribute(self):
         text = "Pam is a doctor."
@@ -59,7 +59,7 @@ class TestDependencyGraphExtractor(ExtractorTest):
                 obj=TripletPart(text="a doctor", start_char=7, end_char=15),
             )
         ]
-        self.assertTripletsEqual(expected_triplets, triplets)
+        self.assert_triplets_equal(expected_triplets, triplets)
 
     def test_xcomp_verb_object(self):
         text = "He likes to read books."
@@ -73,7 +73,7 @@ class TestDependencyGraphExtractor(ExtractorTest):
             #     obj=TripletPart(text="books", start_char=17, end_char=22)
             # )
         ]
-        self.assertTripletsEqual(expected_triplets, triplets)
+        self.assert_triplets_equal(expected_triplets, triplets)
 
     def test_passive_voice_with_agent(self):
         text = "The book was read by Mary."
@@ -92,7 +92,7 @@ class TestDependencyGraphExtractor(ExtractorTest):
                 ),  # Swapped object (grammatical subject)
             )
         ]
-        self.assertTripletsEqual(expected_triplets, triplets)
+        self.assert_triplets_equal(expected_triplets, triplets)
 
     def test_copular_verb_adjective(self):
         text = "The car is red."
@@ -105,7 +105,7 @@ class TestDependencyGraphExtractor(ExtractorTest):
                 obj=TripletPart(text="red", start_char=11, end_char=14),
             )
         ]
-        self.assertTripletsEqual(expected_triplets, triplets)
+        self.assert_triplets_equal(expected_triplets, triplets)
 
     def test_ditransitive_verb(self):
         text = "The boy gave his friend a present."
@@ -120,7 +120,7 @@ class TestDependencyGraphExtractor(ExtractorTest):
                 obj=TripletPart(text="a present", start_char=24, end_char=33),
             )
         ]
-        self.assertTripletsEqual(expected_triplets, triplets)
+        self.assert_triplets_equal(expected_triplets, triplets)
 
     def test_multiple_sentences(self):
         text = "John hit the ball. Birds fly fast. The dog chased the cat quickly."
@@ -138,7 +138,7 @@ class TestDependencyGraphExtractor(ExtractorTest):
                 obj=TripletPart(text="the cat", start_char=50, end_char=57),
             ),
         ]
-        self.assertTripletsEqual(expected_triplets, triplets)
+        self.assert_triplets_equal(expected_triplets, triplets)
 
     def test_intransitive_verb(self):
         text = "Birds fly."

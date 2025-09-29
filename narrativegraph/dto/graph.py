@@ -7,11 +7,11 @@ class Node(CamelModel):
 
     id: int
     label: str
-    term_frequency: int
+    frequency: int
     focus: bool = False
 
 
-class Predicate(CamelModel):
+class Relation(CamelModel):
     """Individual relation within an edge group"""
 
     id: int
@@ -24,13 +24,13 @@ class Edge(CamelModel):
     """Edge in the graph representing grouped relations"""
 
     id: str
+    label: str
     from_id: int = Field(serialization_alias="from", validation_alias="from_id")
     to_id: int = Field(serialization_alias="to", validation_alias="to_id")
     subject_label: str
     object_label: str
-    label: str
-    total_term_frequency: int
-    group: list[Predicate]
+    total_frequency: int
+    group: list[Relation]
 
 
 class Graph(CamelModel):

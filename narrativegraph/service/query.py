@@ -1,26 +1,31 @@
 from collections import defaultdict
-from pathlib import Path
 
 from sqlalchemy import Engine, func
 
 from narrativegraph.db.documents import DocumentCategory, DocumentOrm
-from narrativegraph.db.relations import RelationOrm
 from narrativegraph.db.entities import EntityOrm
-from narrativegraph.service.common import DbService
-from narrativegraph.service.graph import GraphService
-from narrativegraph.service.orms.docs import DocService
+from narrativegraph.db.relations import RelationOrm
 from narrativegraph.dto.filter import DataBounds
-from narrativegraph.service.orms.entities import EntityService
-from narrativegraph.service.orms.relations import RelationService
+from narrativegraph.service.common import DbService
+from narrativegraph.service.cooccurrences import CoOccurrencesService
+from narrativegraph.service.graph import GraphService
+from narrativegraph.service.documents import DocService
+from narrativegraph.service.entities import EntityService
+from narrativegraph.service.predicates import PredicateService
+from narrativegraph.service.relations import RelationService
+from narrativegraph.service.triplets import TripletService
 
 
 class QueryService(DbService):
 
     def __init__(self, engine: Engine):
         super().__init__(engine)
-        self.docs = DocService(lambda: self.get_session_context())
+        self.documents = DocService(lambda: self.get_session_context())
         self.entities = EntityService(lambda: self.get_session_context())
         self.relations = RelationService(lambda: self.get_session_context())
+        self.predicates = PredicateService(lambda: self.get_session_context())
+        self.co_occurrences = CoOccurrencesService(lambda: self.get_session_context())
+        self.triplets = TripletService(lambda: self.get_session_context())
         self.graph = GraphService(lambda: self.get_session_context())
 
     def _compile_categories(self) -> dict[str, list[str]]:
@@ -34,16 +39,16 @@ class QueryService(DbService):
         with self.get_session_context() as db:
             return DataBounds(
                 minimum_possible_node_frequency=db.query(
-                    func.min(EntityOrm.term_frequency)
+                    func.min(EntityOrm.frequency)
                 ).scalar(),
                 maximum_possible_node_frequency=db.query(
-                    func.max(EntityOrm.term_frequency)
+                    func.max(EntityOrm.frequency)
                 ).scalar(),
                 minimum_possible_edge_frequency=db.query(
-                    func.min(RelationOrm.term_frequency)
+                    func.min(RelationOrm.frequency)
                 ).scalar(),
                 maximum_possible_edge_frequency=db.query(
-                    func.max(RelationOrm.term_frequency)
+                    func.max(RelationOrm.frequency)
                 ).scalar(),
                 categories=self._compile_categories(),
                 earliest_date=db.query(func.min(DocumentOrm.timestamp)).scalar()

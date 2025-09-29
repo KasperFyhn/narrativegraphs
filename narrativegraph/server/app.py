@@ -1,24 +1,21 @@
 import logging
+import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, status
-from fastapi.exceptions import RequestValidationError
-from fastapi.staticfiles import StaticFiles
-from fastapi.requests import Request
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
 
 from narrativegraph.db.engine import get_engine, get_session_factory
-from narrativegraph.service import QueryService
 from narrativegraph.errors import EntryNotFoundError
-from narrativegraph.server.routes.graph import router as graph_router
+from narrativegraph.server.routes.documents import router as docs_router
 from narrativegraph.server.routes.entities import router as entities_router
+from narrativegraph.server.routes.graph import router as graph_router
 from narrativegraph.server.routes.relations import router as relations_router
-from narrativegraph.server.routes.docs import router as docs_router
-
-import os
+from narrativegraph.service import QueryService
 
 
 @asynccontextmanager
@@ -49,8 +46,9 @@ async def lifespan(app_arg: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+# noinspection PyTypeChecker
 app.add_middleware(
-    CORSMiddleware,  # noqa, PyCharm bug: https://github.com/fastapi/fastapi/discussions/10968
+    CORSMiddleware,
     allow_origins=["*"],  # specify specific origins if needed
     allow_credentials=True,
     allow_methods=["*"],
