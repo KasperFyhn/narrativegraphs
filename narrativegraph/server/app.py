@@ -46,8 +46,9 @@ async def lifespan(app_arg: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+# noinspection PyTypeChecker
 app.add_middleware(
-    CORSMiddleware,  # noqa, PyCharm bug: https://github.com/fastapi/fastapi/discussions/10968
+    CORSMiddleware,
     allow_origins=["*"],  # specify specific origins if needed
     allow_credentials=True,
     allow_methods=["*"],
