@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING
+
 from sqlalchemy import Column, Integer, ForeignKey, String, select, func
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship, Mapped
@@ -5,12 +7,13 @@ from sqlalchemy.orm import relationship, Mapped
 from narrativegraph.db.common import (
     CategoryMixin,
     CategorizableMixin,
-    TextStatsMixin,
     HasAltLabels,
 )
 from narrativegraph.db.engine import Base
-from narrativegraph.db.relations import RelationOrm
-from narrativegraph.db.triplets import TripletOrm
+from narrativegraph.db.triplets import TripletOrm, TripletBackedTextStatsMixin
+
+if TYPE_CHECKING:
+    from narrativegraph.db.relations import RelationOrm
 
 
 class PredicateCategory(Base, CategoryMixin):
@@ -18,7 +21,7 @@ class PredicateCategory(Base, CategoryMixin):
     target_id = Column(Integer, ForeignKey("predicates.id"), nullable=False, index=True)
 
 
-class PredicateOrm(Base, TextStatsMixin, CategorizableMixin, HasAltLabels):
+class PredicateOrm(Base, TripletBackedTextStatsMixin, CategorizableMixin, HasAltLabels):
     __tablename__ = "predicates"
     id = Column(Integer, primary_key=True, autoincrement=True)
     label: str = Column(String, nullable=False, index=True)
@@ -34,9 +37,7 @@ class PredicateOrm(Base, TextStatsMixin, CategorizableMixin, HasAltLabels):
         return (
             select(func.json_group_array(TripletOrm.pred_span_text.distinct()))
             .select_from(TripletOrm)
-            .where(
-                TripletOrm.predicate_id == cls.id
-            )
+            .where(TripletOrm.predicate_id == cls.id)
             .scalar_subquery()
         )
 

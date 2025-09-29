@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING
+
 from sqlalchemy import Column, Integer, ForeignKey, select, func
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship, Mapped
@@ -5,12 +7,15 @@ from sqlalchemy.orm import relationship, Mapped
 from narrativegraph.db.common import (
     CategoryMixin,
     CategorizableMixin,
-    TextStatsMixin,
     HasAltLabels,
 )
 from narrativegraph.db.engine import Base
 from narrativegraph.db.entities import EntityOrm
-from narrativegraph.db.triplets import TripletOrm
+from narrativegraph.db.predicates import PredicateOrm
+from narrativegraph.db.triplets import TripletOrm, TripletBackedTextStatsMixin
+
+if TYPE_CHECKING:
+    from narrativegraph.db.cooccurrences import CoOccurrenceOrm
 
 
 class RelationCategory(Base, CategoryMixin):
@@ -18,13 +23,17 @@ class RelationCategory(Base, CategoryMixin):
     target_id = Column(Integer, ForeignKey("relations.id"), nullable=False, index=True)
 
 
-class RelationOrm(Base, TextStatsMixin, CategorizableMixin, HasAltLabels):
+class RelationOrm(Base, TripletBackedTextStatsMixin, CategorizableMixin, HasAltLabels):
     __tablename__ = "relations"
     id = Column(Integer, primary_key=True, autoincrement=True)
     subject_id = Column(Integer, ForeignKey("entities.id"), nullable=False, index=True)
-    predicate_id = Column(Integer, ForeignKey("predicates.id"), nullable=False, index=True)
+    predicate_id = Column(
+        Integer, ForeignKey("predicates.id"), nullable=False, index=True
+    )
     object_id = Column(Integer, ForeignKey("entities.id"), nullable=False, index=True)
-    co_occurrence_id = Column(Integer, ForeignKey("co_occurrences.id"), nullable=False, index=True)
+    co_occurrence_id = Column(
+        Integer, ForeignKey("co_occurrences.id"), nullable=False, index=True
+    )
 
     @property
     def label(self) -> str:
@@ -41,9 +50,7 @@ class RelationOrm(Base, TextStatsMixin, CategorizableMixin, HasAltLabels):
         return (
             select(func.json_group_array(TripletOrm.pred_span_text.distinct()))
             .select_from(TripletOrm)
-            .where(
-                TripletOrm.relation_id == self.id
-            )
+            .where(TripletOrm.relation_id == self.id)
             .scalar_subquery()
         )
 

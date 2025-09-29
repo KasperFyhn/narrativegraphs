@@ -1,23 +1,29 @@
 from sqlalchemy import Column, Integer, ForeignKey, Float
 from sqlalchemy.orm import Mapped, relationship
 
-from narrativegraph.db.common import CategoryMixin, TextStatsMixin, CategorizableMixin
+from narrativegraph.db.common import CategoryMixin, CategorizableMixin
 from narrativegraph.db.engine import Base
 from narrativegraph.db.entities import EntityOrm
 from narrativegraph.db.relations import RelationOrm
-from narrativegraph.db.triplets import TripletOrm
+from narrativegraph.db.triplets import TripletOrm, TripletBackedTextStatsMixin
 
 
 class CoOccurrenceCategory(Base, CategoryMixin):
     __tablename__ = "co_occurrences_categories"
-    target_id = Column(Integer, ForeignKey("co_occurrences.id"), nullable=False, index=True)
+    target_id = Column(
+        Integer, ForeignKey("co_occurrences.id"), nullable=False, index=True
+    )
 
 
-class CoOccurrenceOrm(Base, TextStatsMixin, CategorizableMixin):
+class CoOccurrenceOrm(Base, TripletBackedTextStatsMixin, CategorizableMixin):
     __tablename__ = "co_occurrences"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    entity_one_id = Column(Integer, ForeignKey("entities.id"), nullable=False, index=True)
-    entity_two_id = Column(Integer, ForeignKey("entities.id"), nullable=False, index=True)
+    entity_one_id = Column(
+        Integer, ForeignKey("entities.id"), nullable=False, index=True
+    )
+    entity_two_id = Column(
+        Integer, ForeignKey("entities.id"), nullable=False, index=True
+    )
 
     pmi = Column(Float, default=-1, nullable=False)
 
