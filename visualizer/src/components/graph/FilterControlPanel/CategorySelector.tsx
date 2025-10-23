@@ -36,7 +36,10 @@ const CategorySelectorInner: React.FC<CategorySelectorInnerProps> = ({
   }, [selected]);
 
   return (
-    <div className={'flex-container--vertical panel__sub-panel'}>
+    <div
+      className={'flex-container--vertical panel__sub-panel'}
+      style={{ width: '100%' }}
+    >
       {showHeader && <>{capitalizedName}&nbsp;</>}
       <button
         onClick={(e) => {
@@ -99,7 +102,7 @@ export const CategorySelector: React.FC = () => {
   const { dataBounds } = useGraphFilter();
 
   return (
-    <div className={'flex-container'}>
+    <div className={'flex-container'} style={{ maxWidth: '175px' }}>
       {dataBounds.categories &&
         Object.entries(dataBounds.categories).map(([name, values]) => (
           <CategorySelectorInner

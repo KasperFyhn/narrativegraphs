@@ -33,15 +33,14 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  margin-top: 5px;
-  margin-bottom: 5px;
   gap: 5px;
+  width: 100%;
 }
 
 .flex-container--vertical {
   flex-direction: column;
   align-items: flex-start;
-  gap: 10px;
+  gap: 15px;
 }
 
 .control-panel {
@@ -62,7 +61,6 @@
 
 .option-span {
   min-width: 130px;
-  width: 130px;
   max-width: 130px;
 }
 
@@ -91,4 +89,5 @@
   transform: translateX(-50%) translateY(-50%);
   z-index: 3;
   max-height: 80%;
+  max-width: 70vw;
 }

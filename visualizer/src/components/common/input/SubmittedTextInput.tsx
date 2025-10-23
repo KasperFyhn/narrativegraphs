@@ -22,7 +22,13 @@ export const SubmittedTextInput: React.FC<SubmittedTextInputProps> = ({
       <input
         type={'search'}
         value={value}
-        onChange={(event) => setValue(event.target.value)}
+        onChange={(event) => {
+          const newValue = event.target.value;
+          setValue(newValue);
+          if (newValue === '') {
+            onSubmit(newValue);
+          }
+        }}
       />
     </form>
   );
