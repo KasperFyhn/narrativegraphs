@@ -11,6 +11,10 @@ class EntityLabel(CamelModel):
     id: int
     label: str
 
+    @classmethod
+    def from_orm(cls, entity_orm: EntityOrm) -> "EntityLabel":
+        return cls(id=entity_orm.id, label=entity_orm.label)
+
 
 class EntityLabelsRequest(CamelModel):
     ids: list[int]

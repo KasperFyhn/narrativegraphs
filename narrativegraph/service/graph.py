@@ -1,14 +1,19 @@
 from collections import defaultdict
-from typing import List
+from functools import partial
+from typing import List, Callable, Literal
 
+import networkx as nx
+from networkx.algorithms import community
 from sqlalchemy import or_, and_
 from sqlalchemy.orm import selectinload
 
-from narrativegraph.db.relations import RelationOrm
+from narrativegraph.db.cooccurrences import CoOccurrenceOrm
 from narrativegraph.db.entities import EntityOrm
+from narrativegraph.db.relations import RelationOrm
+from narrativegraph.dto.entities import EntityLabel
 from narrativegraph.dto.filter import GraphFilter
-from narrativegraph.service.common import SubService
 from narrativegraph.dto.graph import Node, Edge, Relation
+from narrativegraph.service.common import SubService
 from narrativegraph.service.filter import (
     create_relation_conditions,
     create_entity_conditions,
@@ -226,3 +231,56 @@ class GraphService(SubService):
             ]
 
             return {"edges": edges, "nodes": nodes}
+
+    def find_communities(
+        self,
+        graph_filter: GraphFilter = None,
+        weight_measure: Literal["pmi", "frequency"] = "pmi",
+        community_detection_method: Callable[
+            [nx.Graph], list[set[int]]
+        ] = partial(community.louvain_communities, resolution=2),
+    ) -> list[list[EntityLabel]]:
+        if graph_filter is None:
+            graph_filter = GraphFilter()
+
+        # Build entity filter conditions
+        entity_conditions = create_entity_conditions(graph_filter)
+
+        # Build relation filter conditions
+        relation_conditions = create_relation_conditions(graph_filter)
+
+        with self.get_session_context() as db:
+
+            query = db.query(EntityOrm).filter(and_(*entity_conditions))
+            entities = query.all()
+            entity_map = {entity.id: entity for entity in entities}
+            entity_ids = list(entity_map.keys())
+
+            # Get relations between entities
+            coc_query_conditions = [
+                and_(
+                    *relation_conditions,
+                    CoOccurrenceOrm.entity_one_id.in_(entity_ids),
+                    CoOccurrenceOrm.entity_two_id.in_(entity_ids),
+                )
+            ]
+            co_occurrences: list[CoOccurrenceOrm] = (
+                db.query(CoOccurrenceOrm).filter(or_(*coc_query_conditions)).all()
+            )
+
+            graph = nx.Graph()
+            graph.add_nodes_from(entity_ids)
+            for co_occ in co_occurrences:
+                if weight_measure == "frequency":
+                    weight = co_occ.frequency
+                elif weight_measure == "pmi":
+                    weight = co_occ.pmi
+
+                graph.add_edge(
+                    co_occ.entity_one_id, co_occ.entity_two_id, weight=weight
+                )
+
+            result = community_detection_method(graph)
+
+            return [[EntityLabel.from_orm(entity_map[entity]) for entity in comm]
+                    for comm in result]

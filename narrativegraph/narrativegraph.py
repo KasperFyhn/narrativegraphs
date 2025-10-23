@@ -12,6 +12,7 @@ from narrativegraph.db.engine import (
 from narrativegraph.dto.cooccurrences import CoOccurrenceDetails
 from narrativegraph.dto.documents import Document
 from narrativegraph.dto.entities import EntityDetails
+from narrativegraph.dto.filter import GraphFilter
 from narrativegraph.dto.predicates import PredicateDetails
 from narrativegraph.dto.relations import RelationDetails
 from narrativegraph.nlp.extraction import TripletExtractor
@@ -98,20 +99,35 @@ class NarrativeGraph:
     def triplets_(self) -> pd.DataFrame:
         return self._db_service.triplets.as_df()
 
-    def get_entities(self, ids: list[int] = None, limit: int = None) -> list[EntityDetails]:
+    def get_entities(
+        self, ids: list[int] = None, limit: int = None
+    ) -> list[EntityDetails]:
         return self._db_service.entities.get_multiple(ids=ids, limit=limit)
 
-    def get_predicates(self, ids: list[int] = None, limit: int = None) -> list[PredicateDetails]:
+    def get_predicates(
+        self, ids: list[int] = None, limit: int = None
+    ) -> list[PredicateDetails]:
         return self._db_service.predicates.get_multiple(ids=ids, limit=limit)
 
-    def get_relations(self, ids: list[int] = None, limit: int = None) -> list[RelationDetails]:
+    def get_relations(
+        self, ids: list[int] = None, limit: int = None
+    ) -> list[RelationDetails]:
         return self._db_service.relations.get_multiple(ids=ids, limit=limit)
 
-    def get_co_occurrences(self, ids: list[int] = None, limit: int = None) -> list[CoOccurrenceDetails]:
+    def get_co_occurrences(
+        self, ids: list[int] = None, limit: int = None
+    ) -> list[CoOccurrenceDetails]:
         return self._db_service.co_occurrences.get_multiple(ids=ids, limit=limit)
 
     def get_documents(self, ids: list[int] = None, limit: int = None) -> list[Document]:
         return self._db_service.documents.get_multiple(ids=ids, limit=limit)
+
+    def find_communities(
+        self, graph_filter: GraphFilter = None
+    ) -> list[list[int]]:
+        return self._db_service.graph.find_communities(
+            graph_filter=graph_filter
+        )
 
     def serve_visualizer(
         self,

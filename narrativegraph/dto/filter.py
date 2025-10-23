@@ -15,9 +15,8 @@ class DataBounds(CamelModel):
 
 
 class GraphFilter(CamelModel):
-    limit_nodes: int
-    limit_edges: int
-    only_supernodes: Optional[bool] = None
+    limit_nodes: int = None
+    limit_edges: int = None
     minimum_node_frequency: Optional[int] = None
     maximum_node_frequency: Optional[int] = None
     minimum_edge_frequency: Optional[int] = None

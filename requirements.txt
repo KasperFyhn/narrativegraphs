@@ -16,3 +16,6 @@ kagglehub~=0.3.13
 fastapi_camelcase~=2.0.0
 psutil~=7.0.0
 pytest~=8.4.1
+fastapi_camelcase~=2.0.0
+numpy~=2.2.6
+networkx==3.4.2
