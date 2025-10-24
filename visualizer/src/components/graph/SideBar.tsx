@@ -1,17 +1,12 @@
 import React from 'react';
-import { GraphOptionsControlPanel } from './GraphOptionsControlPanel';
-import {
-  Filter,
-  Settings,
-  Calendar,
-  ChevronRight,
-  ChevronLeft,
-  LucideIcon,
-} from 'lucide-react';
-import { GraphFilterControlPanel } from './FilterControlPanel/GraphFilterControlPanel';
+import { GraphOptionsPanel } from './controls/GraphOptionsPanel';
+import { Filter, LucideIcon, Puzzle, Settings } from 'lucide-react';
+import { GraphFilterPanel } from './controls/GraphFilterPanel';
+import { HiddenControlPanel } from './controls/HiddenControlPanel';
+import { CommunitiesPanel } from './controls/CommunitiesPanel';
 
 export const SideBar: React.FC = () => {
-  type PanelType = 'controls' | 'filters' | 'settings' | null;
+  type PanelType = 'filters' | 'communities' | 'settings' | null;
 
   const [activePanel, setActivePanel] = React.useState<PanelType>(null);
 
@@ -26,7 +21,6 @@ export const SideBar: React.FC = () => {
     name: PanelType;
     Icon: LucideIcon;
   }) => {
-    console.log(JSON.stringify(Icon));
     return (
       <button
         onClick={() => togglePanel(name)}
@@ -37,7 +31,7 @@ export const SideBar: React.FC = () => {
           justifyContent: 'center',
         }}
       >
-        <Icon size={20} />
+        <Icon size={22} />
       </button>
     );
   };
@@ -52,6 +46,7 @@ export const SideBar: React.FC = () => {
         height: '100vh',
         backgroundColor: 'rgba(245, 245, 245, .7)',
         padding: '5px',
+        paddingTop: '10px',
         boxSizing: 'border-box',
         display: 'flex',
         flexDirection: 'column',
@@ -59,23 +54,22 @@ export const SideBar: React.FC = () => {
       }}
     >
       <ToggleButton name={'filters'} Icon={Filter} />
-      <div
-        className={
-          'panel control-panel ' +
-          (activePanel === 'filters' ? '' : 'control-panel--hidden')
-        }
-      >
-        <GraphFilterControlPanel />
-      </div>
+      <HiddenControlPanel hidden={activePanel === 'filters'}>
+        <h2>Graph Filter Control</h2>
+        <GraphFilterPanel />
+      </HiddenControlPanel>
+
+      <ToggleButton name={'communities'} Icon={Puzzle} />
+      <HiddenControlPanel hidden={activePanel === 'communities'}>
+        <h2>Sub-narrative Detection</h2>
+        <CommunitiesPanel />
+      </HiddenControlPanel>
+
       <ToggleButton name={'settings'} Icon={Settings} />
-      <div
-        className={
-          'panel control-panel ' +
-          (activePanel === 'settings' ? '' : 'control-panel--hidden')
-        }
-      >
-        <GraphOptionsControlPanel />
-      </div>
+      <HiddenControlPanel hidden={activePanel === 'settings'}>
+        <h2>Settings</h2>
+        <GraphOptionsPanel />
+      </HiddenControlPanel>
     </div>
   );
 };

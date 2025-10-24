@@ -1,12 +1,12 @@
 import React from 'react';
-import './graph.css';
+import '../graph.css';
 import {
   isSmoothEnabled,
   useGraphOptionsContext,
-} from '../../contexts/GraphOptionsContext';
-import { NamedInput } from '../common/input/NamedInput';
+} from '../../../contexts/GraphOptionsContext';
+import { NamedInput } from '../../common/input/NamedInput';
 
-export const GraphOptionsControlPanel: React.FC = () => {
+export const GraphOptionsPanel: React.FC = () => {
   const { options, setOptions } = useGraphOptionsContext();
 
   return (

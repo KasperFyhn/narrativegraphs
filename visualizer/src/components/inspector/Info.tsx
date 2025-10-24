@@ -48,7 +48,7 @@ export const Info: React.FC<InfoProps> = ({ type, id }) => {
   }
 
   return (
-    <div>
+    <>
       <p>Frequency: {details.stats.frequency}</p>
       <p>Document hits: {details.stats.docFrequency}</p>
       {details.stats.firstOccurrence && (
@@ -80,7 +80,7 @@ export const Info: React.FC<InfoProps> = ({ type, id }) => {
         {docs === undefined && <button onClick={loadDocs}>Load docs</button>}
         {docs === null && <ClipLoader loading={true} />}
         {docs && (
-          <div className={'scroll-content'}>
+          <div>
             <button
               style={{ marginBottom: '3px' }}
               onClick={() => setDocs(undefined)}
@@ -102,6 +102,6 @@ export const Info: React.FC<InfoProps> = ({ type, id }) => {
           </div>
         )}
       </div>
-    </div>
+    </>
   );
 };

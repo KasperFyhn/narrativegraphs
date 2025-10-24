@@ -13,7 +13,7 @@ import {
 import { CategorySelector } from './CategorySelector';
 import { NamedInput } from '../../common/input/NamedInput';
 
-export const GraphFilterControlPanel: React.FC = () => {
+export const GraphFilterPanel: React.FC = () => {
   const {
     dataBounds,
     filter,

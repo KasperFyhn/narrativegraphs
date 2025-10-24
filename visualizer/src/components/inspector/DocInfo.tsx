@@ -203,11 +203,14 @@ export const DocInfo: React.FC<DocInfoProps> = ({
         predicateId={predicateId}
         objectId={objectId}
       />
-      <br />
+
       {document.text !== excerpt.text && (
-        <button onClick={() => setShowExcerpt((prevState) => !prevState)}>
-          {showExcerpt ? 'Show more' : 'Show less'}
-        </button>
+        <>
+          <br />
+          <button onClick={() => setShowExcerpt((prevState) => !prevState)}>
+            {showExcerpt ? 'Show more' : 'Show less'}
+          </button>
+        </>
       )}
     </div>
   );

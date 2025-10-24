@@ -1,3 +1,4 @@
+import math
 from collections import defaultdict
 from functools import partial
 from typing import List, Callable, Literal
@@ -238,7 +239,7 @@ class GraphService(SubService):
 
         # Internal density
         possible_edges = len(comm) * (len(comm) - 1) / 2
-        internal_density = (
+        density = (
             subgraph.number_of_edges() / possible_edges if possible_edges > 0 else 0
         )
 
@@ -261,8 +262,8 @@ class GraphService(SubService):
         conductance = boundary / total if total > 0 else 0
 
         return {
-            "score": internal_density * (1 - conductance),
-            "density": internal_density,
+            "score": density * (1 - conductance),
+            "density": density,
             "avg_pmi": avg_pmi,
             "conductance": conductance
         }

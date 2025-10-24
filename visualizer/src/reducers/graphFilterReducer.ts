@@ -32,6 +32,10 @@ export type GraphFilterAction =
       payload: string;
     }
   | {
+      type: 'SET_WHITELIST_ENTITIES';
+      payload: string[];
+    }
+  | {
       type: 'ADD_BLACKLIST_ENTITY';
       payload: string[];
     }
@@ -152,6 +156,12 @@ export function graphFilterReducer(
           action.payload,
           state.whitelistedEntityIds,
         ),
+      };
+
+    case 'SET_WHITELIST_ENTITIES':
+      return {
+        ...state,
+        whitelistedEntityIds: action.payload,
       };
 
     case 'ADD_BLACKLIST_ENTITY':
