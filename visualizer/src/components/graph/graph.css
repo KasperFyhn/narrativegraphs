@@ -46,13 +46,13 @@
 .control-panel {
   position: fixed;
   top: 5px;
-  right: 5px;
+  right: 55px;
   z-index: 3;
   width: 25%;
-  min-width: 250px;
-  max-width: 400px;
+  min-width: 200px;
+  max-width: 300px;
   max-height: 80%;
-  transition: 0.4s;
+  transition: 0.2s;
 }
 
 .control-panel--hidden {
