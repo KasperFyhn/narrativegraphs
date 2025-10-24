@@ -11,6 +11,7 @@ import {
   EntityWhitelistControl,
 } from './EntityListControl';
 import { CategorySelector } from './CategorySelector';
+import { NamedInput } from '../../common/input/NamedInput';
 
 export const GraphFilterControlPanel: React.FC = () => {
   const {
@@ -47,47 +48,40 @@ export const GraphFilterControlPanel: React.FC = () => {
           Redo
         </button>
       </div>
-      <div className={'flex-container'}>
-        <span className={'option-span'}>Limit nodes:&nbsp;</span>
+      <NamedInput name={'Limit Nodes'}>
         <SubmittedNumberInput
           startValue={filter.limitNodes}
           onSubmit={setNodeLimit}
         />
-      </div>
-      <div className={'flex-container'}>
-        <span className={'option-span'}>Node Frequency:&nbsp;</span>
-        <NodeFrequencySlider />
-      </div>
-      <div className={'flex-container'}>
-        <span className={'option-span'}>Limit edges:&nbsp;</span>
+      </NamedInput>
+      <NamedInput name={'Limit edges'}>
         <SubmittedNumberInput
           startValue={filter.limitEdges}
           onSubmit={setEdgeLimit}
         />
-      </div>
-      <div className={'flex-container'}>
-        <span className={'option-span'}>Edge Frequency:&nbsp;</span>
+      </NamedInput>
+      <NamedInput name={'Node Frequency'}>
+        <NodeFrequencySlider />
+      </NamedInput>
+      <NamedInput name={'Edge Frequency'}>
         <EdgeFrequencySlider />
-      </div>
-      <div className={'flex-container'}>
-        <span className={'option-span'}>Search nodes:</span>
+      </NamedInput>
+      <NamedInput name={'Search'}>
         <SubmittedTextInput onSubmit={setLabelSearch} />
-      </div>
+      </NamedInput>
       {dataBounds.categories && (
-        <div className={'flex-container--vertical'}>
-          <span className={'option-span'}>Categories:</span>
+        <NamedInput name={'Categories'}>
           <CategorySelector />
-        </div>
+        </NamedInput>
       )}
       {dataBounds.earliestDate && dataBounds.latestDate && (
-        <div className={'flex-container'}>
-          <span className={'option-span'}>Date Filter:</span>
+        <NamedInput name={'Date Range'}>
           <SubmittedDataRangeInput
             min={dataBounds.earliestDate}
             max={dataBounds.latestDate}
             onSubmit={setDateRange}
           />
-        </div>
+        </NamedInput>
       )}
       <div className={'flex-container flex-container--vertical'}>
         <EntityWhitelistControl />

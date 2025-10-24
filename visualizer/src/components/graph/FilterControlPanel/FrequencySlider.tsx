@@ -14,7 +14,7 @@ const FrequencySlider: React.FC<FrequencySliderProps> = (
   props: FrequencySliderProps,
 ) => {
   return (
-    <div style={{ width: '250px' }}>
+    <div style={{ minWidth: '150px' }}>
       <LogarithmicRangeSlider
         {...props}
         style={{ border: 'none', boxShadow: 'none', padding: '15px 10px' }}

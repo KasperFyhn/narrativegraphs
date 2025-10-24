@@ -118,6 +118,7 @@ const LogarithmicRangeSlider: React.FC<LogarithmicRangeSliderProps> = ({
       minCaption={String(minCaption)} // Use the updated caption state
       maxCaption={String(maxCaption)} // Use the updated caption state
       labels={labels}
+      barInnerColor={'transparent'}
       {...rest}
       ruler={ruler || false}
     />

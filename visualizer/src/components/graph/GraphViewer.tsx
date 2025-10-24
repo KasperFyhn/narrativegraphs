@@ -1,13 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Graph, { GraphEvents } from 'react-vis-graph-wrapper';
-import { GraphOptionsControlPanel } from './GraphOptionsControlPanel';
 import { Edge, GraphData, Node } from '../../types/graph';
 import { NodeInfo } from '../inspector/NodeInfo';
 import { EdgeInfo } from '../inspector/EdgeInfo';
 import { useServiceContext } from '../../contexts/ServiceContext';
 import { useGraphFilter } from '../../hooks/useGraphFilter';
-import { GraphFilterControlPanel } from './FilterControlPanel/GraphFilterControlPanel';
 import { useGraphOptionsContext } from '../../contexts/GraphOptionsContext';
+import { SideBar } from './SideBar';
 
 export const GraphViewer: React.FC = () => {
   const { graphService } = useServiceContext();
@@ -97,38 +96,14 @@ export const GraphViewer: React.FC = () => {
     },
   };
 
-  const [showControlPanel, setShowControlPanel] = useState<boolean>(true);
-
   return (
     <div>
-      <button
-        onClick={() => setShowControlPanel((prev) => !prev)}
-        style={{
-          position: 'absolute',
-          top: '1px',
-          right: '1px',
-          zIndex: 5,
-          fontSize: '16px',
-        }}
-      >
-        {showControlPanel ? <>&#8614;</> : <>&#8612;</>}
-      </button>
-      <div
-        className={
-          'panel control-panel ' +
-          (showControlPanel ? '' : 'control-panel--hidden')
-        }
-      >
-        <GraphOptionsControlPanel />
-        <hr />
-        <GraphFilterControlPanel />
-      </div>
-
       <div className="graph-container">
         {selectedNode && <NodeInfo node={selectedNode} />}
         {selectedEdge && <EdgeInfo edge={selectedEdge} />}
         <Graph graph={coloredGraphData} events={events} options={options} />
       </div>
+      <SideBar />
     </div>
   );
 };

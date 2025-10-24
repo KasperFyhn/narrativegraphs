@@ -4,14 +4,14 @@ import {
   isSmoothEnabled,
   useGraphOptionsContext,
 } from '../../contexts/GraphOptionsContext';
+import { NamedInput } from '../common/input/NamedInput';
 
 export const GraphOptionsControlPanel: React.FC = () => {
   const { options, setOptions } = useGraphOptionsContext();
 
   return (
     <div className={'flex-container flex-container--vertical'}>
-      <div className={'flex-container'}>
-        <span className={'option-span'}>Physics enabled:</span>
+      <NamedInput name={'Physics'}>
         <input
           type={'checkbox'}
           checked={options.physics.enabled}
@@ -25,9 +25,8 @@ export const GraphOptionsControlPanel: React.FC = () => {
             })
           }
         />
-      </div>
-      <div className={'flex-container'}>
-        <span className={'option-span'}>Rounded edges:</span>
+      </NamedInput>
+      <NamedInput name={'Rounded Edges'}>
         <input
           type={'checkbox'}
           checked={isSmoothEnabled(options)}
@@ -41,9 +40,8 @@ export const GraphOptionsControlPanel: React.FC = () => {
             })
           }
         />
-      </div>
-      <div className={'flex-container'}>
-        <span className={'option-span'}>Edge length:</span>
+      </NamedInput>
+      <NamedInput name={'Edge Length'}>
         <input
           type="range"
           min="50"
@@ -60,9 +58,8 @@ export const GraphOptionsControlPanel: React.FC = () => {
               },
             })
           }
-          step="1"
         />
-      </div>
+      </NamedInput>
     </div>
   );
 };

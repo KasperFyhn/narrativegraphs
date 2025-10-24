@@ -54,6 +54,8 @@ export const SubmittedDataRangeInput: React.FC<
           onSubmit(finalStartDate, finalEndDate);
         }
       }}
+      className="flex-container flex-container--vertical"
+      style={{ gap: '2px' }}
     >
       <input
         type="date"
