@@ -1,6 +1,9 @@
+from typing import Optional
+
 from fastapi import APIRouter, Depends
 
 from narrativegraph.dto.filter import DataBounds, GraphFilter
+from narrativegraph.dto.graph import Community
 from narrativegraph.server.routes.common import get_query_service
 from narrativegraph.service import QueryService
 
@@ -13,6 +16,14 @@ async def get_graph(
 ):
     """Get graph data with entities and relations based on filters"""
     return service.graph.get_graph(graph_filter)
+
+
+@router.post("/communities")
+async def get_bounds(
+    graph_filter: Optional[GraphFilter] = None,
+    service: QueryService = Depends(get_query_service),
+) -> list[Community]:
+    return service.graph.find_communities(graph_filter)
 
 
 @router.get("/bounds")

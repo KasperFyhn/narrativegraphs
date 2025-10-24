@@ -12,7 +12,7 @@ from narrativegraph.db.entities import EntityOrm
 from narrativegraph.db.relations import RelationOrm
 from narrativegraph.dto.entities import EntityLabel
 from narrativegraph.dto.filter import GraphFilter
-from narrativegraph.dto.graph import Node, Edge, Relation
+from narrativegraph.dto.graph import Node, Edge, Relation, Community
 from narrativegraph.service.common import SubService
 from narrativegraph.service.filter import (
     create_relation_conditions,
@@ -232,14 +232,49 @@ class GraphService(SubService):
 
             return {"edges": edges, "nodes": nodes}
 
+    @staticmethod
+    def _community_metrics(graph: nx.Graph, comm: set[int]):
+        subgraph = graph.subgraph(comm)
+
+        # Internal density
+        possible_edges = len(comm) * (len(comm) - 1) / 2
+        internal_density = (
+            subgraph.number_of_edges() / possible_edges if possible_edges > 0 else 0
+        )
+
+        # Average internal PMI
+        avg_pmi = (
+            sum(graph[u][v]["weight"] for u, v in subgraph.edges())
+            / subgraph.number_of_edges()
+            if subgraph.number_of_edges() > 0
+            else 0
+        )
+
+        # Conductance (boundary edges / total edges touching community)
+        boundary = sum(
+            1
+            for node in comm
+            for neighbor in graph.neighbors(node)
+            if neighbor not in comm
+        )
+        total = boundary + 2 * subgraph.number_of_edges()
+        conductance = boundary / total if total > 0 else 0
+
+        return {
+            "score": internal_density * (1 - conductance),
+            "density": internal_density,
+            "avg_pmi": avg_pmi,
+            "conductance": conductance
+        }
+
     def find_communities(
         self,
         graph_filter: GraphFilter = None,
         weight_measure: Literal["pmi", "frequency"] = "pmi",
-        community_detection_method: Callable[
-            [nx.Graph], list[set[int]]
-        ] = partial(community.louvain_communities, resolution=2),
-    ) -> list[list[EntityLabel]]:
+        community_detection_method: Callable[[nx.Graph], list[set[int]]] = partial(
+            community.louvain_communities, resolution=2
+        ),
+    ) -> list[Community]:
         if graph_filter is None:
             graph_filter = GraphFilter()
 
@@ -282,5 +317,12 @@ class GraphService(SubService):
 
             result = community_detection_method(graph)
 
-            return [[EntityLabel.from_orm(entity_map[entity]) for entity in comm]
-                    for comm in result]
+            return [
+                Community(
+                    members=[
+                        EntityLabel.from_orm(entity_map[entity]) for entity in comm
+                    ],
+                    **self._community_metrics(graph, comm),
+                )
+                for comm in result
+            ]

@@ -28,6 +28,14 @@ export interface GraphData {
   edges: Edge[];
 }
 
+export interface Community {
+  members: Identifiable[];
+  score: number;
+  density: number;
+  avgPmi: number;
+  conductance: number;
+}
+
 export interface TextStats {
   frequency: number;
   docFrequency: number;

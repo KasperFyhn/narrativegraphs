@@ -1,5 +1,8 @@
+import networkx as nx
 from fastapi_camelcase import CamelModel
 from pydantic import Field
+
+from narrativegraph.dto.entities import EntityLabel
 
 
 class Node(CamelModel):
@@ -38,4 +41,13 @@ class Graph(CamelModel):
 
     edges: list[Edge]
     nodes: list[Node]
+
+
+class Community(CamelModel):
+    """Community in the graph"""
+    members: list[EntityLabel]
+    score: float
+    density: float
+    avg_pmi: float
+    conductance: float
 

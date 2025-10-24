@@ -1,4 +1,4 @@
-import { Details, GraphData } from '../types/graph';
+import { Community, GraphData } from '../types/graph';
 import { DataBounds, GraphFilter } from '../types/graphFilter';
 
 export interface GraphService {
@@ -6,9 +6,7 @@ export interface GraphService {
 
   getGraph(filter?: GraphFilter): Promise<GraphData>;
 
-  getEntityDetails(id: string | number): Promise<Details>;
-
-  getRelationDetails(ids: string | number): Promise<Details>;
+  findCommunities(filter?: GraphFilter): Promise<Community[]>;
 }
 
 export class GraphServiceImpl implements GraphService {
@@ -44,27 +42,20 @@ export class GraphServiceImpl implements GraphService {
       throw new Error(`Failed to fetch graph: ${response.statusText}`);
     }
 
-    const r = await response.json();
-    return r;
-  }
-
-  async getEntityDetails(id: string | number): Promise<Details> {
-    const response = await fetch(`${this.baseUrl}/entities/${id}`);
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch entity details: ${response.statusText}`);
-    }
-
     return await response.json();
   }
 
-  async getRelationDetails(id: string | number): Promise<Details> {
-    const response = await fetch(`${this.baseUrl}/relations/${id}`);
+  async findCommunities(
+    filter?: GraphFilter | undefined,
+  ): Promise<Community[]> {
+    const response = await fetch(`${this.baseUrl}/graph/communities`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(filter),
+    });
 
     if (!response.ok) {
-      throw new Error(
-        `Failed to fetch relation details: ${response.statusText}`,
-      );
+      throw new Error(`Failed to fetch communities: ${response.statusText}`);
     }
 
     return await response.json();
