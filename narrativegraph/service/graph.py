@@ -1,4 +1,3 @@
-import math
 from collections import defaultdict
 from functools import partial
 from typing import List, Callable, Literal
@@ -20,6 +19,7 @@ from narrativegraph.service.filter import (
     create_entity_conditions,
     entity_whitelist_filter,
     entity_label_filter,
+    create_co_occurrence_conditions,
 )
 
 
@@ -131,7 +131,6 @@ class GraphService(SubService):
             extra_conditions = entity_conditions + [
                 EntityOrm.id.in_(connected_entity_ids)
             ]
-
             extra_query = (
                 db.query(EntityOrm)
                 .filter(and_(*extra_conditions))
@@ -283,7 +282,7 @@ class GraphService(SubService):
         entity_conditions = create_entity_conditions(graph_filter)
 
         # Build relation filter conditions
-        relation_conditions = create_relation_conditions(graph_filter)
+        coc_conditions = create_co_occurrence_conditions(graph_filter)
 
         with self.get_session_context() as db:
 
@@ -293,15 +292,14 @@ class GraphService(SubService):
             entity_ids = list(entity_map.keys())
 
             # Get relations between entities
-            coc_query_conditions = [
-                and_(
-                    *relation_conditions,
+            coc_query_conditions = and_(
+                    *coc_conditions,
                     CoOccurrenceOrm.entity_one_id.in_(entity_ids),
                     CoOccurrenceOrm.entity_two_id.in_(entity_ids),
                 )
-            ]
+
             co_occurrences: list[CoOccurrenceOrm] = (
-                db.query(CoOccurrenceOrm).filter(or_(*coc_query_conditions)).all()
+                db.query(CoOccurrenceOrm).filter(coc_query_conditions).all()
             )
 
             graph = nx.Graph()

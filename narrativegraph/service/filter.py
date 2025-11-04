@@ -1,6 +1,8 @@
 from typing import Optional
 
 from sqlalchemy import and_, or_, between
+
+from narrativegraph.db.cooccurrences import CoOccurrenceOrm
 from narrativegraph.db.documents import DocumentCategory, DocumentOrm
 from narrativegraph.db.relations import RelationCategory, RelationOrm
 from narrativegraph.db.entities import EntityCategory, EntityOrm
@@ -80,6 +82,14 @@ def relation_frequency_filter(graph_filter: GraphFilter) -> list:
         graph_filter.maximum_edge_frequency,
     )
 
+def co_occurrence_frequency_filter(graph_filter: GraphFilter) -> list:
+    """Create relation term frequency filter"""
+    return frequency_filter(
+        CoOccurrenceOrm,
+        graph_filter.minimum_edge_frequency,
+        graph_filter.maximum_edge_frequency,
+    )
+
 
 def entity_blacklist_filter(graph_filter: GraphFilter) -> list:
     """Filter out blacklisted entities"""
@@ -124,4 +134,11 @@ def create_relation_conditions(graph_filter: GraphFilter) -> list:
         date_filter(RelationOrm, graph_filter),
         category_filter(RelationOrm, graph_filter),
         relation_frequency_filter(graph_filter),
+    )
+
+def create_co_occurrence_conditions(graph_filter: GraphFilter) -> list:
+    return combine_filters(
+        date_filter(CoOccurrenceOrm, graph_filter),
+        category_filter(CoOccurrenceOrm, graph_filter),
+        co_occurrence_frequency_filter(graph_filter),
     )
