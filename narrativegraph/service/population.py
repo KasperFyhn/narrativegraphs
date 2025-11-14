@@ -1,22 +1,23 @@
-import math
 from datetime import date
+from typing import Type
 
-from sqlalchemy import func
-from sqlalchemy.orm import Session, InstrumentedAttribute
-from tqdm import tqdm
+from sqlalchemy import select, update, insert, func, union_all
+from sqlalchemy.orm import Session, aliased
+from sqlalchemy.orm.attributes import InstrumentedAttribute
 
+from narrativegraph.db.common import CategoryMixin
+from narrativegraph.db.cooccurrences import CoOccurrenceCategory, CoOccurrenceOrm
 from narrativegraph.db.documents import DocumentCategory, DocumentOrm
+from narrativegraph.db.engine import Base
+from narrativegraph.db.entities import EntityCategory, EntityOrm
 from narrativegraph.db.predicates import PredicateOrm, PredicateCategory
-from narrativegraph.db.triplets import (
-    TripletOrm,
-    TripletBackedTextStatsMixin,
-)
 from narrativegraph.db.relations import (
     RelationCategory,
     RelationOrm,
 )
-from narrativegraph.db.cooccurrences import CoOccurrenceCategory, CoOccurrenceOrm
-from narrativegraph.db.entities import EntityCategory, EntityOrm
+from narrativegraph.db.triplets import (
+    TripletOrm,
+)
 from narrativegraph.nlp.extraction.common import Triplet
 from narrativegraph.service.common import DbService
 
@@ -96,13 +97,14 @@ class PopulationService(DbService):
 
     def add_triplets(
         self,
-        doc_id: int,
+        doc: DocumentOrm,
         triplets: list[Triplet],
     ):
         with self.get_session_context() as sc:
             triplet_orms = [
                 TripletOrm(
-                    doc_id=doc_id,
+                    doc_id=doc.id,
+                    timestamp=doc.timestamp,
                     subj_span_start=triplet.subj.start_char,
                     subj_span_end=triplet.subj.end_char,
                     subj_span_text=triplet.subj.text,
@@ -123,20 +125,22 @@ class PopulationService(DbService):
         predicate_mappings: dict[str, str],
     ):
         with self.get_session_context() as sc:
-            cache = Cache(sc, entity_mappings, predicate_mappings)
+            triplets = self.get_triplets()
 
-            for triplet in tqdm(sc.query(TripletOrm).all(), desc="Mapping triplets"):
-                subject_id = cache.get_or_create_entity(triplet.subj_span_text)
-                predicate_id = cache.get_or_create_predicate(
+            cache = Cache(sc, entity_mappings, predicate_mappings, triplets)
+
+            for triplet in triplets:
+                subject_id = cache.get_entity_id(triplet.subj_span_text)
+                predicate_id = cache.get_predicate_id(
                     triplet.pred_span_text,
                 )
-                object_id = cache.get_or_create_entity(triplet.obj_span_text)
-                relation_id = cache.get_or_create_relation(
+                object_id = cache.get_entity_id(triplet.obj_span_text)
+                relation_id = cache.get_relation_id(
                     subject_id,
                     predicate_id,
                     object_id,
                 )
-                co_occurrence_id = cache.get_or_create_co_occurrence(
+                co_occurrence_id = cache.get_co_occurrence_id(
                     subject_id,
                     object_id,
                 )
@@ -149,7 +153,217 @@ class PopulationService(DbService):
 
             sc.commit()
 
-            cache.calculate_stats()
+            self.calculate_stats()
+
+    def _update_stats_for_type(
+        self,
+        orm_class: Type[Base],
+        triplet_fk_columns: InstrumentedAttribute | list[InstrumentedAttribute],
+        n_docs: int,
+    ):
+        """
+        Generic stats update for any ORM type linked to triplets.
+
+        Args:
+            orm_class: The ORM class to update (EntityOrm, PredicateOrm, etc.)
+            triplet_fk_columns: Single column or list of columns that link to this entity.
+                               If list, will UNION results (e.g., for entities as subject/object)
+            n_docs: Total number of documents
+        """
+
+        # Normalize to list
+        with self.get_session_context() as session:
+
+            if not isinstance(triplet_fk_columns, list):
+                triplet_fk_columns = [triplet_fk_columns]
+
+            triplet_queries = []
+            for fk_column in triplet_fk_columns:
+                triplet_queries.append(
+                    select(
+                        fk_column.label("target_id"),
+                        TripletOrm.id.label("triplet_id"),
+                        TripletOrm.doc_id,
+                        TripletOrm.timestamp,
+                    ).where(fk_column.isnot(None))
+                )
+
+            # union_all handles single query case
+            triplet_union = union_all(*triplet_queries).subquery()
+
+            # Aggregate stats
+            stats_subquery = (
+                select(
+                    triplet_union.c.target_id,
+                    func.count(triplet_union.c.triplet_id).label("frequency"),
+                    func.count(func.distinct(triplet_union.c.doc_id)).label(
+                        "doc_frequency"
+                    ),
+                    func.min(triplet_union.c.timestamp).label("first_occurrence"),
+                    func.max(triplet_union.c.timestamp).label("last_occurrence"),
+                )
+                .group_by(triplet_union.c.target_id)
+                .subquery()
+            )
+
+            # Bulk update
+            update_stmt = (
+                update(orm_class)
+                .values(
+                    frequency=stats_subquery.c.frequency,
+                    doc_frequency=stats_subquery.c.doc_frequency,
+                    adjusted_tf_idf=(
+                        (stats_subquery.c.frequency - 1)
+                        * (n_docs / (stats_subquery.c.doc_frequency + 1))
+                    ),
+                    first_occurrence=stats_subquery.c.first_occurrence,
+                    last_occurrence=stats_subquery.c.last_occurrence,
+                )
+                .where(orm_class.id == stats_subquery.c.target_id)
+            )
+
+            session.execute(update_stmt)
+
+    def _update_categories_for_type(
+        self,
+        category_orm_class: Type[CategoryMixin],
+        triplet_fk_columns: InstrumentedAttribute | list[InstrumentedAttribute],
+    ):
+        """Generic category update for any type linked to triplets."""
+        with self.get_session_context() as session:
+            session.query(category_orm_class).delete()
+
+            # Normalize to list
+            if not isinstance(triplet_fk_columns, list):
+                triplet_fk_columns = [triplet_fk_columns]
+
+            # Build union of categories from all foreign key columns
+            category_queries = []
+            for fk_column in triplet_fk_columns:
+                category_queries.append(
+                    select(
+                        fk_column.label("target_id"),
+                        DocumentCategory.name,
+                        DocumentCategory.value,
+                    )
+                    .join(DocumentOrm, TripletOrm.doc_id == DocumentOrm.id)
+                    .join(
+                        DocumentCategory, DocumentOrm.id == DocumentCategory.target_id
+                    )
+                    .where(fk_column.isnot(None))
+                )
+
+            # Build queries for all columns
+            category_queries = []
+            for fk_column in triplet_fk_columns:
+                category_queries.append(
+                    select(
+                        fk_column.label("target_id"),
+                        DocumentCategory.name,
+                        DocumentCategory.value,
+                    )
+                    .join(DocumentOrm, TripletOrm.doc_id == DocumentOrm.id)
+                    .join(
+                        DocumentCategory, DocumentOrm.id == DocumentCategory.target_id
+                    )
+                    .where(fk_column.isnot(None))
+                )
+            categories_select = union_all(*category_queries).subquery()
+
+            # Bulk insert
+            insert_stmt = insert(category_orm_class).from_select(
+                ["target_id", "name", "value"], categories_select
+            )
+
+            session.execute(insert_stmt)
+
+    def update_entity_info(self, n_docs: int = None):
+        with self.get_session_context() as session:
+            if n_docs is None:
+                n_docs = session.query(DocumentOrm).count()
+
+            self._update_stats_for_type(
+                EntityOrm, [TripletOrm.subject_id, TripletOrm.object_id], n_docs
+            )
+            self._update_categories_for_type(
+                EntityCategory, [TripletOrm.subject_id, TripletOrm.object_id]
+            )
+            session.commit()
+
+    def update_predicate_info(self, n_docs: int = None):
+        with self.get_session_context() as session:
+            if n_docs is None:
+                n_docs = session.query(DocumentOrm).count()
+
+            self._update_stats_for_type(PredicateOrm, TripletOrm.predicate_id, n_docs)
+            self._update_categories_for_type(PredicateCategory, TripletOrm.predicate_id)
+            session.commit()
+
+    def update_relation_info(self, n_docs: int = None):
+        with self.get_session_context() as session:
+            if n_docs is None:
+                n_docs = session.query(DocumentOrm).count()
+
+            self._update_stats_for_type(RelationOrm, TripletOrm.relation_id, n_docs)
+            self._update_categories_for_type(RelationCategory, TripletOrm.relation_id)
+            session.commit()
+
+    def update_co_occurrence_info(self, n_docs: int = None):
+        with self.get_session_context() as session:
+            if n_docs is None:
+                n_docs = session.query(DocumentOrm).count()
+
+            # Stats
+            self._update_stats_for_type(
+                CoOccurrenceOrm, TripletOrm.co_occurrence_id, n_docs
+            )
+
+            # PMI calculation (special to co-occurrences)
+            total_entity_occurrences = session.query(
+                func.sum(EntityOrm.frequency)
+            ).scalar()
+
+            entity_two_alias = aliased(EntityOrm)
+
+            pmi_subquery = (
+                select(
+                    CoOccurrenceOrm.id,
+                    (
+                        func.log(CoOccurrenceOrm.frequency)
+                        + func.log(total_entity_occurrences)
+                        - func.log(EntityOrm.frequency)
+                        - func.log(entity_two_alias.frequency)
+                    ).label("pmi"),
+                )
+                .join(EntityOrm, CoOccurrenceOrm.entity_one_id == EntityOrm.id)
+                .join(
+                    entity_two_alias,
+                    CoOccurrenceOrm.entity_two_id == entity_two_alias.id,
+                )
+                .subquery()
+            )
+
+            pmi_update = (
+                update(CoOccurrenceOrm)
+                .values(pmi=pmi_subquery.c.pmi)
+                .where(CoOccurrenceOrm.id == pmi_subquery.c.id)
+            )
+
+            session.execute(pmi_update)
+
+            self._update_categories_for_type(
+                CoOccurrenceCategory, TripletOrm.co_occurrence_id
+            )
+            session.commit()
+
+    def calculate_stats(self):
+        with self.get_session_context() as session:
+            n_docs = session.query(DocumentOrm).count()
+
+            self.update_entity_info(n_docs=n_docs)
+            self.update_predicate_info(n_docs=n_docs)
+            self.update_relation_info(n_docs=n_docs)
+            self.update_co_occurrence_info(n_docs=n_docs)
 
     def get_triplets(
         self,
@@ -165,23 +379,114 @@ class Cache:
         session: Session,
         entity_mappings: dict[str, str],
         predicate_mappings: dict[str, str],
+        triplets: list[TripletOrm],
     ):
         self._session = session
-        self._entities = {str(e.label): e for e in session.query(EntityOrm).all()}
-        self._predicates = {str(p.label): p for p in session.query(PredicateOrm).all()}
-        self._relations = {
-            (int(r.subject_id), int(r.predicate_id), int(r.object_id)): r  # noqa
-            for r in session.query(RelationOrm).all()
-        }
-        self._co_occurrences = {
-            (int(co.entity_one_id), int(co.entity_two_id)): co  # noqa
-            for co in session.query(CoOccurrenceOrm).all()
-        }
-
         self._entity_mappings = entity_mappings
         self._predicate_mappings = predicate_mappings
 
-    def get_or_create_entity(self, label: InstrumentedAttribute[str] | str):
+        self._entities = self._initialize_entities()
+        self._predicates = self._initialize_predicates()
+
+        self._co_occurrences = self._initialize_co_occurrences(triplets)
+        self._relations = self._initialize_relations(triplets)
+
+    def _initialize_entities(self) -> dict[str, EntityOrm]:
+        entities = {str(e.label): e for e in self._session.query(EntityOrm).all()}
+
+        new_entities = []
+        for mapped_entity in self._entity_mappings.values():
+            if mapped_entity not in entities:
+                new_entity = EntityOrm(label=mapped_entity)
+                entities[mapped_entity] = new_entity
+                new_entities.append(new_entity)
+
+        if new_entities:
+            self._session.add_all(new_entities)
+            self._session.flush()  # Get IDs without committing
+
+        return entities
+
+    def _initialize_predicates(self) -> dict[str, PredicateOrm]:
+        predicates = {str(p.label): p for p in self._session.query(PredicateOrm).all()}
+
+        new_predicates = []
+        for mapped_predicate in self._predicate_mappings.values():
+            if mapped_predicate not in predicates:
+                new_predicate = PredicateOrm(label=mapped_predicate)
+                predicates[mapped_predicate] = new_predicate
+                new_predicates.append(new_predicate)
+
+        if new_predicates:
+            self._session.add_all(new_predicates)
+            self._session.flush()
+
+        return predicates
+
+    def _initialize_co_occurrences(
+        self, triplets: list[TripletOrm]
+    ) -> dict[tuple[int, int], CoOccurrenceOrm]:
+        co_occurrences = {
+            (int(coc.entity_one_id), int(coc.entity_two_id)): coc
+            for coc in self._session.query(CoOccurrenceOrm).all()
+        }
+
+        new_co_occurrences = []
+        for triplet in triplets:
+            entity_id_1 = self.get_entity_id(triplet.subj_span_text)
+            entity_id_2 = self.get_entity_id(triplet.obj_span_text)
+            if entity_id_1 < entity_id_2:
+                key = entity_id_1, entity_id_2
+            else:
+                key = entity_id_2, entity_id_1
+            if key not in co_occurrences:
+                co_occurrence = CoOccurrenceOrm(
+                    entity_one_id=entity_id_1,
+                    entity_two_id=entity_id_2,
+                )
+                co_occurrences[key] = co_occurrence
+                new_co_occurrences.append(co_occurrence)
+
+        if new_co_occurrences:
+            self._session.add_all(new_co_occurrences)
+            self._session.flush()
+
+        return co_occurrences
+
+    def _initialize_relations(
+        self, triplets: list[TripletOrm]
+    ) -> dict[tuple[int, int, int], RelationOrm]:
+        relations = {
+            (int(r.subject_id), int(r.predicate_id), int(r.object_id)): r
+            for r in self._session.query(RelationOrm).all()
+        }
+
+        new_relations = []
+        for triplet in triplets:
+            subject_id = self.get_entity_id(triplet.subj_span_text)
+            predicate_id = self.get_predicate_id(
+                triplet.pred_span_text,
+            )
+            object_id = self.get_entity_id(triplet.obj_span_text)
+            relation_key = (subject_id, predicate_id, object_id)
+            if relation_key not in relations:
+                coc_id = self.get_co_occurrence_id(subject_id, object_id)
+                relation = RelationOrm(
+                    subject_id=subject_id,
+                    predicate_id=predicate_id,
+                    object_id=object_id,
+                    co_occurrence_id=coc_id,
+                )
+                relations[relation_key] = relation
+                new_relations.append(relation)
+
+        if new_relations:
+            self._session.add_all(new_relations)
+            self._session.flush()
+
+        return relations
+
+    def get_entity_id(self, label: InstrumentedAttribute[str] | str) -> int:
         """Fetch an entity by label, or create it if it doesn't exist."""
         mapped_entity = self._entity_mappings[label]
 
@@ -190,10 +495,10 @@ class Cache:
             entity = EntityOrm(label=mapped_entity)
             self._session.add(entity)
             self._session.flush()  # Get the ID immediately
-            self._entities[mapped_entity] = entity  # noqa
+            self._entities[mapped_entity] = entity
         return entity.id
 
-    def get_or_create_predicate(
+    def get_predicate_id(
         self,
         label: InstrumentedAttribute[str] | str,
     ):
@@ -207,19 +512,17 @@ class Cache:
             )
             self._session.add(predicate)
             self._session.flush()  # Get the ID immediately
-            self._predicates[mapped_predicate] = predicate  # noqa
+            self._predicates[mapped_predicate] = predicate
         return predicate.id
 
-    def get_or_create_relation(
-        self, subject_id: int, predicate_id: int, object_id: int
-    ):
+    def get_relation_id(self, subject_id: int, predicate_id: int, object_id: int):
         relation_key = (
             subject_id,
             predicate_id,
             object_id,
         )
 
-        co_occurrence_id = self.get_or_create_co_occurrence(subject_id, object_id)
+        co_occurrence_id = self.get_co_occurrence_id(subject_id, object_id)
 
         relation = self._relations.get(relation_key, None)
         if relation is None:
@@ -234,7 +537,7 @@ class Cache:
             self._relations[relation_key] = relation
         return relation.id
 
-    def get_or_create_co_occurrence(
+    def get_co_occurrence_id(
         self,
         entity_id_1: int,
         entity_id_2: int,
@@ -253,89 +556,3 @@ class Cache:
             self._session.flush()  # Get the ID immediately
             self._co_occurrences[key] = co_occurrence
         return co_occurrence.id
-
-    def update_entity_info(self, n_docs: int = None):
-        if n_docs is None:
-            n_docs = self._session.query(DocumentOrm).count()
-        for entity in tqdm(self._entities.values(), desc="Updating entity info"):
-            TripletBackedTextStatsMixin.set_from_triplets(
-                entity, entity.triplets, n_docs=n_docs
-            )
-            category_orms = EntityCategory.from_categorizable(
-                entity.id, entity.triplets
-            )
-            self._session.add_all(category_orms)
-
-        self._session.commit()
-
-    def update_predicate_info(self, n_docs: int = None):
-        if n_docs is None:
-            n_docs = self._session.query(DocumentOrm).count()
-        for predicate in tqdm(
-            self._predicates.values(),
-            desc="Updating predicate info",
-        ):
-            TripletBackedTextStatsMixin.set_from_triplets(
-                predicate, predicate.triplets, n_docs=n_docs
-            )
-
-            category_orms = PredicateCategory.from_categorizable(
-                predicate.id, predicate.triplets
-            )
-            self._session.add_all(category_orms)
-
-        self._session.commit()
-
-    def update_relation_info(self, n_docs: int = None):
-        if n_docs is None:
-            n_docs = self._session.query(DocumentOrm).count()
-        for relation in tqdm(
-            self._relations.values(),
-            desc="Updating relation info",
-        ):
-            TripletBackedTextStatsMixin.set_from_triplets(
-                relation, relation.triplets, n_docs=n_docs
-            )
-
-            category_orms = RelationCategory.from_categorizable(
-                relation.id, relation.triplets
-            )
-            self._session.add_all(category_orms)
-
-        self._session.commit()
-
-    def update_co_occurrence_info(self, n_docs: int = None):
-        if n_docs is None:
-            n_docs = self._session.query(DocumentOrm).count()
-        total_entity_occurrences = self._session.query(
-            func.sum(EntityOrm.frequency)
-        ).scalar()
-        for co_occurrence in tqdm(
-            self._co_occurrences.values(),
-            desc="Updating co-occurrence info",
-        ):
-            TripletBackedTextStatsMixin.set_from_triplets(
-                co_occurrence, co_occurrence.triplets, n_docs=n_docs
-            )
-
-            co_occurrence.pmi = (
-                math.log(co_occurrence.frequency)
-                + math.log(total_entity_occurrences)
-                - math.log(co_occurrence.entity_one.frequency)
-                - math.log(co_occurrence.entity_two.frequency)
-            )
-
-            category_orms = CoOccurrenceCategory.from_categorizable(
-                co_occurrence.id, co_occurrence.triplets
-            )
-            self._session.add_all(category_orms)
-
-        self._session.commit()
-
-    def calculate_stats(self):
-        n_docs = self._session.query(DocumentOrm).count()
-
-        self.update_entity_info(n_docs=n_docs)
-        self.update_predicate_info()
-        self.update_relation_info()
-        self.update_co_occurrence_info()

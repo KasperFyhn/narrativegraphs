@@ -10,9 +10,10 @@ from narrativegraph.nlp.mapping.common import Mapper
 class StemmingMapper(Mapper):
 
     def __init__(
-            self,
-            ignore_determiners: bool = True,
-            ranking: Literal["shortest", "most_frequent"] = "shortest"):
+        self,
+        ignore_determiners: bool = True,
+        ranking: Literal["shortest", "most_frequent"] = "shortest",
+    ):
         super().__init__()
         self._ignore_determiners = ignore_determiners
         self._ranking = ranking
@@ -24,8 +25,7 @@ class StemmingMapper(Mapper):
         if self._ignore_determiners:
             tokens = word_tokenize(label)
             pos_tagged = pos_tag(tokens)
-            label = ' '.join(w[0] for w in pos_tagged
-                             if w[1] != "DT")
+            label = " ".join(w[0] for w in pos_tagged if w[1] != "DT")
         return self._stemmer.stem(label)
 
     @staticmethod
@@ -48,16 +48,18 @@ class StemmingMapper(Mapper):
         for cluster in clusters.values():
             cluster.sort(key=ranker, reverse=True)
 
-        return {label: cluster[0] for cluster in clusters.values()
-                for label in cluster}
+        return {label: cluster[0] for cluster in clusters.values() for label in cluster}
 
 
 class SubgramStemmingMapper(StemmingMapper):
 
     def __init__(
-            self,
-            ignore_determiners: bool = True,
-            ranking: Literal["shortest", "most_frequent"] = "shortest"):
+        self,
+        head_word_subtag: str,
+        ignore_determiners: bool = True,
+        ranking: Literal["shortest", "most_frequent"] = "shortest",
+    ):
+        self._head_word_subtag = head_word_subtag
         super().__init__(ignore_determiners=ignore_determiners, ranking=ranking)
 
     def create_mapping(self, labels: list[str]) -> dict[str, str]:
@@ -65,13 +67,14 @@ class SubgramStemmingMapper(StemmingMapper):
 
         norm_map = {
             label: " "
-                   + self._normalize(label)
-                   + " "  # surrounding spaces avoids matches like evil <-> devil
+            + self._normalize(label)
+            + " "  # surrounding spaces avoids matches like evil <-> devil
             for label in counter.keys()
         }
         cluster_map = {
-            label: [] for label in counter.keys()
-            if len(label.split()) > 1 or "NN" in pos_tag([label])[0][1]
+            label: []
+            for label in counter.keys()
+            if self._head_word_subtag in pos_tag([label])[0][1]
         }
 
         unclustered = []
@@ -97,6 +100,11 @@ class SubgramStemmingMapper(StemmingMapper):
             if best_match != label:
                 cluster_map[best_match].append(label)
 
-        return {alt_label: main_label
-                for main_label, alt_labels in cluster_map.items()
-                for alt_label in alt_labels}
+        result = {
+            alt_label: main_label
+            for main_label, alt_labels in cluster_map.items()
+            for alt_label in alt_labels + [main_label]
+        }
+        for uc in unclustered:
+            result[uc] = uc
+        return result

@@ -1,5 +1,3 @@
-from datetime import date
-
 from sqlalchemy import Column, Integer, ForeignKey, String, Float, Date
 from sqlalchemy.orm import relationship
 
@@ -11,6 +9,7 @@ class TripletOrm(Base, CategorizableMixin):
     __tablename__ = "triplets"
     id = Column(Integer, primary_key=True, autoincrement=True)
     doc_id = Column(Integer, ForeignKey("documents.id"), nullable=False, index=True)
+    timestamp = Column(Date, nullable=False, index=True)
 
     subject_id = Column(Integer, ForeignKey("entities.id"), nullable=True, index=True)
     predicate_id = Column(
@@ -62,10 +61,6 @@ class TripletOrm(Base, CategorizableMixin):
     @property
     def categories(self) -> list[CategoryMixin]:
         return self.document.categories
-
-    @property
-    def timestamp(self) -> date:
-        return self.document.timestamp
 
 
 class TripletBackedTextStatsMixin:

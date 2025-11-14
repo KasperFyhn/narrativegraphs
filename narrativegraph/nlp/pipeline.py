@@ -9,6 +9,7 @@ from narrativegraph.nlp.extraction.spacy import NaiveSpacyTripletExtractor
 from narrativegraph.nlp.mapping import Mapper
 from narrativegraph.nlp.mapping.linguistic import StemmingMapper, SubgramStemmingMapper
 from narrativegraph.service import PopulationService
+from narrativegraph.service.population import Cache
 from narrativegraph.utils.transform import normalize_categories
 
 logging.basicConfig(level=logging.INFO)
@@ -22,7 +23,7 @@ class Pipeline:
         engine: Engine,
         triplet_extractor: TripletExtractor = None,
         entity_mapper: Mapper = None,
-        relation_mapper: Mapper = None,
+        predicate_mapper: Mapper = None,
     ):
         # Analysis components
         self._triplet_extractor = triplet_extractor or NaiveSpacyTripletExtractor(
@@ -30,7 +31,7 @@ class Pipeline:
             noun_chunks=(2, None),
         )
         self._entity_mapper = entity_mapper or StemmingMapper()
-        self._relation_mapper = relation_mapper or SubgramStemmingMapper()
+        self._predicate_mapper = predicate_mapper or StemmingMapper()
 
         self._db_service = PopulationService(engine)
         self.predicate_mapping = None
@@ -72,11 +73,11 @@ class Pipeline:
                 )
             for doc, doc_triplets in docs_and_triplets:
                 self._db_service.add_triplets(
-                    doc.id,
+                    doc,
                     doc_triplets,
                 )
 
-            _logger.info("Mapping entities and relations")
+            _logger.info("Mapping entities and predicates")
             triplets = self._db_service.get_triplets()
             entities = [
                 entity
@@ -86,7 +87,7 @@ class Pipeline:
             self.entity_mapping = self._entity_mapper.create_mapping(entities)
 
             predicates = [triplet.pred_span_text for triplet in triplets]
-            self.predicate_mapping = self._entity_mapper.create_mapping(predicates)
+            self.predicate_mapping = self._predicate_mapper.create_mapping(predicates)
 
             _logger.info("Mapping triplets")
             self._db_service.map_triplets(

@@ -13,6 +13,7 @@ from narrativegraph.dto.cooccurrences import CoOccurrenceDetails
 from narrativegraph.dto.documents import Document
 from narrativegraph.dto.entities import EntityDetails
 from narrativegraph.dto.filter import GraphFilter
+from narrativegraph.dto.graph import Community
 from narrativegraph.dto.predicates import PredicateDetails
 from narrativegraph.dto.relations import RelationDetails
 from narrativegraph.nlp.extraction import TripletExtractor
@@ -31,7 +32,7 @@ class NarrativeGraph:
         self,
         triplet_extractor: TripletExtractor = None,
         entity_mapper: Mapper = None,
-        relation_mapper: Mapper = None,
+        predicate_mapper: Mapper = None,
         sqlite_db_path: str = None,
         on_existing_db: Literal["stop", "overwrite", "reuse"] = "stop",
     ):
@@ -53,7 +54,7 @@ class NarrativeGraph:
             self._engine,
             triplet_extractor=triplet_extractor,
             entity_mapper=entity_mapper,
-            relation_mapper=relation_mapper,
+            predicate_mapper=predicate_mapper,
         )
 
     def fit(
@@ -124,7 +125,7 @@ class NarrativeGraph:
 
     def find_communities(
         self, graph_filter: GraphFilter = None
-    ) -> list[list[int]]:
+    ) -> list[Community]:
         return self._db_service.graph.find_communities(
             graph_filter=graph_filter
         )

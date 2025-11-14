@@ -91,7 +91,7 @@ class TestNarrativeGraphFileHandling:
         ng1 = NarrativeGraph(
             triplet_extractor=MockTripletExtractor(),
             entity_mapper=MockMapper(),
-            relation_mapper=MockMapper(),
+            predicate_mapper=MockMapper(),
         )
         ng1.fit(["Test document 1", "Test document 2"])
 
