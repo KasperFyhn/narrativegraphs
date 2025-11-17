@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import HighlightWithinTextarea from 'react-highlight-within-textarea';
-import './docinfo.css';
+import './DocInfo.css';
 import { Doc, Triplet, TripletField } from '../../types/doc';
 
 function subtractOffsetFromTripletField(

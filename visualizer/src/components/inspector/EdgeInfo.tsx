@@ -1,6 +1,7 @@
 import React from 'react';
 import { Info } from './Info';
 import { Edge } from '../../types/graph';
+import { Panel } from '../common/Panel';
 
 interface RelationInfoProps {
   id: string | number;
@@ -35,7 +36,7 @@ export const EdgeInfo: React.FC<EdgeInfoProps> = ({
   className,
 }: EdgeInfoProps) => {
   return (
-    <div className={'panel node-info ' + className}>
+    <Panel className={'node-info ' + className}>
       {edge.group.map((r, i) => (
         <div key={r.id}>
           <RelationInfo
@@ -52,6 +53,6 @@ export const EdgeInfo: React.FC<EdgeInfoProps> = ({
           )}
         </div>
       ))}
-    </div>
+    </Panel>
   );
 };

@@ -50,7 +50,10 @@ const CategorySelectorInner: React.FC<CategorySelectorInnerProps> = ({
         Edit
       </button>
       {editing && (
-        <FloatingWindow onCloseOrClickOutside={() => setEditing(false)}>
+        <FloatingWindow
+          title={'Categories'}
+          onCloseOrClickOutside={() => setEditing(false)}
+        >
           <div className={'flex-container'}>
             <button
               onClick={() => resetCategory(name)}

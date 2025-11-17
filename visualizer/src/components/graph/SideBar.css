@@ -1,0 +1,42 @@
+.side-bar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 50px;
+  height: 100vh;
+  background-color: rgba(245, 245, 245, .7);
+  padding: 10px 5px 5px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 9999;
+}
+
+.toggle-button {
+  background-color: lightgray;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.toggle-button--toggled {
+  background-color: gray;
+}
+
+.control-panel {
+  position: fixed;
+  top: 5px;
+  right: 55px;
+  z-index: 1;
+  width: 25%;
+  min-width: 200px;
+  max-width: 300px;
+  max-height: 80%;
+  transition: 0.2s;
+}
+
+.control-panel--hidden {
+  transform: translateX(500px);
+}

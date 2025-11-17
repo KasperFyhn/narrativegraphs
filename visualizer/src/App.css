@@ -1,4 +1,14 @@
-.navbar {
-  background-color: lightgreen;
-  padding: 10px;
+
+.flex-container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+}
+
+.flex-container--vertical {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 15px;
 }

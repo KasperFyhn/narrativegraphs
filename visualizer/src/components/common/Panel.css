@@ -1,0 +1,16 @@
+.panel {
+  margin: 2px;
+  padding: 10px;
+  background: whitesmoke;
+  border: 1px solid lightgray;
+  border-radius: 10px;
+  overflow-y: auto;
+}
+
+.panel__sub-panel {
+  padding: 10px;
+  margin-bottom: 4px;
+  background: white;
+  border: 1px solid lightgray;
+  border-radius: 5px;
+}

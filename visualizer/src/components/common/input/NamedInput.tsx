@@ -16,9 +16,7 @@ export const NamedInput: React.FC<NamedInputProps> = ({
         'flex-container' + (vertical ? ' flex-container--vertical' : '')
       }
     >
-      <span className={'option-span'} style={{ alignSelf: 'flex-start' }}>
-        {name}
-      </span>
+      <span style={{ alignSelf: 'flex-start', width: '130px' }}>{name}</span>
       <div style={{ marginLeft: 'auto', padding: 0 }}>{children}</div>
     </div>
   );

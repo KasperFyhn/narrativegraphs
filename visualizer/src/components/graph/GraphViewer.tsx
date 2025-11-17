@@ -98,7 +98,7 @@ export const GraphViewer: React.FC = () => {
 
   return (
     <div>
-      <div className="graph-container">
+      <div style={{ height: '100vh' }}>
         {selectedNode && <NodeInfo node={selectedNode} />}
         {selectedEdge && <EdgeInfo edge={selectedEdge} />}
         <Graph graph={coloredGraphData} events={events} options={options} />

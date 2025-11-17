@@ -4,6 +4,7 @@ import { Doc } from '../../types/doc';
 import { DocInfo } from './DocInfo';
 import { ClipLoader } from 'react-spinners';
 import { useServiceContext } from '../../contexts/ServiceContext';
+import './Info.css';
 
 export interface InfoProps {
   id: string | number;

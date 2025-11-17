@@ -1,75 +1,91 @@
 import React from 'react';
 import { GraphOptionsPanel } from './controls/GraphOptionsPanel';
-import { Filter, LucideIcon, Puzzle, Settings } from 'lucide-react';
+import { Filter, Puzzle, Settings } from 'lucide-react';
 import { GraphFilterPanel } from './controls/GraphFilterPanel';
-import { HiddenControlPanel } from './controls/HiddenControlPanel';
 import { CommunitiesPanel } from './controls/CommunitiesPanel';
+import { Panel } from '../common/Panel';
+import './SideBar.css';
+
+type ControlType = 'filters' | 'communities' | 'settings' | null;
+
+interface ToggleButtonProps extends React.PropsWithChildren {
+  onToggle: () => void;
+  toggled: boolean;
+}
+
+const ToggleButton: React.FC<ToggleButtonProps> = ({
+  onToggle,
+  toggled,
+  children,
+}) => {
+  return (
+    <button
+      onClick={onToggle}
+      className={'toggle-button ' + (toggled ? 'toggle-button--toggled' : '')}
+    >
+      {children}
+    </button>
+  );
+};
+
+interface ControlPanelProps extends React.PropsWithChildren {
+  hidden: boolean;
+}
+
+const ControlPanel: React.FC<ControlPanelProps> = ({
+  hidden,
+  children,
+}: ControlPanelProps) => {
+  return (
+    <Panel
+      className={'control-panel ' + (hidden ? '' : 'control-panel--hidden')}
+    >
+      {children}
+    </Panel>
+  );
+};
 
 export const SideBar: React.FC = () => {
-  type PanelType = 'filters' | 'communities' | 'settings' | null;
+  const [activePanel, setActivePanel] = React.useState<ControlType>(null);
 
-  const [activePanel, setActivePanel] = React.useState<PanelType>(null);
-
-  const togglePanel = (panel: PanelType): void => {
+  const togglePanel = (panel: ControlType): void => {
     setActivePanel((prev) => (prev === panel ? null : panel));
   };
 
-  const ToggleButton = ({
-    name,
-    Icon,
-  }: {
-    name: PanelType;
-    Icon: LucideIcon;
-  }) => {
-    return (
-      <button
-        onClick={() => togglePanel(name)}
-        style={{
-          backgroundColor: activePanel === name ? 'gray' : 'lightgray',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Icon size={22} />
-      </button>
-    );
-  };
-
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        right: 0,
-        width: '50px', // Adjust width as needed
-        height: '100vh',
-        backgroundColor: 'rgba(245, 245, 245, .7)',
-        padding: '5px',
-        paddingTop: '10px',
-        boxSizing: 'border-box',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '10px',
-      }}
-    >
-      <ToggleButton name={'filters'} Icon={Filter} />
-      <HiddenControlPanel hidden={activePanel === 'filters'}>
+    <div className="side-bar">
+      <ToggleButton
+        onToggle={() => togglePanel('filters')}
+        toggled={activePanel === 'filters'}
+      >
+        <Filter />
+      </ToggleButton>
+      <ControlPanel hidden={activePanel === 'filters'}>
         <h2>Graph Filter Control</h2>
         <GraphFilterPanel />
-      </HiddenControlPanel>
+      </ControlPanel>
 
-      <ToggleButton name={'communities'} Icon={Puzzle} />
-      <HiddenControlPanel hidden={activePanel === 'communities'}>
+      <ToggleButton
+        onToggle={() => togglePanel('communities')}
+        toggled={activePanel === 'communities'}
+      >
+        <Puzzle />
+      </ToggleButton>
+      <ControlPanel hidden={activePanel === 'communities'}>
         <h2>Sub-narrative Detection</h2>
         <CommunitiesPanel />
-      </HiddenControlPanel>
+      </ControlPanel>
 
-      <ToggleButton name={'settings'} Icon={Settings} />
-      <HiddenControlPanel hidden={activePanel === 'settings'}>
+      <ToggleButton
+        onToggle={() => togglePanel('settings')}
+        toggled={activePanel === 'settings'}
+      >
+        <Settings />
+      </ToggleButton>
+      <ControlPanel hidden={activePanel === 'settings'}>
         <h2>Settings</h2>
         <GraphOptionsPanel />
-      </HiddenControlPanel>
+      </ControlPanel>
     </div>
   );
 };
