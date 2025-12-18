@@ -2,7 +2,7 @@ from typing import Optional
 
 from sqlalchemy import and_, or_, between
 
-from narrativegraph.db.cooccurrences import CoOccurrenceOrm
+from narrativegraph.db.cooccurrences import CoOccurrenceOrm, CoOccurrenceCategory
 from narrativegraph.db.documents import DocumentCategory, DocumentOrm
 from narrativegraph.db.relations import RelationCategory, RelationOrm
 from narrativegraph.db.entities import EntityCategory, EntityOrm
@@ -23,6 +23,7 @@ _category_model_map = {
     EntityOrm: EntityCategory,
     RelationOrm: RelationCategory,
     DocumentOrm: DocumentCategory,
+    CoOccurrenceOrm: CoOccurrenceCategory,
 }
 
 
