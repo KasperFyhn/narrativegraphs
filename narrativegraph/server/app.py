@@ -34,7 +34,7 @@ async def lifespan(app_arg: FastAPI):
     app_arg.state.query_service = QueryService(engine=app_arg.state.db_engine)
 
     # Ensure the correct path to your build directory
-    build_directory = Path(os.path.dirname(__file__)) / "../../visualizer/build/"
+    build_directory = Path(os.path.dirname(__file__)) / "static"
     if not os.path.isdir(build_directory):
         raise ValueError(f"Build directory '{build_directory}' does not exist.")
     app_arg.mount(
