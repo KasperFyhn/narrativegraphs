@@ -19,7 +19,7 @@ async def get_graph(
 
 
 @router.post("/communities")
-async def get_bounds(
+async def get_communities(
     graph_filter: Optional[GraphFilter] = None,
     service: QueryService = Depends(get_query_service),
 ) -> list[Community]:

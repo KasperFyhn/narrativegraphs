@@ -7,9 +7,8 @@ from tqdm import tqdm
 from narrativegraph.nlp.extraction import TripletExtractor
 from narrativegraph.nlp.extraction.spacy import NaiveSpacyTripletExtractor
 from narrativegraph.nlp.mapping import Mapper
-from narrativegraph.nlp.mapping.linguistic import StemmingMapper, SubgramStemmingMapper
+from narrativegraph.nlp.mapping.linguistic import StemmingMapper
 from narrativegraph.service import PopulationService
-from narrativegraph.service.population import Cache
 from narrativegraph.utils.transform import normalize_categories
 
 logging.basicConfig(level=logging.INFO)
