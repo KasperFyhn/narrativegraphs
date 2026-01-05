@@ -8,16 +8,15 @@ from narrativegraph.db.relations import RelationOrm
 from narrativegraph.dto.filter import DataBounds
 from narrativegraph.service.common import DbService
 from narrativegraph.service.cooccurrences import CoOccurrencesService
-from narrativegraph.service.graph import GraphService
 from narrativegraph.service.documents import DocService
 from narrativegraph.service.entities import EntityService
+from narrativegraph.service.graph import GraphService
 from narrativegraph.service.predicates import PredicateService
 from narrativegraph.service.relations import RelationService
 from narrativegraph.service.triplets import TripletService
 
 
 class QueryService(DbService):
-
     def __init__(self, engine: Engine):
         super().__init__(engine)
         self.documents = DocService(lambda: self.get_session_context())

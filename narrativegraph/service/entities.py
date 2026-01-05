@@ -4,11 +4,11 @@ import pandas as pd
 from sqlalchemy import select
 
 from narrativegraph.db.documents import DocumentOrm
-from narrativegraph.db.entities import EntityOrm, EntityCategory
+from narrativegraph.db.entities import EntityCategory, EntityOrm
 from narrativegraph.db.triplets import TripletOrm
 from narrativegraph.dto.entities import (
-    EntityLabel,
     EntityDetails,
+    EntityLabel,
 )
 from narrativegraph.service.common import OrmAssociatedService
 
@@ -26,7 +26,7 @@ class EntityService(OrmAssociatedService):
                     EntityOrm.id.label("id"),
                     EntityOrm.label.label("label"),
                     *EntityOrm.stats_columns(),
-                    EntityOrm.alt_labels.label("alt_labels")
+                    EntityOrm.alt_labels.label("alt_labels"),
                 ),
                 engine,
             )
@@ -44,7 +44,7 @@ class EntityService(OrmAssociatedService):
         self, ids: list[int] = None, limit: Optional[int] = None
     ) -> list[EntityDetails]:
         return self._get_multiple_by_ids_and_transform(
-            EntityDetails.from_orm, ids=ids,  limit=limit
+            EntityDetails.from_orm, ids=ids, limit=limit
         )
 
     def doc_ids_by_entity(

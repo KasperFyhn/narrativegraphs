@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import Depends, APIRouter
+from fastapi import APIRouter, Depends
 
 from narrativegraph.dto.relations import RelationDetails
 from narrativegraph.server.routes.common import get_query_service
@@ -9,9 +9,12 @@ from narrativegraph.service import QueryService
 # FastAPI app
 router = APIRouter()
 
+
 # API Endpoints
 @router.get("/{relation_id}", response_model=RelationDetails)
-async def get_relation(relation_id: int, service: QueryService = Depends(get_query_service)):
+async def get_relation(
+    relation_id: int, service: QueryService = Depends(get_query_service)
+):
     """Get relation details by ID"""
     relation = service.relations.by_id(relation_id)
     return relation
@@ -19,9 +22,9 @@ async def get_relation(relation_id: int, service: QueryService = Depends(get_que
 
 @router.get("/{relation_id}/docs")
 async def get_docs_by_relation(
-        relation_id: int,
-        limit: Optional[int] = None,
-        service: QueryService = Depends(get_query_service)
+    relation_id: int,
+    limit: Optional[int] = None,
+    service: QueryService = Depends(get_query_service),
 ):
     doc_ids = service.relations.doc_ids_by_relation(relation_id, limit=limit)
     docs = service.documents.get_multiple(doc_ids)

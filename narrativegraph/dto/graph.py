@@ -44,9 +44,9 @@ class Graph(CamelModel):
 
 class Community(CamelModel):
     """Community in the graph"""
+
     members: list[EntityLabel]
     score: float
     density: float
     avg_pmi: float
     conductance: float
-

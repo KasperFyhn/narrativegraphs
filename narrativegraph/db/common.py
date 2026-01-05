@@ -49,7 +49,6 @@ class CategorizableMixin:
 
 
 class HasAltLabels:
-
     @property
     def alt_labels(self) -> list[str]:
         return []

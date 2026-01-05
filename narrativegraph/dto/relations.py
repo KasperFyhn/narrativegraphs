@@ -6,7 +6,6 @@ from narrativegraph.dto.common import (
 
 
 class RelationDetails(LabeledTextOccurrence):
-
     @classmethod
     def from_orm(cls, relation_orm: RelationOrm) -> "RelationDetails":
         return cls(

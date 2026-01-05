@@ -4,7 +4,6 @@ from tests.extraction.common import ExtractorTest
 
 
 class TestDependencyGraphExtractor(ExtractorTest):
-
     @classmethod
     def setUpClass(cls):
         cls.extractor = DependencyGraphExtractor()

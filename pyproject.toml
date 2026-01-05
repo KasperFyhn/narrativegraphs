@@ -55,10 +55,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest~=8.4.1",
-    "pytest-cov>=4.0",
-    "black>=23.0",
     "ruff>=0.1.0",
-    "mypy>=1.0",
 ]
 docs = [
     # To be added
@@ -84,10 +81,6 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-
-[tool.black]
-line-length = 88
-target-version = ['py310']
 
 [tool.ruff]
 line-length = 88

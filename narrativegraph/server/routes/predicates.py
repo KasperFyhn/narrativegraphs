@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import Depends, APIRouter
+from fastapi import APIRouter, Depends
 
 from narrativegraph.dto.predicates import PredicateDetails
 from narrativegraph.server.routes.common import get_query_service
@@ -9,9 +9,12 @@ from narrativegraph.service import QueryService
 # FastAPI app
 router = APIRouter()
 
+
 # API Endpoints
 @router.get("/{predicate_id}", response_model=PredicateDetails)
-async def get_predicate(predicate_id: int, service: QueryService = Depends(get_query_service)):
+async def get_predicate(
+    predicate_id: int, service: QueryService = Depends(get_query_service)
+):
     """Get predicate details by ID"""
     predicate = service.predicates.by_id(predicate_id)
     return predicate
@@ -19,9 +22,9 @@ async def get_predicate(predicate_id: int, service: QueryService = Depends(get_q
 
 @router.get("/{predicate_id}/docs")
 async def get_docs_by_predicate(
-        predicate_id: int,
-        limit: Optional[int] = None,
-        service: QueryService = Depends(get_query_service)
+    predicate_id: int,
+    limit: Optional[int] = None,
+    service: QueryService = Depends(get_query_service),
 ):
     doc_ids = service.predicates.doc_ids_by_predicate(predicate_id, limit=limit)
     docs = service.documents.get_multiple(doc_ids)

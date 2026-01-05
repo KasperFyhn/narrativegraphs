@@ -1,11 +1,12 @@
+from typing import List, Optional, Tuple
+
+from spacy.tokens import Span, Token
+
 from narrativegraph.nlp.extraction.common import Triplet, TripletPart
 from narrativegraph.nlp.extraction.spacy.common import SpacyTripletExtractor
-from typing import List, Tuple, Optional
-from spacy.tokens import Span, Token
 
 
 class DependencyGraphExtractor(SpacyTripletExtractor):
-
     def __init__(
         self,
         model_name: str = None,
@@ -86,7 +87,8 @@ class DependencyGraphExtractor(SpacyTripletExtractor):
             elif (
                 self.copula_attribute and child.dep_ == "attr" or child.dep_ == "acomp"
             ):  # Attribute/Complement (e.g., "is happy", "is a doctor")
-                # For attributes/complements, get the full phrase whether noun chunk or adjective
+                # For attributes/complements, get the full phrase whether noun chunk
+                # or adjective
                 attr_comp_span: Optional[Span] = None
                 for chunk in sent.noun_chunks:
                     if chunk.start <= child.i < chunk.end:
@@ -99,27 +101,6 @@ class DependencyGraphExtractor(SpacyTripletExtractor):
 
                 if attr_comp_span:
                     potential_objects.append(("attr", attr_comp_span))
-
-            # elif child.dep_ == "xcomp":  # Open clausal complement (e.g., "likes to read books")
-            #     xcomp_verb_token = child
-            #
-            #     # Include 'to' if it's an auxiliary of the xcomp verb
-            #     for xcomp_aux_child in xcomp_verb_token.children:
-            #         if xcomp_aux_child.dep_ == "aux" and xcomp_aux_child.text.lower() == "to":
-            #             predicate_tokens.append(xcomp_aux_child)
-            #
-            #     xcomp_obj_found = False
-            #     for grandchild in xcomp_verb_token.children:
-            #         if grandchild.dep_ == "dobj":
-            #             for chunk in sent.noun_chunks:
-            #                 if chunk.start <= grandchild.i < chunk.end:
-            #                     potential_objects.append(('xcomp_dobj', chunk))
-            #                     xcomp_obj_found = True
-            #                     break
-            #             break
-            #     if not xcomp_obj_found:  # If xcomp has no direct object, the xcomp verb itself might be the object
-            #         potential_objects.append(('xcomp', sent[xcomp_verb_token.i:xcomp_verb_token.i + 1]))
-            #
 
         if not potential_objects:
             return None, False

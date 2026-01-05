@@ -1,7 +1,7 @@
 from datetime import date
 from typing import Type
 
-from sqlalchemy import select, update, insert, func, union_all
+from sqlalchemy import func, insert, select, union_all, update
 from sqlalchemy.orm import Session, aliased
 from sqlalchemy.orm.attributes import InstrumentedAttribute
 
@@ -10,7 +10,7 @@ from narrativegraph.db.cooccurrences import CoOccurrenceCategory, CoOccurrenceOr
 from narrativegraph.db.documents import DocumentCategory, DocumentOrm
 from narrativegraph.db.engine import Base
 from narrativegraph.db.entities import EntityCategory, EntityOrm
-from narrativegraph.db.predicates import PredicateOrm, PredicateCategory
+from narrativegraph.db.predicates import PredicateCategory, PredicateOrm
 from narrativegraph.db.relations import (
     RelationCategory,
     RelationOrm,
@@ -23,7 +23,6 @@ from narrativegraph.service.common import DbService
 
 
 class PopulationService(DbService):
-
     def _bulk_save_with_categories(
         self,
         bulk: list[DocumentOrm],
@@ -62,9 +61,10 @@ class PopulationService(DbService):
         if categories is None:
             categories = [{}] * len(docs)
 
-        assert (
-            len(doc_ids) == len(timestamps) == len(categories) == len(docs)
-        ), "Document metadata (ids, timestamps, categories) must be the same length as input documents"
+        assert len(doc_ids) == len(timestamps) == len(categories) == len(docs), (
+            "Document metadata (ids, timestamps, categories) must be the same "
+            "length as input documents"
+        )
 
         bulk = []
         doc_cats = []
@@ -166,14 +166,14 @@ class PopulationService(DbService):
 
         Args:
             orm_class: The ORM class to update (EntityOrm, PredicateOrm, etc.)
-            triplet_fk_columns: Single column or list of columns that link to this entity.
-                               If list, will UNION results (e.g., for entities as subject/object)
+            triplet_fk_columns: Single column or list of columns that link to this
+                entity. If list, will UNION results (e.g., for entities as
+                subject/object)
             n_docs: Total number of documents
         """
 
         # Normalize to list
         with self.get_session_context() as session:
-
             if not isinstance(triplet_fk_columns, list):
                 triplet_fk_columns = [triplet_fk_columns]
 
@@ -373,7 +373,6 @@ class PopulationService(DbService):
 
 
 class Cache:
-
     def __init__(
         self,
         session: Session,

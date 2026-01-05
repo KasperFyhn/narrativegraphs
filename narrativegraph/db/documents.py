@@ -1,9 +1,9 @@
 from datetime import date
 
-from sqlalchemy import Column, Integer, ForeignKey, Text, String, Date
+from sqlalchemy import Column, Date, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, relationship
 
-from narrativegraph.db.common import CategoryMixin, CategorizableMixin
+from narrativegraph.db.common import CategorizableMixin, CategoryMixin
 from narrativegraph.db.engine import Base
 from narrativegraph.db.triplets import TripletOrm
 

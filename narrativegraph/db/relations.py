@@ -1,18 +1,18 @@
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Column, Integer, ForeignKey, select, func
+from sqlalchemy import Column, ForeignKey, Integer, func, select
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import relationship, Mapped
+from sqlalchemy.orm import Mapped, relationship
 
 from narrativegraph.db.common import (
-    CategoryMixin,
     CategorizableMixin,
+    CategoryMixin,
     HasAltLabels,
 )
 from narrativegraph.db.engine import Base
 from narrativegraph.db.entities import EntityOrm
 from narrativegraph.db.predicates import PredicateOrm
-from narrativegraph.db.triplets import TripletOrm, TripletBackedTextStatsMixin
+from narrativegraph.db.triplets import TripletBackedTextStatsMixin, TripletOrm
 
 if TYPE_CHECKING:
     from narrativegraph.db.cooccurrences import CoOccurrenceOrm

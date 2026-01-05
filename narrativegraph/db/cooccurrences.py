@@ -1,11 +1,11 @@
-from sqlalchemy import Column, Integer, ForeignKey, Float
+from sqlalchemy import Column, Float, ForeignKey, Integer
 from sqlalchemy.orm import Mapped, relationship
 
-from narrativegraph.db.common import CategoryMixin, CategorizableMixin
+from narrativegraph.db.common import CategorizableMixin, CategoryMixin
 from narrativegraph.db.engine import Base
 from narrativegraph.db.entities import EntityOrm
 from narrativegraph.db.relations import RelationOrm
-from narrativegraph.db.triplets import TripletOrm, TripletBackedTextStatsMixin
+from narrativegraph.db.triplets import TripletBackedTextStatsMixin, TripletOrm
 
 
 class CoOccurrenceCategory(Base, CategoryMixin):

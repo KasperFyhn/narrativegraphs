@@ -3,8 +3,8 @@ from typing import Optional
 import pandas as pd
 from sqlalchemy import select
 
+from narrativegraph.db.documents import DocumentCategory, DocumentOrm
 from narrativegraph.dto.documents import Document
-from narrativegraph.db.documents import DocumentOrm, DocumentCategory
 from narrativegraph.service.common import OrmAssociatedService
 
 

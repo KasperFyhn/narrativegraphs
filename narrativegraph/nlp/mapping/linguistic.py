@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Literal, Counter
+from typing import Counter, Literal
 
 import nltk
 from nltk import PorterStemmer, pos_tag, word_tokenize
@@ -8,7 +8,6 @@ from narrativegraph.nlp.mapping.common import Mapper
 
 
 class StemmingMapper(Mapper):
-
     def __init__(
         self,
         ignore_determiners: bool = True,
@@ -52,7 +51,6 @@ class StemmingMapper(Mapper):
 
 
 class SubgramStemmingMapper(StemmingMapper):
-
     def __init__(
         self,
         head_word_subtag: str,

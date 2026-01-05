@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import Depends, HTTPException, APIRouter
+from fastapi import APIRouter, Depends, HTTPException
 
 from narrativegraph.dto.documents import Document
 from narrativegraph.server.routes.common import get_query_service

@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 
 
 class Mapper(ABC):
-
     def __init__(self):
         pass
 

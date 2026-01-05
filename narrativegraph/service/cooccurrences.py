@@ -4,7 +4,7 @@ import pandas as pd
 from sqlalchemy import select
 from sqlalchemy.orm import aliased
 
-from narrativegraph.db.cooccurrences import CoOccurrenceOrm, CoOccurrenceCategory
+from narrativegraph.db.cooccurrences import CoOccurrenceCategory, CoOccurrenceOrm
 from narrativegraph.db.documents import DocumentOrm
 from narrativegraph.db.entities import EntityOrm
 from narrativegraph.db.triplets import TripletOrm
@@ -32,7 +32,7 @@ class CoOccurrencesService(OrmAssociatedService):
                     *CoOccurrenceOrm.stats_columns(),
                     CoOccurrenceOrm.pmi.label("pmi"),
                     entity_one.id.label("entity_one_id"),
-                    entity_two.id.label("entity_two_id")
+                    entity_two.id.label("entity_two_id"),
                 )
                 .join(
                     entity_one,

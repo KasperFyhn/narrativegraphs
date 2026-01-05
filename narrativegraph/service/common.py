@@ -1,14 +1,14 @@
 import threading
 from abc import ABC, abstractmethod
-from contextlib import contextmanager, _GeneratorContextManager
-from typing import Callable, Optional, Any
+from contextlib import _GeneratorContextManager, contextmanager
+from typing import Any, Callable, Optional
 
 import pandas as pd
 from sqlalchemy import Engine, select
 from sqlalchemy.orm import Session
 
 from narrativegraph.db.common import CategoryMixin
-from narrativegraph.db.engine import setup_database, get_session_factory, Base
+from narrativegraph.db.engine import Base, get_session_factory, setup_database
 from narrativegraph.errors import EntryNotFoundError
 
 
@@ -100,14 +100,13 @@ class OrmAssociatedService(SubService, ABC):
     def by_id(self, id_: int):
         pass
 
-
-    def _get_multiple_by_ids_and_transform(self, transform: Callable[[Any], Any], ids: list[int] = None, limit: int = None):
+    def _get_multiple_by_ids_and_transform(
+        self, transform: Callable[[Any], Any], ids: list[int] = None, limit: int = None
+    ):
         with self.get_session_context() as sc:
             query = sc.query(self._orm)
             if ids is not None:
-                query = query.filter(
-                    self._orm.id.in_(ids)  # noqa; the id ref works
-                )
+                query = query.filter(self._orm.id.in_(ids))  # noqa; the id ref works
                 # FIXME: what to do in case of missing entries?
             if limit:
                 query = query.limit(limit)

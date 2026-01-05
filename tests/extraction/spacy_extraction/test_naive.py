@@ -4,13 +4,13 @@ from tests.extraction.common import ExtractorTest
 
 
 class TestNaiveSpacyTripletExtractor(ExtractorTest):
-
     @classmethod
     def setUpClass(cls):
         cls.extractor = NaiveSpacyTripletExtractor()
 
     def test_initialization_error(self):
-        """Test that initialization raises error when both ner and noun_chunks are False."""
+        """Test that initialization raises error when both ner and noun_chunks are
+        False."""
         with self.assertRaises(NotImplementedError):
             NaiveSpacyTripletExtractor(named_entities=False, noun_chunks=False)
 
@@ -68,7 +68,8 @@ class TestNaiveSpacyTripletExtractor(ExtractorTest):
     def test_entity_length_filtering(self):
         """Test filtering entities by length ranges."""
         extractor = NaiveSpacyTripletExtractor(
-            named_entities=(2, 4), noun_chunks=False  # Only entities with 2-3 tokens
+            named_entities=(2, 4),
+            noun_chunks=False,  # Only entities with 2-3 tokens
         )
         text = "Dr. John Smith visited New York City."
         triplets = extractor.extract(text)
@@ -156,7 +157,8 @@ class TestNaiveSpacyTripletExtractor(ExtractorTest):
     def test_noun_chunks_length_filtering(self):
         """Test filtering noun chunks by length."""
         extractor = NaiveSpacyTripletExtractor(
-            named_entities=False, noun_chunks=(3, 5)  # Only noun chunks with 3-4 tokens
+            named_entities=False,
+            noun_chunks=(3, 5),  # Only noun chunks with 3-4 tokens
         )
         text = "The large red car hit the green bike in the street."
         triplets = extractor.extract(text)
@@ -182,7 +184,8 @@ class TestNaiveSpacyTripletExtractor(ExtractorTest):
 
         text = (
             "I Asked Trump A Policy Question. Then He Called Me ‘Beautiful.’\n\n"
-            "Donald Trump, the Republican front-runner for the presidential nomination,met with The Washington Post’s editorial board"
+            "Donald Trump, the Republican front-runner for the presidential "
+            "nomination, met with The Washington Post’s editorial board"
         )
         triplets = extractor.extract(text)
         print(triplets)

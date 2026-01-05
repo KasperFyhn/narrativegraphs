@@ -6,7 +6,6 @@ from narrativegraph.dto.common import (
 
 
 class PredicateDetails(LabeledTextOccurrence):
-
     @classmethod
     def from_orm(cls, predicate_orm: PredicateOrm) -> "PredicateDetails":
         return cls(

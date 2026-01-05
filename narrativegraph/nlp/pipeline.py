@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, date
+from datetime import date, datetime
 
 from sqlalchemy import Engine
 from tqdm import tqdm
