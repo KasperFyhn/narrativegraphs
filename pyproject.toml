@@ -7,10 +7,10 @@ name = "narrative-graph"
 version = "0.1.0"
 description = "A package for creating and analyzing narrative graphs from text corpora"
 readme = "README.md"
-license = {text = "MIT"}
+license = "MIT"
 requires-python = ">=3.10"
 authors = [
-    {name = "Kasper Fyhn", email = "kasperfyhnjacobsen@gmail.com"}
+    { name = "Kasper Fyhn", email = "kasperfyhnjacobsen@gmail.com" }
 ]
 keywords = [
     "nlp",
@@ -21,7 +21,6 @@ keywords = [
 ]
 classifiers = [
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -31,31 +30,33 @@ classifiers = [
 ]
 
 dependencies = [
-    "pydantic~=2.11.4",
-    "sqlalchemy~=2.0.41",
+    "pydantic>=2.11.4",
+    "sqlalchemy>=2.0.41",
     "sqlalchemy-stubs",
-    "pandas~=2.2.3",
-    "spacy~=3.8.6",
+    "pandas>=2.2.3",
+    "spacy>=3.8.6",
     "en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl",
-    "scikit-learn~=1.6.1",
-    "tqdm~=4.67.1",
-    "nltk~=3.8.1",
-    "uvicorn~=0.34.2",
-    "fastapi~=0.115.12",
-    "ipython~=9.2.0",
+    "scikit-learn>=1.6.1",
+    "tqdm>=4.67.1",
+    "nltk>=3.8.1",
+    "uvicorn>=0.34.2",
+    "fastapi>=0.115.12",
+    "ipython>=9.2.0",
     "ipywidgets",
-    "nest-asyncio~=1.6.0",
-    "kagglehub~=0.3.13",
-    "fastapi_camelcase~=2.0.0",
-    "psutil~=7.0.0",
-    "numpy~=2.2.6",
-    "networkx==3.4.2"
+    "nest-asyncio>=1.6.0",
+    "kagglehub>=0.3.13",
+    "fastapi_camelcase>=2.0.0",
+    "psutil>=7.0.0",
+    "numpy>=2.2.6",
+    "networkx>=3.4.2"
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest~=8.4.1",
     "ruff>=0.1.0",
+    "build>=1.0",
+    "twine>=4.0",
 ]
 docs = [
     # To be added
@@ -68,15 +69,15 @@ viz = [
 Repository = "https://github.com/KasperFyhn/narrative-graph"
 "Bug Tracker" = "https://github.com/your-username/narrative-graph/issues"
 
-[tool.setuptools]
-packages = ["narrativegraph"]
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["narrativegraph*"]
 
 [tool.setuptools.package-data]
-narrativegraph = [
-    "server/static/**/*",
-]
+narrativegraph = ["server/static/**/*"]
 
 [tool.pytest.ini_options]
+pythonpath = ["."]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
