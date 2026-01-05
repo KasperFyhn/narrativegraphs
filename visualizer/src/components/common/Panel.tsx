@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { ComponentPropsWithRef, PropsWithChildren } from 'react';
 import './Panel.css';
 
-type PanelProps = React.HTMLAttributes<HTMLDivElement>;
+interface PanelProps extends PropsWithChildren, ComponentPropsWithRef<'div'> {}
 
 export const Panel: React.FC<PanelProps> = ({
   children,
@@ -9,7 +9,7 @@ export const Panel: React.FC<PanelProps> = ({
   ...rest
 }) => {
   return (
-    <div className={'panel ' + (className || '')} {...rest}>
+    <div className={'panel ' + className} {...rest}>
       {children}
     </div>
   );
