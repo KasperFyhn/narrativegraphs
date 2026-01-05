@@ -1,10 +1,7 @@
-import React, { PropsWithChildren, PropsWithRef } from 'react';
+import React from 'react';
 import './Panel.css';
 
-interface PanelProps extends PropsWithChildren, PropsWithRef<any> {
-  className?: string;
-  style?: React.CSSProperties;
-}
+type PanelProps = React.HTMLAttributes<HTMLDivElement>;
 
 export const Panel: React.FC<PanelProps> = ({
   children,
@@ -12,7 +9,7 @@ export const Panel: React.FC<PanelProps> = ({
   ...rest
 }) => {
   return (
-    <div className={'panel ' + className} {...rest}>
+    <div className={'panel ' + (className || '')} {...rest}>
       {children}
     </div>
   );

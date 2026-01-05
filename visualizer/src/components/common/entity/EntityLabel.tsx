@@ -6,7 +6,6 @@ export interface EntityLabelProps {
 }
 
 export const EntityLabel: React.FC<EntityLabelProps> = ({
-  id,
   label,
 }: EntityLabelProps) => {
   return (
