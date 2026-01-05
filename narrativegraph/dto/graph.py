@@ -1,4 +1,3 @@
-import networkx as nx
 from fastapi_camelcase import CamelModel
 from pydantic import Field
 
