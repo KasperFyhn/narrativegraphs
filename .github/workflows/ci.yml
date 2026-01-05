@@ -38,7 +38,7 @@ jobs:
         run: pip install -e ".[dev]"
 
       - name: Test with pytest
-        run: pytest tests --cov=narrativegraph --cov-report=term-missing
+        run: pytest tests
 
   build:
     runs-on: ubuntu-latest
