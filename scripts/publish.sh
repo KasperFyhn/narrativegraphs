@@ -2,8 +2,8 @@
 
 set -e
 
-./scripts/build.sh
+rm dist/*
 
-python3 -m pip install --upgrade twine
+./scripts/build.sh
 
 python3 -m twine upload --repository testpypi dist/*
