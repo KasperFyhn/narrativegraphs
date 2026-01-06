@@ -14,6 +14,7 @@ rm -rf narrativegraph/server/static
 cp -r visualizer/build narrativegraph/server/static
 
 echo "Building Python package..."
+python3 -m pip install --upgrade build
 python -m build
 
 echo "Done! Package ready in dist/"

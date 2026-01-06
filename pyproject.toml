@@ -35,7 +35,6 @@ dependencies = [
     "sqlalchemy-stubs>=0.4",
     "pandas>=2.2.3",
     "spacy>=3.8.6",
-    "en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl",
     "scikit-learn>=1.6.1",
     "tqdm>=4.67.1",
     "nltk>=3.8.1",
@@ -54,9 +53,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest~=8.4.1",
-    "ruff>=0.1.0",
-    "build>=1.0",
-    "twine>=4.0",
+    "ruff>=0.1.0"
 ]
 docs = [
     # To be added
