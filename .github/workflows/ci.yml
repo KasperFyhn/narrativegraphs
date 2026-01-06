@@ -37,6 +37,9 @@ jobs:
       - name: Install dependencies
         run: pip install -e ".[dev]"
 
+      - name: Test setup
+        run: ./tests/setup.sh
+
       - name: Test with pytest
         run: pytest tests
 
