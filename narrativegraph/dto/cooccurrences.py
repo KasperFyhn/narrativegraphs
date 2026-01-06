@@ -1,7 +1,7 @@
 from narrativegraph.db.cooccurrences import CoOccurrenceOrm
 from narrativegraph.dto.common import (
-    TextOccurrenceStats,
     TextOccurrence,
+    TextOccurrenceStats,
 )
 
 
@@ -18,7 +18,6 @@ class CoOccurrenceStats(TextOccurrenceStats):
 
 
 class CoOccurrenceDetails(TextOccurrence):
-
     @classmethod
     def from_orm(cls, co_occurrence_orm: CoOccurrenceOrm) -> "CoOccurrenceDetails":
         return cls(

@@ -1,10 +1,7 @@
-import React, { PropsWithChildren, PropsWithRef } from 'react';
+import React, { ComponentPropsWithRef, PropsWithChildren } from 'react';
 import './Panel.css';
 
-interface PanelProps extends PropsWithChildren, PropsWithRef<any> {
-  className?: string;
-  style?: React.CSSProperties;
-}
+interface PanelProps extends PropsWithChildren, ComponentPropsWithRef<'div'> {}
 
 export const Panel: React.FC<PanelProps> = ({
   children,

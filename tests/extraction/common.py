@@ -4,8 +4,6 @@ from narrativegraph.nlp.extraction.common import Triplet
 
 
 class ExtractorTest(unittest.TestCase):
-
-
     def assert_triplet_equal(self, expected: Triplet, actual: Triplet):
         """
         Custom assertion to compare Triplet NamedTuples.
@@ -29,8 +27,8 @@ class ExtractorTest(unittest.TestCase):
         self.assertTrue(len(errors) == 0, "\n".join(errors))
 
     def assert_triplets_equal(self, expected: list[Triplet], actual: list[Triplet]):
-        assert len(expected) == len(
-            actual
-        ), f"Expected {len(expected)}, got {len(actual)}: {actual}"
+        assert len(expected) == len(actual), (
+            f"Expected {len(expected)}, got {len(actual)}: {actual}"
+        )
         for e, a in zip(expected, actual):
             self.assert_triplet_equal(e, a)

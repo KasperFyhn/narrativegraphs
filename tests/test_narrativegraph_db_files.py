@@ -4,11 +4,10 @@ from unittest.mock import Mock, patch
 import pytest
 
 from narrativegraph import NarrativeGraph
-from tests.mocks import MockTripletExtractor, MockMapper
+from tests.mocks import MockMapper, MockTripletExtractor
 
 
 class TestNarrativeGraphFileHandling:
-
     def test_init_memory_db_default(self):
         """Test default initialization creates in-memory database"""
         ng = NarrativeGraph()

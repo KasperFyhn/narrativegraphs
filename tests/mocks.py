@@ -4,7 +4,6 @@ from narrativegraph.nlp.mapping import Mapper
 
 
 class MockTripletExtractor(TripletExtractor):
-
     def extract(self, text: str) -> list[Triplet]:
         tokens = text.split()
         if len(tokens) < 2:

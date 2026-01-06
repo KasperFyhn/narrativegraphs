@@ -1,11 +1,11 @@
 from typing import Optional
 
-from sqlalchemy import and_, or_, between
+from sqlalchemy import and_, between, or_
 
-from narrativegraph.db.cooccurrences import CoOccurrenceOrm, CoOccurrenceCategory
+from narrativegraph.db.cooccurrences import CoOccurrenceCategory, CoOccurrenceOrm
 from narrativegraph.db.documents import DocumentCategory, DocumentOrm
-from narrativegraph.db.relations import RelationCategory, RelationOrm
 from narrativegraph.db.entities import EntityCategory, EntityOrm
+from narrativegraph.db.relations import RelationCategory, RelationOrm
 from narrativegraph.dto.filter import GraphFilter
 
 
@@ -83,6 +83,7 @@ def relation_frequency_filter(graph_filter: GraphFilter) -> list:
         graph_filter.maximum_edge_frequency,
     )
 
+
 def co_occurrence_frequency_filter(graph_filter: GraphFilter) -> list:
     """Create relation term frequency filter"""
     return frequency_filter(
@@ -122,6 +123,7 @@ def combine_filters(*filter_lists: list) -> list:
         result += filter_list
     return result
 
+
 def create_entity_conditions(graph_filter: GraphFilter) -> list:
     return combine_filters(
         date_filter(EntityOrm, graph_filter),
@@ -130,12 +132,14 @@ def create_entity_conditions(graph_filter: GraphFilter) -> list:
         entity_blacklist_filter(graph_filter),
     )
 
+
 def create_relation_conditions(graph_filter: GraphFilter) -> list:
     return combine_filters(
         date_filter(RelationOrm, graph_filter),
         category_filter(RelationOrm, graph_filter),
         relation_frequency_filter(graph_filter),
     )
+
 
 def create_co_occurrence_conditions(graph_filter: GraphFilter) -> list:
     return combine_filters(

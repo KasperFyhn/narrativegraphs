@@ -7,7 +7,6 @@ from narrativegraph.nlp.extraction.spacy.common import SpacyTripletExtractor
 
 
 class NaiveSpacyTripletExtractor(SpacyTripletExtractor):
-
     def __init__(
         self,
         model_name: str = None,

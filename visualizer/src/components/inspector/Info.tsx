@@ -27,7 +27,7 @@ export const Info: React.FC<InfoProps> = ({ type, id }) => {
 
   const [visibleDocs, setVisibleDocs] = React.useState(50);
 
-  const loadDocs = () => {
+  const loadDocs = (): void => {
     setDocs(null);
     (type === 'entity' ? entityService : relationService)
       .getDocs(id)
@@ -36,7 +36,7 @@ export const Info: React.FC<InfoProps> = ({ type, id }) => {
       });
   };
 
-  const loadMore = () => {
+  const loadMore = (): void => {
     setVisibleDocs((prev) => prev + 50);
   };
 

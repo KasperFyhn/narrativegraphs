@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, ForeignKey, String, Float, Date
+from sqlalchemy import Column, Date, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
 from narrativegraph.db.common import CategorizableMixin, CategoryMixin
@@ -77,7 +77,6 @@ class TripletBackedTextStatsMixin:
         triplets: list[TripletOrm],
         n_docs: int = None,
     ):
-
         orm.frequency = len(triplets)
         orm.doc_frequency = len(set(t.doc_id for t in triplets))
         if n_docs:

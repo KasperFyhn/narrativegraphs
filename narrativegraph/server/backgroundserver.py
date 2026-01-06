@@ -48,7 +48,9 @@ class BackgroundServer:
                 # Wait up to 5 seconds for graceful shutdown
                 await asyncio.wait_for(self._server_task, timeout=5.0)
             except asyncio.TimeoutError:
-                logging.warning("Server didn't shut down gracefully, forcing cancellation")
+                logging.warning(
+                    "Server didn't shut down gracefully, forcing cancellation"
+                )
                 self._server_task.cancel()
                 try:
                     await self._server_task
@@ -65,9 +67,5 @@ class BackgroundServer:
         asyncio.get_running_loop().run_until_complete(self._stop())
 
     def show_iframe(self, width=None, height=None):
-        url = f'http://localhost:{self._port}/vis'
-        return IFrame(
-            url,
-            width=width or '100%',
-            height=height or 800
-        )
+        url = f"http://localhost:{self._port}/vis"
+        return IFrame(url, width=width or "100%", height=height or 800)

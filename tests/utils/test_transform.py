@@ -4,7 +4,6 @@ from narrativegraph.utils.transform import normalize_categories
 
 
 class TestNormalizeCategories(unittest.TestCase):
-
     def test_list_of_strings(self):
         self.assertEqual(
             normalize_categories(["label1", "label2"]),
@@ -76,6 +75,6 @@ class TestNormalizeCategories(unittest.TestCase):
 
     def test_different_lengths(self):
         with self.assertRaises(ValueError):
-            normalize_categories({"category1": ["label1", "label2"], "category2": ["label2"]})
-
-
+            normalize_categories(
+                {"category1": ["label1", "label2"], "category2": ["label2"]}
+            )

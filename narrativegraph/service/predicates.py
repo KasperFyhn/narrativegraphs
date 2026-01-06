@@ -4,7 +4,7 @@ import pandas as pd
 from sqlalchemy import select
 
 from narrativegraph.db.documents import DocumentOrm
-from narrativegraph.db.predicates import PredicateOrm, PredicateCategory
+from narrativegraph.db.predicates import PredicateCategory, PredicateOrm
 from narrativegraph.db.triplets import TripletOrm
 from narrativegraph.dto.predicates import (
     PredicateDetails,
@@ -25,7 +25,7 @@ class PredicateService(OrmAssociatedService):
                     PredicateOrm.id.label("id"),
                     PredicateOrm.label.label("label"),
                     *PredicateOrm.stats_columns(),
-                    PredicateOrm.alt_labels.label("alt_labels")
+                    PredicateOrm.alt_labels.label("alt_labels"),
                 ),
                 engine,
             )

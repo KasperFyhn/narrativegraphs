@@ -21,7 +21,6 @@ class EntityLabelsRequest(CamelModel):
 
 
 class EntityDetails(LabeledTextOccurrence):
-
     @classmethod
     def from_orm(cls, entity_orm: EntityOrm) -> "EntityDetails":
         return cls(

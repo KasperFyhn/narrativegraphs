@@ -1,6 +1,6 @@
 import logging
 import os
-from datetime import datetime, date
+from datetime import date, datetime
 from typing import Literal
 
 import pandas as pd
@@ -123,12 +123,8 @@ class NarrativeGraph:
     def get_documents(self, ids: list[int] = None, limit: int = None) -> list[Document]:
         return self._db_service.documents.get_multiple(ids=ids, limit=limit)
 
-    def find_communities(
-        self, graph_filter: GraphFilter = None
-    ) -> list[Community]:
-        return self._db_service.graph.find_communities(
-            graph_filter=graph_filter
-        )
+    def find_communities(self, graph_filter: GraphFilter = None) -> list[Community]:
+        return self._db_service.graph.find_communities(graph_filter=graph_filter)
 
     def serve_visualizer(
         self,
@@ -140,11 +136,11 @@ class NarrativeGraph:
         Serve the visualizer application.
 
         :param port: The port number on which the visualizer should be served.
-        :param block: If True (default), the function will block until the server is stopped.
+        :param block: If True (default), the function will block until the server is
+            stopped.
         If False, the server will run in the background.
-        :param autostart: If True (default), the server is started automatically. Only relevant
-        for background servers.
-
+        :param autostart: If True (default), the server is started automatically. Only
+            relevant for background servers.
 
         :return: None
         """

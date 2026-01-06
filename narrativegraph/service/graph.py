@@ -1,10 +1,10 @@
 from collections import defaultdict
 from functools import partial
-from typing import List, Callable, Literal
+from typing import Callable, List, Literal
 
 import networkx as nx
 from networkx.algorithms import community
-from sqlalchemy import or_, and_
+from sqlalchemy import and_, or_
 from sqlalchemy.orm import selectinload
 
 from narrativegraph.db.cooccurrences import CoOccurrenceOrm
@@ -12,19 +12,18 @@ from narrativegraph.db.entities import EntityOrm
 from narrativegraph.db.relations import RelationOrm
 from narrativegraph.dto.entities import EntityLabel
 from narrativegraph.dto.filter import GraphFilter
-from narrativegraph.dto.graph import Node, Edge, Relation, Community
+from narrativegraph.dto.graph import Community, Edge, Node, Relation
 from narrativegraph.service.common import SubService
 from narrativegraph.service.filter import (
-    create_relation_conditions,
-    create_entity_conditions,
-    entity_whitelist_filter,
-    entity_label_filter,
     create_co_occurrence_conditions,
+    create_entity_conditions,
+    create_relation_conditions,
+    entity_label_filter,
+    entity_whitelist_filter,
 )
 
 
 class GraphService(SubService):
-
     @staticmethod
     def create_edge_groups(relations: List[RelationOrm]) -> List[Edge]:
         """Group relations into edges and create Edge objects"""
@@ -75,7 +74,6 @@ class GraphService(SubService):
     ) -> List[EntityOrm]:
         """Get focus entities based on whitelist or label search"""
         with self.get_session_context() as db:
-
             focus_conditions = []
             if graph_filter.whitelisted_entity_ids:
                 focus_conditions.extend(entity_whitelist_filter(graph_filter))
@@ -152,7 +150,6 @@ class GraphService(SubService):
         focus_entity_ids = []
 
         with self.get_session_context() as db:
-
             # Handle focus entities (whitelist or label search)
             if graph_filter.whitelisted_entity_ids or graph_filter.label_search:
                 focus_entities = self._get_focus_entities(
@@ -264,7 +261,7 @@ class GraphService(SubService):
             "score": density * (1 - conductance),
             "density": density,
             "avg_pmi": avg_pmi,
-            "conductance": conductance
+            "conductance": conductance,
         }
 
     def find_communities(
@@ -285,7 +282,6 @@ class GraphService(SubService):
         coc_conditions = create_co_occurrence_conditions(graph_filter)
 
         with self.get_session_context() as db:
-
             query = db.query(EntityOrm).filter(and_(*entity_conditions))
             entities = query.all()
             entity_map = {entity.id: entity for entity in entities}
@@ -293,10 +289,10 @@ class GraphService(SubService):
 
             # Get relations between entities
             coc_query_conditions = and_(
-                    *coc_conditions,
-                    CoOccurrenceOrm.entity_one_id.in_(entity_ids),
-                    CoOccurrenceOrm.entity_two_id.in_(entity_ids),
-                )
+                *coc_conditions,
+                CoOccurrenceOrm.entity_one_id.in_(entity_ids),
+                CoOccurrenceOrm.entity_two_id.in_(entity_ids),
+            )
 
             co_occurrences: list[CoOccurrenceOrm] = (
                 db.query(CoOccurrenceOrm).filter(coc_query_conditions).all()

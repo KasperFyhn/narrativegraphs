@@ -5,8 +5,7 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from narrativegraph.db.engine import get_engine, get_session_factory
@@ -34,7 +33,7 @@ async def lifespan(app_arg: FastAPI):
     app_arg.state.query_service = QueryService(engine=app_arg.state.db_engine)
 
     # Ensure the correct path to your build directory
-    build_directory = Path(os.path.dirname(__file__)) / "../../visualizer/build/"
+    build_directory = Path(os.path.dirname(__file__)) / "static"
     if not os.path.isdir(build_directory):
         raise ValueError(f"Build directory '{build_directory}' does not exist.")
     app_arg.mount(

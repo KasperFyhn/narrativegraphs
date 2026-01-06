@@ -34,7 +34,8 @@ class TripletExtractor(ABC):
     def extract(self, text: str) -> list[Triplet]:
         pass
 
-    def batch_extract(self, texts: Iterable[str], n_cpu: int = 1, **kwargs) \
-            -> Generator[list[Triplet], None, None]:
+    def batch_extract(
+        self, texts: Iterable[str], n_cpu: int = 1, **kwargs
+    ) -> Generator[list[Triplet], None, None]:
         for text in texts:
             yield self.extract(text)

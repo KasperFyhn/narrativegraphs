@@ -7,7 +7,7 @@ from sqlalchemy.orm import aliased
 from narrativegraph.db.documents import DocumentOrm
 from narrativegraph.db.entities import EntityOrm
 from narrativegraph.db.predicates import PredicateOrm
-from narrativegraph.db.relations import RelationOrm, RelationCategory
+from narrativegraph.db.relations import RelationCategory, RelationOrm
 from narrativegraph.db.triplets import TripletOrm
 from narrativegraph.dto.relations import (
     RelationDetails,
@@ -37,7 +37,7 @@ class RelationService(OrmAssociatedService):
                     subject_entity.id.label("subject_entity_id"),
                     PredicateOrm.id.label("predicate_id"),
                     object_entity.id.label("object_entity_id"),
-                    RelationOrm.alt_labels.label("alt_pred_labels")
+                    RelationOrm.alt_labels.label("alt_pred_labels"),
                 )
                 .join(PredicateOrm)
                 .join(

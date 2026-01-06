@@ -13,7 +13,6 @@ def _bigrams(tokens: list[str]):
 
 
 class BigramFilter:
-
     def __init__(
         self,
         model_name: str = None,

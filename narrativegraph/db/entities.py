@@ -1,22 +1,22 @@
 from sqlalchemy import (
     Column,
-    Integer,
     ForeignKey,
+    Integer,
     String,
-    select,
-    func,
     case,
+    func,
+    select,
 )
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import relationship, Mapped
+from sqlalchemy.orm import Mapped, relationship
 
 from narrativegraph.db.common import (
-    CategoryMixin,
     CategorizableMixin,
+    CategoryMixin,
     HasAltLabels,
 )
 from narrativegraph.db.engine import Base
-from narrativegraph.db.triplets import TripletOrm, TripletBackedTextStatsMixin
+from narrativegraph.db.triplets import TripletBackedTextStatsMixin, TripletOrm
 
 
 class EntityCategory(Base, CategoryMixin):

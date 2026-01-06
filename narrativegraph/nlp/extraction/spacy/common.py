@@ -5,7 +5,7 @@ import psutil
 import spacy
 from spacy.tokens import Doc, Span
 
-from narrativegraph.nlp.extraction.common import TripletExtractor, Triplet
+from narrativegraph.nlp.extraction.common import Triplet, TripletExtractor
 from narrativegraph.nlp.utils.spacysegmentation import custom_sentencizer  # noqa
 
 
@@ -42,7 +42,6 @@ def _calculate_batch_size(texts: list[str], n_cpu: int = -1) -> int:
 
 
 class SpacyTripletExtractor(TripletExtractor):
-
     def __init__(
         self, model_name: str = None, split_sentence_on_double_line_break: bool = True
     ):
