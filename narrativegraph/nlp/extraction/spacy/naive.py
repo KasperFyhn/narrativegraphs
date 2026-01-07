@@ -54,6 +54,9 @@ class NaiveSpacyTripletExtractor(SpacyTripletExtractor):
             ents = sent.ents
             if isinstance(self.ner, tuple):
                 ents = self._filter_by_range(ents, self.ner)
+            ents = [
+                e for e in ents if list(e)[0].ent_type_ not in {"CARDINAL", "ORDINAL"}
+            ]
             candidates.extend((span, 0) for span in ents)  # NER priority: 0
 
         if self.noun_chunks:

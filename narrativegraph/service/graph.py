@@ -268,12 +268,16 @@ class GraphService(SubService):
         self,
         graph_filter: GraphFilter = None,
         weight_measure: Literal["pmi", "frequency"] = "pmi",
-        community_detection_method: Callable[[nx.Graph], list[set[int]]] = partial(
-            community.louvain_communities, resolution=2
-        ),
+        community_detection_method: Literal["louvain", "k_clique"]
+        | Callable[[nx.Graph], list[set[int]]] = "k_clique",
     ) -> list[Community]:
         if graph_filter is None:
             graph_filter = GraphFilter()
+
+        if community_detection_method == "louvain":
+            community_detection_method = partial(community.louvain_communities)
+        elif community_detection_method == "k_clique":
+            community_detection_method = partial(community.k_clique_communities)
 
         # Build entity filter conditions
         entity_conditions = create_entity_conditions(graph_filter)
