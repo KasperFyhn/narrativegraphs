@@ -269,7 +269,7 @@ class GraphService(SubService):
         graph_filter: GraphFilter = None,
         weight_measure: Literal["pmi", "frequency"] = "pmi",
         community_detection_method: Literal["louvain", "k_clique"]
-        | Callable[[nx.Graph], list[set[int]]] = "k_clique",
+        | Callable[[nx.Graph], list[set[int]]] = "louvain",
     ) -> list[Community]:
         if graph_filter is None:
             graph_filter = GraphFilter()

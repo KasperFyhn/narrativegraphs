@@ -1,13 +1,11 @@
 from abc import ABC
 
 from narrativegraph.db.documents import DocumentOrm
-from narrativegraph.nlp.extraction.common import Triplet
+from narrativegraph.nlp.extraction.common import Triplet, Tuplet
 
 
 class CoOccurrenceExtractor(ABC):
-    def extract(
-        self, doc: DocumentOrm, triplets: list[Triplet]
-    ) -> list[tuple[str, str]]:
+    def extract(self, doc: DocumentOrm, triplets: list[Triplet]) -> list[Tuplet]:
         pass
 
 
@@ -16,7 +14,7 @@ class DefaultCoOccurrenceExtractor(CoOccurrenceExtractor):
         self.window = window
         self.boundary = boundary
 
-    def extract_from_chunk(self, triplets: list[Triplet]) -> list[tuple[str, str]]:
+    def extract_from_chunk(self, triplets: list[Triplet]) -> list[Tuplet]:
         seen = set()
         entities = []
         for triplet in triplets:
@@ -32,7 +30,7 @@ class DefaultCoOccurrenceExtractor(CoOccurrenceExtractor):
             window_bound = min(i + 1 + self.window, len(entities))
             following = entities[i + 1 : window_bound]
             for other in following:
-                pairs.append((entity.text, other.text))
+                pairs.append(Tuplet(entity_one=entity, entity_two=other))
 
         return pairs
 
@@ -51,7 +49,7 @@ class DefaultCoOccurrenceExtractor(CoOccurrenceExtractor):
         return start <= min_position and max_position <= end
 
     def extract(
-        self, doc: DocumentOrm, triplets: list[Triplet]
+        self, doc: DocumentOrm, triplets: list[Tuplet]
     ) -> list[tuple[str, str]]:
         if self.boundary is not None:
             chunks = doc.text.split(self.boundary)

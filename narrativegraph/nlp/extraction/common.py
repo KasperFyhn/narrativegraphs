@@ -29,6 +29,11 @@ class Triplet(BaseModel):
     obj: TripletPart
 
 
+class Tuplet(BaseModel):
+    entity_one: TripletPart
+    entity_two: TripletPart
+
+
 class TripletExtractor(ABC):
     @abstractmethod
     def extract(self, text: str) -> list[Triplet]:

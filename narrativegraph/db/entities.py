@@ -15,8 +15,9 @@ from narrativegraph.db.common import (
     CategoryMixin,
     HasAltLabels,
 )
+from narrativegraph.db.documents import AnnotationBackedTextStatsMixin
 from narrativegraph.db.engine import Base
-from narrativegraph.db.triplets import TripletBackedTextStatsMixin, TripletOrm
+from narrativegraph.db.triplets import TripletOrm
 
 
 class EntityCategory(Base, CategoryMixin):
@@ -24,7 +25,7 @@ class EntityCategory(Base, CategoryMixin):
     target_id = Column(Integer, ForeignKey("entities.id"), nullable=False, index=True)
 
 
-class EntityOrm(Base, HasAltLabels, TripletBackedTextStatsMixin, CategorizableMixin):
+class EntityOrm(Base, HasAltLabels, AnnotationBackedTextStatsMixin, CategorizableMixin):
     __tablename__ = "entities"
     id = Column(Integer, primary_key=True, autoincrement=True)
     label: str = Column(String, nullable=False, index=True)

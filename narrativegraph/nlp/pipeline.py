@@ -83,9 +83,8 @@ class Pipeline:
                     doc,
                     doc_triplets,
                 )
-                co_occurrences = self._co_occurrence_extractor.extract(
-                    doc, doc_triplets
-                )
+                doc_tuplets = self._co_occurrence_extractor.extract(doc, doc_triplets)
+                self._db_service.add_tuplets(doc, doc_tuplets)
 
             _logger.info("Mapping entities and predicates")
             triplets = self._db_service.get_triplets()

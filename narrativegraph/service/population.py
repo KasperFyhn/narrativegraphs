@@ -7,7 +7,7 @@ from sqlalchemy.orm.attributes import InstrumentedAttribute
 
 from narrativegraph.db.common import CategoryMixin
 from narrativegraph.db.cooccurrences import CoOccurrenceCategory, CoOccurrenceOrm
-from narrativegraph.db.documents import DocumentCategory, DocumentOrm
+from narrativegraph.db.documents import AnnotationMixin, DocumentCategory, DocumentOrm
 from narrativegraph.db.engine import Base
 from narrativegraph.db.entities import EntityCategory, EntityOrm
 from narrativegraph.db.predicates import PredicateCategory, PredicateOrm
@@ -18,7 +18,8 @@ from narrativegraph.db.relations import (
 from narrativegraph.db.triplets import (
     TripletOrm,
 )
-from narrativegraph.nlp.extraction.common import Triplet
+from narrativegraph.db.tuplets import TupletOrm
+from narrativegraph.nlp.extraction.common import Triplet, Tuplet
 from narrativegraph.service.common import DbService
 
 
@@ -119,6 +120,27 @@ class PopulationService(DbService):
             ]
             sc.bulk_save_objects(triplet_orms)
 
+    def add_tuplets(
+        self,
+        doc: DocumentOrm,
+        tuplets: list[Tuplet],
+    ):
+        with self.get_session_context() as sc:
+            tuplet_orms = [
+                TupletOrm(
+                    doc_id=doc.id,
+                    timestamp=doc.timestamp,
+                    entity_one_span_start=tuplet.entity_one.start_char,
+                    entity_one_span_end=tuplet.entity_one.end_char,
+                    entity_one_span_text=tuplet.entity_one.text,
+                    entity_two_span_start=tuplet.entity_two.start_char,
+                    entity_two_span_end=tuplet.entity_two.end_char,
+                    entity_two_span_text=tuplet.entity_two.text,
+                )
+                for tuplet in tuplets
+            ]
+            sc.bulk_save_objects(tuplet_orms)
+
     def map_triplets(
         self,
         entity_mappings: dict[str, str],
@@ -126,8 +148,9 @@ class PopulationService(DbService):
     ):
         with self.get_session_context() as sc:
             triplets = self.get_triplets()
+            tuplets = self.get_tuplets()
 
-            cache = Cache(sc, entity_mappings, predicate_mappings, triplets)
+            cache = Cache(sc, entity_mappings, predicate_mappings, triplets, tuplets)
 
             for triplet in triplets:
                 subject_id = cache.get_entity_id(triplet.subj_span_text)
@@ -151,22 +174,34 @@ class PopulationService(DbService):
                 triplet.relation_id = relation_id
                 triplet.co_occurrence_id = co_occurrence_id
 
-            sc.commit()
+            for tuplet in tuplets:
+                entity_one_id = cache.get_entity_id(tuplet.entity_one_span_text)
+                entity_two_id = cache.get_entity_id(tuplet.entity_two_span_text)
+
+                co_occurrence_id = cache.get_co_occurrence_id(
+                    entity_one_id,
+                    entity_two_id,
+                )
+
+                tuplet.entity_one_id = entity_one_id
+                tuplet.entity_two_id = entity_two_id
+                tuplet.co_occurrence_id = co_occurrence_id
 
             self.calculate_stats()
 
     def _update_stats_for_type(
         self,
         orm_class: Type[Base],
-        triplet_fk_columns: InstrumentedAttribute | list[InstrumentedAttribute],
+        backing_annotation_type: Type[AnnotationMixin],
+        annotation_fk_columns: InstrumentedAttribute | list[InstrumentedAttribute],
         n_docs: int,
     ):
         """
-        Generic stats update for any ORM type linked to triplets.
+        Generic stats update for any ORM type linked to annotations.
 
         Args:
             orm_class: The ORM class to update (EntityOrm, PredicateOrm, etc.)
-            triplet_fk_columns: Single column or list of columns that link to this
+            annotation_fk_columns: Single column or list of columns that link to this
                 entity. If list, will UNION results (e.g., for entities as
                 subject/object)
             n_docs: Total number of documents
@@ -174,35 +209,35 @@ class PopulationService(DbService):
 
         # Normalize to list
         with self.get_session_context() as session:
-            if not isinstance(triplet_fk_columns, list):
-                triplet_fk_columns = [triplet_fk_columns]
+            if not isinstance(annotation_fk_columns, list):
+                annotation_fk_columns = [annotation_fk_columns]
 
-            triplet_queries = []
-            for fk_column in triplet_fk_columns:
-                triplet_queries.append(
+            annotation_queries = []
+            for fk_column in annotation_fk_columns:
+                annotation_queries.append(
                     select(
                         fk_column.label("target_id"),
-                        TripletOrm.id.label("triplet_id"),
-                        TripletOrm.doc_id,
-                        TripletOrm.timestamp,
+                        backing_annotation_type.id.label("annotation_id"),
+                        backing_annotation_type.doc_id,
+                        backing_annotation_type.timestamp,
                     ).where(fk_column.isnot(None))
                 )
 
             # union_all handles single query case
-            triplet_union = union_all(*triplet_queries).subquery()
+            annotation_union = union_all(*annotation_queries).subquery()
 
             # Aggregate stats
             stats_subquery = (
                 select(
-                    triplet_union.c.target_id,
-                    func.count(triplet_union.c.triplet_id).label("frequency"),
-                    func.count(func.distinct(triplet_union.c.doc_id)).label(
+                    annotation_union.c.target_id,
+                    func.count(annotation_union.c.annotation_id).label("frequency"),
+                    func.count(func.distinct(annotation_union.c.doc_id)).label(
                         "doc_frequency"
                     ),
-                    func.min(triplet_union.c.timestamp).label("first_occurrence"),
-                    func.max(triplet_union.c.timestamp).label("last_occurrence"),
+                    func.min(annotation_union.c.timestamp).label("first_occurrence"),
+                    func.max(annotation_union.c.timestamp).label("last_occurrence"),
                 )
-                .group_by(triplet_union.c.target_id)
+                .group_by(annotation_union.c.target_id)
                 .subquery()
             )
 
@@ -227,26 +262,27 @@ class PopulationService(DbService):
     def _update_categories_for_type(
         self,
         category_orm_class: Type[CategoryMixin],
-        triplet_fk_columns: InstrumentedAttribute | list[InstrumentedAttribute],
+        backing_annotation_type: Type[AnnotationMixin],
+        annotation_fk_columns: InstrumentedAttribute | list[InstrumentedAttribute],
     ):
-        """Generic category update for any type linked to triplets."""
+        """Generic category update for any type linked to annotations."""
         with self.get_session_context() as session:
             session.query(category_orm_class).delete()
 
             # Normalize to list
-            if not isinstance(triplet_fk_columns, list):
-                triplet_fk_columns = [triplet_fk_columns]
+            if not isinstance(annotation_fk_columns, list):
+                annotation_fk_columns = [annotation_fk_columns]
 
             # Build union of categories from all foreign key columns
             category_queries = []
-            for fk_column in triplet_fk_columns:
+            for fk_column in annotation_fk_columns:
                 category_queries.append(
                     select(
                         fk_column.label("target_id"),
                         DocumentCategory.name,
                         DocumentCategory.value,
                     )
-                    .join(DocumentOrm, TripletOrm.doc_id == DocumentOrm.id)
+                    .join(DocumentOrm, backing_annotation_type.doc_id == DocumentOrm.id)
                     .join(
                         DocumentCategory, DocumentOrm.id == DocumentCategory.target_id
                     )
@@ -255,14 +291,14 @@ class PopulationService(DbService):
 
             # Build queries for all columns
             category_queries = []
-            for fk_column in triplet_fk_columns:
+            for fk_column in annotation_fk_columns:
                 category_queries.append(
                     select(
                         fk_column.label("target_id"),
                         DocumentCategory.name,
                         DocumentCategory.value,
                     )
-                    .join(DocumentOrm, TripletOrm.doc_id == DocumentOrm.id)
+                    .join(DocumentOrm, backing_annotation_type.doc_id == DocumentOrm.id)
                     .join(
                         DocumentCategory, DocumentOrm.id == DocumentCategory.target_id
                     )
@@ -283,10 +319,15 @@ class PopulationService(DbService):
                 n_docs = session.query(DocumentOrm).count()
 
             self._update_stats_for_type(
-                EntityOrm, [TripletOrm.subject_id, TripletOrm.object_id], n_docs
+                EntityOrm,
+                TripletOrm,
+                [TripletOrm.subject_id, TripletOrm.object_id],
+                n_docs,
             )
             self._update_categories_for_type(
-                EntityCategory, [TripletOrm.subject_id, TripletOrm.object_id]
+                EntityCategory,
+                TripletOrm,
+                [TripletOrm.subject_id, TripletOrm.object_id],
             )
             session.commit()
 
@@ -295,8 +336,12 @@ class PopulationService(DbService):
             if n_docs is None:
                 n_docs = session.query(DocumentOrm).count()
 
-            self._update_stats_for_type(PredicateOrm, TripletOrm.predicate_id, n_docs)
-            self._update_categories_for_type(PredicateCategory, TripletOrm.predicate_id)
+            self._update_stats_for_type(
+                PredicateOrm, TripletOrm, TripletOrm.predicate_id, n_docs
+            )
+            self._update_categories_for_type(
+                PredicateCategory, TripletOrm, TripletOrm.predicate_id
+            )
             session.commit()
 
     def update_relation_info(self, n_docs: int = None):
@@ -304,8 +349,12 @@ class PopulationService(DbService):
             if n_docs is None:
                 n_docs = session.query(DocumentOrm).count()
 
-            self._update_stats_for_type(RelationOrm, TripletOrm.relation_id, n_docs)
-            self._update_categories_for_type(RelationCategory, TripletOrm.relation_id)
+            self._update_stats_for_type(
+                RelationOrm, TripletOrm, TripletOrm.relation_id, n_docs
+            )
+            self._update_categories_for_type(
+                RelationCategory, TripletOrm, TripletOrm.relation_id
+            )
             session.commit()
 
     def update_co_occurrence_info(self, n_docs: int = None):
@@ -315,7 +364,7 @@ class PopulationService(DbService):
 
             # Stats
             self._update_stats_for_type(
-                CoOccurrenceOrm, TripletOrm.co_occurrence_id, n_docs
+                CoOccurrenceOrm, TupletOrm, TupletOrm.co_occurrence_id, n_docs
             )
 
             # PMI calculation (special to co-occurrences)
@@ -323,6 +372,7 @@ class PopulationService(DbService):
                 func.sum(EntityOrm.frequency)
             ).scalar()
 
+            entity_one_alias = aliased(EntityOrm)
             entity_two_alias = aliased(EntityOrm)
 
             pmi_subquery = (
@@ -331,11 +381,14 @@ class PopulationService(DbService):
                     (
                         func.log(CoOccurrenceOrm.frequency)
                         + func.log(total_entity_occurrences)
-                        - func.log(EntityOrm.frequency)
+                        - func.log(entity_one_alias.frequency)
                         - func.log(entity_two_alias.frequency)
                     ).label("pmi"),
                 )
-                .join(EntityOrm, CoOccurrenceOrm.entity_one_id == EntityOrm.id)
+                .join(
+                    entity_one_alias,
+                    CoOccurrenceOrm.entity_one_id == entity_one_alias.id,
+                )
                 .join(
                     entity_two_alias,
                     CoOccurrenceOrm.entity_two_id == entity_two_alias.id,
@@ -352,7 +405,7 @@ class PopulationService(DbService):
             session.execute(pmi_update)
 
             self._update_categories_for_type(
-                CoOccurrenceCategory, TripletOrm.co_occurrence_id
+                CoOccurrenceCategory, TripletOrm, TripletOrm.co_occurrence_id
             )
             session.commit()
 
@@ -371,6 +424,12 @@ class PopulationService(DbService):
         with self.get_session_context() as sc:
             return sc.query(TripletOrm).all()
 
+    def get_tuplets(
+        self,
+    ):
+        with self.get_session_context() as sc:
+            return sc.query(TupletOrm).all()
+
 
 class Cache:
     def __init__(
@@ -379,6 +438,7 @@ class Cache:
         entity_mappings: dict[str, str],
         predicate_mappings: dict[str, str],
         triplets: list[TripletOrm],
+        tuplets: list[TupletOrm],
     ):
         self._session = session
         self._entity_mappings = entity_mappings
@@ -387,7 +447,7 @@ class Cache:
         self._entities = self._initialize_entities()
         self._predicates = self._initialize_predicates()
 
-        self._co_occurrences = self._initialize_co_occurrences(triplets)
+        self._co_occurrences = self._initialize_co_occurrences(tuplets)
         self._relations = self._initialize_relations(triplets)
 
     def _initialize_entities(self) -> dict[str, EntityOrm]:
@@ -423,7 +483,7 @@ class Cache:
         return predicates
 
     def _initialize_co_occurrences(
-        self, triplets: list[TripletOrm]
+        self, tuplets: list[TupletOrm]
     ) -> dict[tuple[int, int], CoOccurrenceOrm]:
         co_occurrences = {
             (int(coc.entity_one_id), int(coc.entity_two_id)): coc
@@ -431,9 +491,9 @@ class Cache:
         }
 
         new_co_occurrences = []
-        for triplet in triplets:
-            entity_id_1 = self.get_entity_id(triplet.subj_span_text)
-            entity_id_2 = self.get_entity_id(triplet.obj_span_text)
+        for triplet in tuplets:
+            entity_id_1 = self.get_entity_id(triplet.entity_one_span_text)
+            entity_id_2 = self.get_entity_id(triplet.entity_two_span_text)
             if entity_id_1 < entity_id_2:
                 key = entity_id_1, entity_id_2
             else:

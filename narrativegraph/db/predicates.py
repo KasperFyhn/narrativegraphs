@@ -9,8 +9,9 @@ from narrativegraph.db.common import (
     CategoryMixin,
     HasAltLabels,
 )
+from narrativegraph.db.documents import AnnotationBackedTextStatsMixin
 from narrativegraph.db.engine import Base
-from narrativegraph.db.triplets import TripletBackedTextStatsMixin, TripletOrm
+from narrativegraph.db.triplets import TripletOrm
 
 if TYPE_CHECKING:
     from narrativegraph.db.relations import RelationOrm
@@ -21,7 +22,9 @@ class PredicateCategory(Base, CategoryMixin):
     target_id = Column(Integer, ForeignKey("predicates.id"), nullable=False, index=True)
 
 
-class PredicateOrm(Base, TripletBackedTextStatsMixin, CategorizableMixin, HasAltLabels):
+class PredicateOrm(
+    Base, AnnotationBackedTextStatsMixin, CategorizableMixin, HasAltLabels
+):
     __tablename__ = "predicates"
     id = Column(Integer, primary_key=True, autoincrement=True)
     label: str = Column(String, nullable=False, index=True)

@@ -9,10 +9,11 @@ from narrativegraph.db.common import (
     CategoryMixin,
     HasAltLabels,
 )
+from narrativegraph.db.documents import AnnotationBackedTextStatsMixin
 from narrativegraph.db.engine import Base
 from narrativegraph.db.entities import EntityOrm
 from narrativegraph.db.predicates import PredicateOrm
-from narrativegraph.db.triplets import TripletBackedTextStatsMixin, TripletOrm
+from narrativegraph.db.triplets import TripletOrm
 
 if TYPE_CHECKING:
     from narrativegraph.db.cooccurrences import CoOccurrenceOrm
@@ -23,7 +24,9 @@ class RelationCategory(Base, CategoryMixin):
     target_id = Column(Integer, ForeignKey("relations.id"), nullable=False, index=True)
 
 
-class RelationOrm(Base, TripletBackedTextStatsMixin, CategorizableMixin, HasAltLabels):
+class RelationOrm(
+    Base, AnnotationBackedTextStatsMixin, CategorizableMixin, HasAltLabels
+):
     __tablename__ = "relations"
     id = Column(Integer, primary_key=True, autoincrement=True)
     subject_id = Column(Integer, ForeignKey("entities.id"), nullable=False, index=True)
