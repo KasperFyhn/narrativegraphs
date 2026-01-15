@@ -10,7 +10,7 @@ class TripletOrm(Base, CategorizableMixin):
     id = Column(Integer, primary_key=True, autoincrement=True)
     doc_id = Column(Integer, ForeignKey("documents.id"), nullable=False, index=True)
 
-    timestamp = Column(Date, nullable=True, index=True)
+    timestamp = Column(Date, nullable=True)
 
     subject_id = Column(Integer, ForeignKey("entities.id"), nullable=True, index=True)
     predicate_id = Column(

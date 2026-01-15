@@ -5,6 +5,10 @@ from sqlalchemy import Engine
 from tqdm import tqdm
 
 from narrativegraph.nlp.extraction import TripletExtractor
+from narrativegraph.nlp.extraction.cooccurrences import (
+    CoOccurrenceExtractor,
+    DefaultCoOccurrenceExtractor,
+)
 from narrativegraph.nlp.extraction.spacy import NaiveSpacyTripletExtractor
 from narrativegraph.nlp.mapping import Mapper
 from narrativegraph.nlp.mapping.linguistic import StemmingMapper
@@ -21,6 +25,7 @@ class Pipeline:
         self,
         engine: Engine,
         triplet_extractor: TripletExtractor = None,
+        co_occurrence_extractor: CoOccurrenceExtractor = None,
         entity_mapper: Mapper = None,
         predicate_mapper: Mapper = None,
     ):
@@ -28,6 +33,9 @@ class Pipeline:
         self._triplet_extractor = triplet_extractor or NaiveSpacyTripletExtractor(
             named_entities=(2, None),
             noun_chunks=(2, None),
+        )
+        self._co_occurrence_extractor = (
+            co_occurrence_extractor or DefaultCoOccurrenceExtractor()
         )
         self._entity_mapper = entity_mapper or StemmingMapper()
         self._predicate_mapper = predicate_mapper or StemmingMapper()
@@ -74,6 +82,9 @@ class Pipeline:
                 self._db_service.add_triplets(
                     doc,
                     doc_triplets,
+                )
+                co_occurrences = self._co_occurrence_extractor.extract(
+                    doc, doc_triplets
                 )
 
             _logger.info("Mapping entities and predicates")
