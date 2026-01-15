@@ -123,6 +123,9 @@ class NarrativeGraph:
     def get_documents(self, ids: list[int] = None, limit: int = None) -> list[Document]:
         return self._db_service.documents.get_multiple(ids=ids, limit=limit)
 
+    def get_graph(self, graph_filter: GraphFilter = None):
+        return self._db_service.graph.get_graph(graph_filter=graph_filter)
+
     def find_communities(self, graph_filter: GraphFilter = None) -> list[Community]:
         return self._db_service.graph.find_communities(graph_filter=graph_filter)
 

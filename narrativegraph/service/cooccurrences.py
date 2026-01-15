@@ -28,7 +28,9 @@ class CoOccurrencesService(OrmAssociatedService):
                 select(
                     CoOccurrenceOrm.id.label("id"),
                     entity_one.label.label("entity_one"),
+                    entity_one.frequency.label("entity_one_frequency"),
                     entity_two.label.label("entity_two"),
+                    entity_two.frequency.label("entity_two_frequency"),
                     *CoOccurrenceOrm.stats_columns(),
                     CoOccurrenceOrm.pmi.label("pmi"),
                     entity_one.id.label("entity_one_id"),

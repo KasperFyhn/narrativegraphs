@@ -277,7 +277,7 @@ class GraphService(SubService):
         if community_detection_method == "louvain":
             community_detection_method = partial(community.louvain_communities)
         elif community_detection_method == "k_clique":
-            community_detection_method = partial(community.k_clique_communities)
+            community_detection_method = partial(community.k_clique_communities, k=3)
 
         # Build entity filter conditions
         entity_conditions = create_entity_conditions(graph_filter)

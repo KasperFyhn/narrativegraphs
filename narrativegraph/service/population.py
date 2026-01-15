@@ -23,7 +23,7 @@ from narrativegraph.service.common import DbService
 
 
 class PopulationService(DbService):
-    def _bulk_save_with_categories(
+    def _bulk_save_docs_with_categories(
         self,
         bulk: list[DocumentOrm],
         categories: list[dict[str, list[str]]],
@@ -82,12 +82,12 @@ class PopulationService(DbService):
                 doc_cats.append(categorization)
 
                 if len(bulk) >= 500:
-                    self._bulk_save_with_categories(bulk, doc_cats)
+                    self._bulk_save_docs_with_categories(bulk, doc_cats)
                     bulk.clear()
                     doc_cats.clear()
 
             # save any remaining in the bulk
-            self._bulk_save_with_categories(bulk, doc_cats)
+            self._bulk_save_docs_with_categories(bulk, doc_cats)
 
     def get_docs(
         self,
