@@ -315,7 +315,6 @@ class GraphService(SubService):
                 .all()
             )
 
-            # Only fetch full entities if you need them (e.g., for entity_map)
             entities = db.query(EntityOrm).filter(and_(*entity_conditions)).all()
             entity_map = {entity.id: entity for entity in entities}
             entity_ids = list(entity_map.keys())

@@ -86,7 +86,7 @@ class Pipeline:
                 doc_tuplets = self._co_occurrence_extractor.extract(doc, doc_triplets)
                 self._db_service.add_tuplets(doc, doc_tuplets)
 
-            _logger.info("Mapping entities and predicates")
+            _logger.info("Resolving entities and predicates")
             triplets = self._db_service.get_triplets()
             entities = [
                 entity
@@ -98,8 +98,8 @@ class Pipeline:
             predicates = [triplet.pred_span_text for triplet in triplets]
             self.predicate_mapping = self._predicate_mapper.create_mapping(predicates)
 
-            _logger.info("Mapping triplets")
-            self._db_service.map_triplets(
+            _logger.info("Mapping triplets and tuplets")
+            self._db_service.map_triplets_and_tuplets(
                 self.entity_mapping,
                 self.predicate_mapping,
             )

@@ -4,6 +4,7 @@ from typing import Type
 from sqlalchemy import func, insert, select, union_all, update
 from sqlalchemy.orm import Session, aliased
 from sqlalchemy.orm.attributes import InstrumentedAttribute
+from tqdm import tqdm
 
 from narrativegraph.db.common import CategoryMixin
 from narrativegraph.db.cooccurrences import CoOccurrenceCategory, CoOccurrenceOrm
@@ -141,7 +142,7 @@ class PopulationService(DbService):
             ]
             sc.bulk_save_objects(tuplet_orms)
 
-    def map_triplets(
+    def map_triplets_and_tuplets(
         self,
         entity_mappings: dict[str, str],
         predicate_mappings: dict[str, str],
@@ -152,7 +153,7 @@ class PopulationService(DbService):
 
             cache = Cache(sc, entity_mappings, predicate_mappings, triplets, tuplets)
 
-            for triplet in triplets:
+            for triplet in tqdm(triplets, desc="Mapping triplets"):
                 subject_id = cache.get_entity_id(triplet.subj_span_text)
                 predicate_id = cache.get_predicate_id(
                     triplet.pred_span_text,
@@ -163,21 +164,15 @@ class PopulationService(DbService):
                     predicate_id,
                     object_id,
                 )
-                co_occurrence_id = cache.get_co_occurrence_id(
-                    subject_id,
-                    object_id,
-                )
 
                 triplet.subject_id = subject_id
                 triplet.predicate_id = predicate_id
                 triplet.object_id = object_id
                 triplet.relation_id = relation_id
-                triplet.co_occurrence_id = co_occurrence_id
 
-            for tuplet in tuplets:
+            for tuplet in tqdm(tuplets, desc="Mapping tuplets"):
                 entity_one_id = cache.get_entity_id(tuplet.entity_one_span_text)
                 entity_two_id = cache.get_entity_id(tuplet.entity_two_span_text)
-
                 co_occurrence_id = cache.get_co_occurrence_id(
                     entity_one_id,
                     entity_two_id,
@@ -491,13 +486,12 @@ class Cache:
         }
 
         new_co_occurrences = []
-        for triplet in tuplets:
-            entity_id_1 = self.get_entity_id(triplet.entity_one_span_text)
-            entity_id_2 = self.get_entity_id(triplet.entity_two_span_text)
-            if entity_id_1 < entity_id_2:
-                key = entity_id_1, entity_id_2
-            else:
-                key = entity_id_2, entity_id_1
+        for tuplet in tuplets:
+            entity_id_1 = self.get_entity_id(tuplet.entity_one_span_text)
+            entity_id_2 = self.get_entity_id(tuplet.entity_two_span_text)
+            if entity_id_1 > entity_id_2:
+                entity_id_2, entity_id_1 = entity_id_1, entity_id_2
+            key = entity_id_1, entity_id_2
             if key not in co_occurrences:
                 co_occurrence = CoOccurrenceOrm(
                     entity_one_id=entity_id_1,
@@ -529,12 +523,10 @@ class Cache:
             object_id = self.get_entity_id(triplet.obj_span_text)
             relation_key = (subject_id, predicate_id, object_id)
             if relation_key not in relations:
-                coc_id = self.get_co_occurrence_id(subject_id, object_id)
                 relation = RelationOrm(
                     subject_id=subject_id,
                     predicate_id=predicate_id,
                     object_id=object_id,
-                    co_occurrence_id=coc_id,
                 )
                 relations[relation_key] = relation
                 new_relations.append(relation)
@@ -581,15 +573,12 @@ class Cache:
             object_id,
         )
 
-        co_occurrence_id = self.get_co_occurrence_id(subject_id, object_id)
-
         relation = self._relations.get(relation_key, None)
         if relation is None:
             relation = RelationOrm(
                 subject_id=subject_id,
                 predicate_id=predicate_id,
                 object_id=object_id,
-                co_occurrence_id=co_occurrence_id,
             )
             self._session.add(relation)
             self._session.flush()  # Get the ID immediately
@@ -601,10 +590,9 @@ class Cache:
         entity_id_1: int,
         entity_id_2: int,
     ):
-        if entity_id_1 < entity_id_2:
-            key = entity_id_1, entity_id_2
-        else:
-            key = entity_id_2, entity_id_1
+        if entity_id_1 > entity_id_2:
+            entity_id_2, entity_id_1 = entity_id_1, entity_id_2
+        key = entity_id_1, entity_id_2
         co_occurrence = self._co_occurrences.get(key, None)
         if co_occurrence is None:
             co_occurrence = CoOccurrenceOrm(

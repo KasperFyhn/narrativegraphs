@@ -16,6 +16,7 @@ from narrativegraph.dto.filter import GraphFilter
 from narrativegraph.dto.predicates import PredicateDetails
 from narrativegraph.dto.relations import RelationDetails
 from narrativegraph.nlp.extraction import TripletExtractor
+from narrativegraph.nlp.extraction.cooccurrences import CoOccurrenceExtractor
 from narrativegraph.nlp.mapping import Mapper
 from narrativegraph.nlp.pipeline import Pipeline
 from narrativegraph.server.backgroundserver import BackgroundServer
@@ -30,6 +31,7 @@ class NarrativeGraph(QueryService):
     def __init__(
         self,
         triplet_extractor: TripletExtractor = None,
+        co_occurrence_extractor: CoOccurrenceExtractor = None,
         entity_mapper: Mapper = None,
         predicate_mapper: Mapper = None,
         sqlite_db_path: str = None,
@@ -51,6 +53,7 @@ class NarrativeGraph(QueryService):
         self._pipeline = Pipeline(
             self._engine,
             triplet_extractor=triplet_extractor,
+            co_occurrence_extractor=co_occurrence_extractor,
             entity_mapper=entity_mapper,
             predicate_mapper=predicate_mapper,
         )
@@ -142,7 +145,7 @@ class NarrativeGraph(QueryService):
 
         :return: None
         """
-        server = BackgroundServer(self.engine, port=port)
+        server = BackgroundServer(self._engine, port=port)
         if autostart:
             server.start(block=block)
         if not block:

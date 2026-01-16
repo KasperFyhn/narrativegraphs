@@ -16,7 +16,7 @@ from narrativegraph.db.predicates import PredicateOrm
 from narrativegraph.db.triplets import TripletOrm
 
 if TYPE_CHECKING:
-    from narrativegraph.db.cooccurrences import CoOccurrenceOrm
+    pass
 
 
 class RelationCategory(Base, CategoryMixin):
@@ -34,9 +34,6 @@ class RelationOrm(
         Integer, ForeignKey("predicates.id"), nullable=False, index=True
     )
     object_id = Column(Integer, ForeignKey("entities.id"), nullable=False, index=True)
-    co_occurrence_id = Column(
-        Integer, ForeignKey("co_occurrences.id"), nullable=False, index=True
-    )
 
     @property
     def label(self) -> str:
@@ -74,11 +71,6 @@ class RelationOrm(
         "TripletOrm",
         back_populates="relation",
         foreign_keys="TripletOrm.relation_id",
-    )
-    co_occurrence: Mapped["CoOccurrenceOrm"] = relationship(
-        "CoOccurrenceOrm",
-        back_populates="relations",
-        foreign_keys="RelationOrm.co_occurrence_id",
     )
 
     categories: Mapped[list[RelationCategory]] = relationship(

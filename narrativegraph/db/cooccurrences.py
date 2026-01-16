@@ -1,4 +1,10 @@
-from sqlalchemy import Column, Float, ForeignKey, Integer
+from sqlalchemy import (
+    CheckConstraint,
+    Column,
+    Float,
+    ForeignKey,
+    Integer,
+)
 from sqlalchemy.orm import Mapped, relationship
 
 from narrativegraph.db.common import (
@@ -8,8 +14,7 @@ from narrativegraph.db.common import (
 from narrativegraph.db.documents import AnnotationBackedTextStatsMixin
 from narrativegraph.db.engine import Base
 from narrativegraph.db.entities import EntityOrm
-from narrativegraph.db.relations import RelationOrm
-from narrativegraph.db.triplets import TripletOrm
+from narrativegraph.db.tuplets import TupletOrm
 
 
 class CoOccurrenceCategory(Base, CategoryMixin):
@@ -40,15 +45,14 @@ class CoOccurrenceOrm(Base, AnnotationBackedTextStatsMixin, CategorizableMixin):
         foreign_keys="CoOccurrenceOrm.entity_two_id",
     )
 
-    relations: Mapped[list[RelationOrm]] = relationship(
-        "RelationOrm",
-        back_populates="co_occurrence",
-        foreign_keys="RelationOrm.co_occurrence_id",
+    __table_args__ = (
+        CheckConstraint("entity_one_id <= entity_two_id", name="entity_order_check"),
     )
-    triplets: Mapped[list["TripletOrm"]] = relationship(
-        "TripletOrm",
+
+    tuplets: Mapped[list["TupletOrm"]] = relationship(
+        "TupletOrm",
         back_populates="co_occurrence",
-        foreign_keys="TripletOrm.co_occurrence_id",
+        foreign_keys="TupletOrm.co_occurrence_id",
     )
 
     categories: Mapped[list[CoOccurrenceCategory]] = relationship(

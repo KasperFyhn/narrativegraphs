@@ -41,10 +41,6 @@ class DbService:
                 setattr(self._local, name, None)
                 session.close()
 
-    @property
-    def engine(self) -> Engine:
-        return self._engine
-
 
 class SubService:
     def __init__(
