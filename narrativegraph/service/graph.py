@@ -2,6 +2,7 @@ from collections import defaultdict
 from functools import partial
 from typing import Callable, List, Literal
 
+import networkx
 import networkx as nx
 from networkx.algorithms import community
 from sqlalchemy import and_, or_
@@ -268,39 +269,56 @@ class GraphService(SubService):
         self,
         graph_filter: GraphFilter = None,
         weight_measure: Literal["pmi", "frequency"] = "pmi",
-        community_detection_method: Literal["louvain", "k_clique"]
-        | Callable[[nx.Graph], list[set[int]]] = "louvain",
+        min_weight: float = 2.0,
+        community_detection_method: Literal[
+            "louvain", "k_clique", "connected_components"
+        ]
+        | Callable[[nx.Graph], list[set[int]]] = "k_clique",
+        community_detection_method_args: dict = None,
     ) -> list[Community]:
         if graph_filter is None:
             graph_filter = GraphFilter()
+        if community_detection_method_args is None:
+            community_detection_method_args = {}
 
         if community_detection_method == "louvain":
-            community_detection_method = partial(community.louvain_communities)
+            args = dict(resolution=1.5)
+            args.update(community_detection_method_args)
+            community_detection_method = partial(community.louvain_communities, **args)
         elif community_detection_method == "k_clique":
-            community_detection_method = partial(community.k_clique_communities, k=3)
+            args = dict(k=4)
+            args.update(community_detection_method_args)
+            community_detection_method = partial(community.k_clique_communities, **args)
+        elif community_detection_method == "connected_components":
+            args = dict()
+            args.update(community_detection_method_args)
+            community_detection_method = partial(networkx.connected_components, **args)
 
         # Build entity filter conditions
         entity_conditions = create_entity_conditions(graph_filter)
 
         # Build relation filter conditions
         coc_conditions = create_co_occurrence_conditions(graph_filter)
+        coc_conditions.append(CoOccurrenceOrm.pmi >= min_weight)
 
         with self.get_session_context() as db:
-            query = db.query(EntityOrm).filter(and_(*entity_conditions))
-            entities = query.all()
+            entity_subquery = db.query(EntityOrm.id).filter(and_(*entity_conditions))
+
+            # Get co-occurrences using subquery
+            co_occurrences = (
+                db.query(CoOccurrenceOrm)
+                .filter(
+                    and_(*coc_conditions),
+                    CoOccurrenceOrm.entity_one_id.in_(entity_subquery),
+                    CoOccurrenceOrm.entity_two_id.in_(entity_subquery),
+                )
+                .all()
+            )
+
+            # Only fetch full entities if you need them (e.g., for entity_map)
+            entities = db.query(EntityOrm).filter(and_(*entity_conditions)).all()
             entity_map = {entity.id: entity for entity in entities}
             entity_ids = list(entity_map.keys())
-
-            # Get relations between entities
-            coc_query_conditions = and_(
-                *coc_conditions,
-                CoOccurrenceOrm.entity_one_id.in_(entity_ids),
-                CoOccurrenceOrm.entity_two_id.in_(entity_ids),
-            )
-
-            co_occurrences: list[CoOccurrenceOrm] = (
-                db.query(CoOccurrenceOrm).filter(coc_query_conditions).all()
-            )
 
             graph = nx.Graph()
             graph.add_nodes_from(entity_ids)
