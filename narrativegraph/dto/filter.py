@@ -19,8 +19,12 @@ class GraphFilter(CamelModel):
     limit_edges: int = None
     minimum_node_frequency: Optional[int] = None
     maximum_node_frequency: Optional[int] = None
+    minimum_node_doc_frequency: Optional[int] = None
+    maximum_node_doc_frequency: Optional[int] = None
     minimum_edge_frequency: Optional[int] = None
     maximum_edge_frequency: Optional[int] = None
+    minimum_edge_doc_frequency: Optional[int] = None
+    maximum_edge_doc_frequency: Optional[int] = None
     label_search: Optional[str] = None
     earliest_date: Optional[date] = None
     latest_date: Optional[date] = None

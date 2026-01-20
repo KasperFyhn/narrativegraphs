@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Literal, Optional
 
 import pandas as pd
 from sqlalchemy import select
@@ -10,6 +10,7 @@ from narrativegraph.dto.entities import (
     EntityDetails,
     EntityLabel,
 )
+from narrativegraph.errors import EntryNotFoundError
 from narrativegraph.service.common import OrmAssociatedService
 
 
@@ -18,7 +19,7 @@ class EntityService(OrmAssociatedService):
     _category_orm = EntityCategory
 
     def as_df(self) -> pd.DataFrame:
-        with self.get_session_context() as session:
+        with self._get_session_context() as session:
             engine = session.get_bind()
 
             df = pd.read_sql(
@@ -50,7 +51,7 @@ class EntityService(OrmAssociatedService):
     def doc_ids_by_entity(
         self, entity_id: int, limit: Optional[int] = None
     ) -> list[int]:
-        with self.get_session_context() as sc:
+        with self._get_session_context() as sc:
             query = (
                 sc.query(DocumentOrm.id)
                 .join(TripletOrm)
@@ -66,7 +67,7 @@ class EntityService(OrmAssociatedService):
         return [doc.id for doc in query.all()]
 
     def labels_by_ids(self, entity_ids: list[int]) -> list[EntityLabel]:
-        with self.get_session_context() as sc:
+        with self._get_session_context() as sc:
             entities = (
                 sc.query(EntityOrm.id, EntityOrm.label)
                 .filter(EntityOrm.id.in_(entity_ids))
@@ -76,3 +77,33 @@ class EntityService(OrmAssociatedService):
             return [
                 EntityLabel(id=entity.id, label=entity.label) for entity in entities
             ]
+
+    def get_connected_entities(
+        self,
+        entity_id: int,
+        limit: Optional[int] = None,
+        connection_type: Literal["relation", "cooccurrence"] = "cooccurrence",
+    ) -> list[EntityDetails]:
+        with self._get_session_context() as sc:
+            entity = sc.query(EntityOrm).get(entity_id)
+            if entity is None:
+                raise EntryNotFoundError(f"Entity with id '{entity_id}' not found.")
+
+            if connection_type == "relation":
+                rels = entity.relations
+                connected_entities = [
+                    other for rel in rels for other in [rel.subject_id, rel.object_id]
+                ]
+            elif connection_type == "cooccurrence":
+                coocs = entity.co_occurrences
+                connected_entities = [
+                    other
+                    for cooc in coocs
+                    for other in [cooc.entity_one_id, cooc.entity_two_id]
+                ]
+
+            query = sc.query(EntityOrm).filter(self._orm.id.in_(connected_entities))
+            if limit:
+                query = query.limit(limit)
+
+            return [EntityDetails.from_orm(entity_orm) for entity_orm in query.all()]

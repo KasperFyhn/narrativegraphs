@@ -36,6 +36,7 @@ class NarrativeGraph(QueryService):
         predicate_mapper: Mapper = None,
         sqlite_db_path: str = None,
         on_existing_db: Literal["stop", "overwrite", "reuse"] = "stop",
+        n_cpu: int = -1,
     ):
         # Check if DB exists and has data
         if sqlite_db_path and os.path.exists(sqlite_db_path):
@@ -56,6 +57,7 @@ class NarrativeGraph(QueryService):
             co_occurrence_extractor=co_occurrence_extractor,
             entity_mapper=entity_mapper,
             predicate_mapper=predicate_mapper,
+            n_cpu=n_cpu,
         )
 
     def fit(

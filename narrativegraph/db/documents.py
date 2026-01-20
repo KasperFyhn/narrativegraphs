@@ -41,6 +41,7 @@ class AnnotationMixin(CategorizableMixin):
 class AnnotationBackedTextStatsMixin:
     frequency = Column(Integer, default=-1, nullable=False)
     doc_frequency = Column(Integer, default=-1, nullable=False)
+    spread = Column(Float, default=-1, nullable=False)
     adjusted_tf_idf = Column(Float, default=-1, nullable=False)
     first_occurrence = Column(Date, nullable=True)
     last_occurrence = Column(Date, nullable=True)
@@ -50,6 +51,7 @@ class AnnotationBackedTextStatsMixin:
         return [
             cls.frequency,
             cls.doc_frequency,
+            cls.spread,
             cls.adjusted_tf_idf,
             cls.first_occurrence,
             cls.last_occurrence,

@@ -74,7 +74,7 @@ class GraphService(SubService):
         self, graph_filter: GraphFilter, entity_conditions: List
     ) -> List[EntityOrm]:
         """Get focus entities based on whitelist or label search"""
-        with self.get_session_context() as db:
+        with self._get_session_context() as db:
             focus_conditions = []
             if graph_filter.whitelisted_entity_ids:
                 focus_conditions.extend(entity_whitelist_filter(graph_filter))
@@ -98,7 +98,7 @@ class GraphService(SubService):
         relation_conditions: List,
     ) -> list[EntityOrm]:
         """Get entities connected to focus entities"""
-        with self.get_session_context() as db:
+        with self._get_session_context() as db:
             # Find relations involving focus entities
             connections = (
                 db.query(RelationOrm)
@@ -150,7 +150,7 @@ class GraphService(SubService):
 
         focus_entity_ids = []
 
-        with self.get_session_context() as db:
+        with self._get_session_context() as db:
             # Handle focus entities (whitelist or label search)
             if graph_filter.whitelisted_entity_ids or graph_filter.label_search:
                 focus_entities = self._get_focus_entities(
@@ -301,7 +301,7 @@ class GraphService(SubService):
         coc_conditions = create_co_occurrence_conditions(graph_filter)
         coc_conditions.append(CoOccurrenceOrm.pmi >= min_weight)
 
-        with self.get_session_context() as db:
+        with self._get_session_context() as db:
             entity_subquery = db.query(EntityOrm.id).filter(and_(*entity_conditions))
 
             # Get co-occurrences using subquery

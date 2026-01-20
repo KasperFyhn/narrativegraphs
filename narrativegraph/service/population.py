@@ -4,7 +4,6 @@ from typing import Type
 from sqlalchemy import func, insert, select, union_all, update
 from sqlalchemy.orm import Session, aliased
 from sqlalchemy.orm.attributes import InstrumentedAttribute
-from tqdm import tqdm
 
 from narrativegraph.db.common import CategoryMixin
 from narrativegraph.db.cooccurrences import CoOccurrenceCategory, CoOccurrenceOrm
@@ -153,7 +152,7 @@ class PopulationService(DbService):
 
             cache = Cache(sc, entity_mappings, predicate_mappings, triplets, tuplets)
 
-            for triplet in tqdm(triplets, desc="Mapping triplets"):
+            for triplet in triplets:
                 subject_id = cache.get_entity_id(triplet.subj_span_text)
                 predicate_id = cache.get_predicate_id(
                     triplet.pred_span_text,
@@ -170,7 +169,7 @@ class PopulationService(DbService):
                 triplet.object_id = object_id
                 triplet.relation_id = relation_id
 
-            for tuplet in tqdm(tuplets, desc="Mapping tuplets"):
+            for tuplet in tuplets:
                 entity_one_id = cache.get_entity_id(tuplet.entity_one_span_text)
                 entity_two_id = cache.get_entity_id(tuplet.entity_two_span_text)
                 co_occurrence_id = cache.get_co_occurrence_id(
@@ -181,8 +180,6 @@ class PopulationService(DbService):
                 tuplet.entity_one_id = entity_one_id
                 tuplet.entity_two_id = entity_two_id
                 tuplet.co_occurrence_id = co_occurrence_id
-
-            self.calculate_stats()
 
     def _update_stats_for_type(
         self,
@@ -242,6 +239,7 @@ class PopulationService(DbService):
                 .values(
                     frequency=stats_subquery.c.frequency,
                     doc_frequency=stats_subquery.c.doc_frequency,
+                    spread=stats_subquery.c.doc_frequency / n_docs,
                     adjusted_tf_idf=(
                         (stats_subquery.c.frequency - 1)
                         * (n_docs / (stats_subquery.c.doc_frequency + 1))

@@ -47,7 +47,7 @@ class SubService:
         self,
         get_session_context: Callable[[], _GeneratorContextManager[Session]],
     ):
-        self.get_session_context = get_session_context
+        self._get_session_context = get_session_context
 
 
 class OrmAssociatedService(SubService, ABC):
@@ -55,7 +55,7 @@ class OrmAssociatedService(SubService, ABC):
     _category_orm: type[CategoryMixin] = None
 
     def _add_category_columns(self, df: pd.DataFrame = None):
-        with self.get_session_context() as session:
+        with self._get_session_context() as session:
             categories_df = pd.read_sql(
                 select(
                     self._category_orm.target_id,
@@ -82,9 +82,9 @@ class OrmAssociatedService(SubService, ABC):
         pass
 
     def _get_by_id_and_transform(self, id_: int, transform: Callable[[Any], Any]):
-        with self.get_session_context() as sc:
+        with self._get_session_context() as sc:
             entry = (
-                sc.query(self._orm).filter(self._orm.id == id_).first()  # noqa; id must be there
+                sc.query(self._orm).get(id_)  # noqa; id must be there
             )  # noqa; the id ref works
             if entry is None:
                 raise EntryNotFoundError(
@@ -99,7 +99,7 @@ class OrmAssociatedService(SubService, ABC):
     def _get_multiple_by_ids_and_transform(
         self, transform: Callable[[Any], Any], ids: list[int] = None, limit: int = None
     ):
-        with self.get_session_context() as sc:
+        with self._get_session_context() as sc:
             query = sc.query(self._orm)
             if ids is not None:
                 query = query.filter(self._orm.id.in_(ids))  # noqa; the id ref works

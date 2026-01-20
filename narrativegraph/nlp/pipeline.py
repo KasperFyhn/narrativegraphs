@@ -28,6 +28,7 @@ class Pipeline:
         co_occurrence_extractor: CoOccurrenceExtractor = None,
         entity_mapper: Mapper = None,
         predicate_mapper: Mapper = None,
+        n_cpu: int = 1,
     ):
         # Analysis components
         self._triplet_extractor = triplet_extractor or NaiveSpacyTripletExtractor(
@@ -39,6 +40,8 @@ class Pipeline:
         )
         self._entity_mapper = entity_mapper or StemmingMapper()
         self._predicate_mapper = predicate_mapper or StemmingMapper()
+
+        self.n_cpu = n_cpu
 
         self._db_service = PopulationService(engine)
         self.predicate_mapping = None
@@ -71,7 +74,7 @@ class Pipeline:
             # TODO: use generators instead of lists here
             doc_orms = self._db_service.get_docs()
             extracted_triplets = self._triplet_extractor.batch_extract(
-                [d.text for d in doc_orms]
+                [d.text for d in doc_orms], n_cpu=self.n_cpu
             )
             docs_and_triplets = zip(doc_orms, extracted_triplets)
             if _logger.isEnabledFor(logging.INFO):
@@ -103,5 +106,8 @@ class Pipeline:
                 self.entity_mapping,
                 self.predicate_mapping,
             )
+
+            _logger.info("Calculating stats")
+            self._db_service.calculate_stats()
 
             return self

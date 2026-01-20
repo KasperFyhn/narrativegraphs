@@ -17,7 +17,7 @@ class CoOccurrencesService(OrmAssociatedService):
     _category_orm = CoOccurrenceCategory
 
     def as_df(self) -> pd.DataFrame:
-        with self.get_session_context() as session:
+        with self._get_session_context() as session:
             engine = session.get_bind()
 
             # Create aliases for the two entity joins
@@ -65,7 +65,7 @@ class CoOccurrencesService(OrmAssociatedService):
     def doc_ids_by_co_occurrence(
         self, co_occurrence_id: int, limit: Optional[int] = None
     ) -> list[int]:
-        with self.get_session_context() as sc:
+        with self._get_session_context() as sc:
             query = (
                 sc.query(DocumentOrm.id)
                 .join(TripletOrm)

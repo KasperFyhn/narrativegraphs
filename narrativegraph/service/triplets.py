@@ -14,7 +14,7 @@ class TripletService(OrmAssociatedService):
     _orm = TripletOrm
 
     def as_df(self) -> pd.DataFrame:
-        with self.get_session_context() as session:
+        with self._get_session_context() as session:
             engine = session.get_bind()
 
             # Create aliases for the two entity joins

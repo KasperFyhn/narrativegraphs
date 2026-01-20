@@ -10,7 +10,7 @@ class CoOccurrenceExtractor(ABC):
 
 
 class DefaultCoOccurrenceExtractor(CoOccurrenceExtractor):
-    def __init__(self, window: int = 3, boundary: str = "\n\n"):
+    def __init__(self, window: int = 5, boundary: str = None):
         self.window = window
         self.boundary = boundary
 
@@ -27,7 +27,10 @@ class DefaultCoOccurrenceExtractor(CoOccurrenceExtractor):
 
         pairs = []
         for i, entity in enumerate(entities):
-            window_bound = min(i + 1 + self.window, len(entities))
+            if self.window is not None:
+                window_bound = min(i + 1 + self.window, len(entities))
+            else:
+                window_bound = len(entities)
             following = entities[i + 1 : window_bound]
             for other in following:
                 pairs.append(Tuplet(entity_one=entity, entity_two=other))
@@ -48,9 +51,7 @@ class DefaultCoOccurrenceExtractor(CoOccurrenceExtractor):
         )
         return start <= min_position and max_position <= end
 
-    def extract(
-        self, doc: DocumentOrm, triplets: list[Tuplet]
-    ) -> list[tuple[str, str]]:
+    def extract(self, doc: DocumentOrm, triplets: list[Triplet]) -> list[Tuplet]:
         if self.boundary is not None:
             chunks = doc.text.split(self.boundary)
         else:
