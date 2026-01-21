@@ -46,6 +46,7 @@ class Community(CamelModel):
     """Community in the graph"""
 
     members: list[EntityLabel]
+    edges: list[tuple[int, int]]
     score: float
     density: float
     avg_pmi: float

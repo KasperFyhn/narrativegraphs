@@ -3,18 +3,13 @@ import os
 from datetime import date, datetime
 from typing import Literal
 
+import networkx as nx
 import pandas as pd
 from sqlalchemy import text
 
 from narrativegraph.db.engine import (
     get_engine,
 )
-from narrativegraph.dto.cooccurrences import CoOccurrenceDetails
-from narrativegraph.dto.documents import Document
-from narrativegraph.dto.entities import EntityDetails
-from narrativegraph.dto.filter import GraphFilter
-from narrativegraph.dto.predicates import PredicateDetails
-from narrativegraph.dto.relations import RelationDetails
 from narrativegraph.nlp.extraction import TripletExtractor
 from narrativegraph.nlp.extraction.cooccurrences import CoOccurrenceExtractor
 from narrativegraph.nlp.mapping import Mapper
@@ -103,31 +98,9 @@ class NarrativeGraph(QueryService):
     def triplets_(self) -> pd.DataFrame:
         return self.triplets.as_df()
 
-    def get_entities(
-        self, ids: list[int] = None, limit: int = None
-    ) -> list[EntityDetails]:
-        return self.entities.get_multiple(ids=ids, limit=limit)
-
-    def get_predicates(
-        self, ids: list[int] = None, limit: int = None
-    ) -> list[PredicateDetails]:
-        return self.predicates.get_multiple(ids=ids, limit=limit)
-
-    def get_relations(
-        self, ids: list[int] = None, limit: int = None
-    ) -> list[RelationDetails]:
-        return self.relations.get_multiple(ids=ids, limit=limit)
-
-    def get_co_occurrences(
-        self, ids: list[int] = None, limit: int = None
-    ) -> list[CoOccurrenceDetails]:
-        return self.co_occurrences.get_multiple(ids=ids, limit=limit)
-
-    def get_documents(self, ids: list[int] = None, limit: int = None) -> list[Document]:
-        return self.documents.get_multiple(ids=ids, limit=limit)
-
-    def get_graph(self, graph_filter: GraphFilter = None):
-        return self.graph.get_graph(graph_filter=graph_filter)
+    @property
+    def relation_graph_(self) -> nx.Graph:
+        return self.graph.get_relation_graph()
 
     def serve_visualizer(
         self,

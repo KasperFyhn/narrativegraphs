@@ -1,121 +1,139 @@
+import re
 from abc import ABC
+from typing import Callable
+
+import spacy
 
 from narrativegraph.db.documents import DocumentOrm
-from narrativegraph.nlp.extraction.common import Triplet, Tuplet
+from narrativegraph.nlp.extraction.common import SpanAnnotation, Tuplet
+from narrativegraph.nlp.utils.spacysegmentation import custom_sentencizer  # noqa
 
 
 class CoOccurrenceExtractor(ABC):
-    def extract(self, doc: DocumentOrm, triplets: list[Triplet]) -> list[Tuplet]:
+    def extract(self, doc: DocumentOrm, triplets: list[SpanAnnotation]) -> list[Tuplet]:
         pass
 
 
-class DefaultCoOccurrenceExtractor(CoOccurrenceExtractor):
-    def __init__(self, window: int = 5, boundary: str = None):
+class ChunkCoOccurrenceExtractor(CoOccurrenceExtractor):
+    def __init__(
+        self,
+        window: int = 3,
+        custom_boundary: str | re.Pattern = None,
+        custom_chunker: Callable[[str], list[str]] = None,
+        language: str = "en",
+    ):
+        if window is not None and window < 0:
+            raise ValueError("Window must be >= 0")
         self.window = window
-        self.boundary = boundary
+        self._boundary_pattern = None
 
-    def extract_from_chunk(self, triplets: list[Triplet]) -> list[Tuplet]:
-        seen = set()
-        entities = []
-        for triplet in triplets:
-            for entity in [triplet.subj, triplet.obj]:
-                key = (entity.start_char, entity.end_char)
-                if key not in seen:
-                    seen.add(key)
-                    entities.append(entity)
-        entities.sort(key=lambda e: e.start_char)
-
-        pairs = []
-        for i, entity in enumerate(entities):
-            if self.window is not None:
-                window_bound = min(i + 1 + self.window, len(entities))
+        if custom_chunker:
+            self._chunker = custom_chunker
+            self._chunker_type = "custom"
+        elif custom_boundary:
+            if isinstance(custom_boundary, str):
+                self._boundary_pattern = re.compile(custom_boundary)
             else:
-                window_bound = len(entities)
-            following = entities[i + 1 : window_bound]
-            for other in following:
-                pairs.append(Tuplet(entity_one=entity, entity_two=other))
+                self._boundary_pattern = custom_boundary
+            self._chunker_type = "regex"
+        else:
+            nlp = spacy.blank(language)
+            nlp.add_pipe("sentencizer")
+            nlp.add_pipe("custom_sentencizer")
+            self._nlp = nlp
+            self._chunker_type = "spacy"
 
-        return pairs
+    def _get_chunk_bounds(self, text: str) -> list[tuple[int, int]]:
+        """Return list of (start_char, end_char) for each chunk."""
+        if self._chunker_type == "spacy":
+            doc = self._nlp(text)
+            return [(sent.start_char, sent.end_char) for sent in doc.sents]
+
+        elif self._chunker_type == "regex":
+            bounds = []
+            last_end = 0
+            for match in self._boundary_pattern.finditer(text):
+                if last_end < match.start():
+                    bounds.append((last_end, match.start()))
+                last_end = match.end()
+            if last_end < len(text):
+                bounds.append((last_end, len(text)))
+            return bounds
+
+        else:  # custom chunker
+            chunks = self._chunker(text)
+            bounds = []
+            pos = 0
+            for chunk in chunks:
+                idx = text.find(chunk, pos)
+                if idx != -1:
+                    bounds.append((idx, idx + len(chunk)))
+                    pos = idx + len(chunk)
+            return bounds
 
     @staticmethod
-    def is_triplet_within_bounds(start: int, end: int, triplet: Triplet) -> bool:
-        min_position = min(
-            triplet.subj.start_char,
-            triplet.pred.start_char,
-            triplet.obj.start_char,
-        )
-        max_position = max(
-            triplet.subj.end_char,
-            triplet.pred.end_char,
-            triplet.obj.end_char,
-        )
-        return start <= min_position and max_position <= end
+    def is_entity_within_bounds(start: int, end: int, entity: SpanAnnotation) -> bool:
+        return start <= entity.start_char and entity.end_char <= end
 
-    def extract(self, doc: DocumentOrm, triplets: list[Triplet]) -> list[Tuplet]:
-        if self.boundary is not None:
-            chunks = doc.text.split(self.boundary)
-        else:
-            chunks = [doc.text]
+    def _assign_entities_to_chunks(
+        self,
+        chunk_bounds: list[tuple[int, int]],
+        entities: list[SpanAnnotation],
+    ) -> list[list[SpanAnnotation]]:
+        """Assign each entity to its containing chunk."""
+        sorted_entities = sorted(entities, key=lambda e: e.start_char)
+        chunk_entities = [[] for _ in chunk_bounds]
+        entity_idx = 0
 
-        # Build chunk boundaries accounting for separator length
-        chunk_bounds = []
-        at = 0
-        boundary_len = len(self.boundary) if self.boundary else 0
+        for chunk_idx, (start, end) in enumerate(chunk_bounds):
+            while entity_idx < len(sorted_entities):
+                entity = sorted_entities[entity_idx]
 
-        for chunk in chunks:
-            start = at
-            end = at + len(chunk)
-            chunk_bounds.append((start, end))
-            at = end + boundary_len  # Account for the boundary
-
-        # Sort triplets once by start position for efficiency
-        sorted_triplets = sorted(
-            triplets,
-            key=lambda t: min(t.subj.start_char, t.pred.start_char, t.obj.start_char),
-        )
-
-        # Assign triplets to chunks
-        triplet_idx = 0
-        all_pairs = []
-
-        for start, end in chunk_bounds:
-            chunk_triplets = []
-
-            # Collect all triplets that could overlap with this chunk
-            temp_idx = triplet_idx
-            while temp_idx < len(sorted_triplets):
-                triplet = sorted_triplets[temp_idx]
-                min_pos = min(
-                    triplet.subj.start_char,
-                    triplet.pred.start_char,
-                    triplet.obj.start_char,
-                )
-
-                # If triplet starts after chunk ends, we're done with this chunk
-                if min_pos >= end:
+                # Entity starts after this chunk - move to next chunk
+                if entity.start_char >= end:
                     break
 
-                # Check if fully contained
-                if self.is_triplet_within_bounds(start, end, triplet):
-                    chunk_triplets.append(triplet)
+                # Check if fully contained in this chunk
+                if self.is_entity_within_bounds(start, end, entity):
+                    chunk_entities[chunk_idx].append(entity)
 
-                temp_idx += 1
+                entity_idx += 1
 
-            # Advance the starting point for next chunk
-            # (triplets can't start before the current chunk's start)
-            while (
-                triplet_idx < len(sorted_triplets)
-                and min(
-                    sorted_triplets[triplet_idx].subj.start_char,
-                    sorted_triplets[triplet_idx].pred.start_char,
-                    sorted_triplets[triplet_idx].obj.start_char,
-                )
-                < start
-            ):
-                triplet_idx += 1
+            # Backtrack for entities that might also fit in the next chunk
+            # (handles edge cases with overlapping or adjacent chunks)
+            while entity_idx > 0 and sorted_entities[entity_idx - 1].end_char > start:
+                entity_idx -= 1
 
-            # Extract pairs from this chunk
-            pairs = self.extract_from_chunk(chunk_triplets)
-            all_pairs.extend(pairs)
+        return chunk_entities
+
+    def extract(self, doc: DocumentOrm, entities: list[SpanAnnotation]) -> list[Tuplet]:
+        chunk_bounds = self._get_chunk_bounds(doc.text)
+        chunk_entities = self._assign_entities_to_chunks(chunk_bounds, entities)
+
+        all_pairs = []
+        num_chunks = len(chunk_entities)
+
+        for i in range(num_chunks):
+            if self.window is None:
+                window_end = i + 1
+            else:
+                window_end = min(i + 1 + self.window, num_chunks)
+            window_entities = [
+                e for chunk in chunk_entities[i + 1 : window_end] for e in chunk
+            ]
+
+            current_chunk = chunk_entities[i]
+            for j, entity in enumerate(current_chunk):
+                for other in current_chunk[j + 1 :] + window_entities:
+                    all_pairs.append(Tuplet(entity_one=entity, entity_two=other))
 
         return all_pairs
+
+
+class DocumentCoOccurrenceExtractor(CoOccurrenceExtractor):
+    def extract(self, doc: DocumentOrm, entities: list[SpanAnnotation]) -> list[Tuplet]:
+        pairs = []
+        for i, entity in enumerate(entities):
+            for other in entities[i + 1 :]:
+                pairs.append(Tuplet(entity_one=entity, entity_two=other))
+        return pairs

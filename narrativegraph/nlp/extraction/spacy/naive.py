@@ -2,7 +2,7 @@ from typing import Iterable
 
 from spacy.tokens import Span
 
-from narrativegraph.nlp.extraction.common import Triplet, TripletPart
+from narrativegraph.nlp.extraction.common import SpanAnnotation, Triplet
 from narrativegraph.nlp.extraction.spacy.common import SpacyTripletExtractor
 
 
@@ -90,9 +90,9 @@ class NaiveSpacyTripletExtractor(SpacyTripletExtractor):
 
             triplets.append(
                 Triplet(
-                    subj=TripletPart.from_span(subj),
-                    pred=TripletPart.from_span(pred),
-                    obj=TripletPart.from_span(obj),
+                    subj=SpanAnnotation.from_span(subj),
+                    pred=SpanAnnotation.from_span(pred),
+                    obj=SpanAnnotation.from_span(obj),
                 )
             )
 

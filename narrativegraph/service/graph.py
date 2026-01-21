@@ -139,7 +139,7 @@ class GraphService(SubService):
 
             return extra_query.all()
 
-    def get_graph(self, graph_filter: GraphFilter):
+    def get_relation_graph(self, graph_filter: GraphFilter):
         """Get graph data with entities and relations based on filters"""
 
         # Build entity filter conditions
@@ -229,6 +229,60 @@ class GraphService(SubService):
             ]
 
             return {"edges": edges, "nodes": nodes}
+
+    def get_cooccurrence_graph(
+        self,
+        graph_filter: GraphFilter,
+        weight_measure: Literal["frequency", "pmi"] = "pmi",
+    ):
+        """Get graph data with entities and co-occurrences based on filters"""
+
+        # Build entity filter conditions
+        entity_conditions = create_entity_conditions(graph_filter)
+
+        # Build relation filter conditions
+        coc_conditions = create_co_occurrence_conditions(graph_filter)
+
+        with self._get_session_context() as db:
+            entity_subquery = (
+                db.query(EntityOrm.id)
+                .filter(and_(*entity_conditions))
+                .limit(graph_filter.limit_nodes)
+            )
+
+            # Get co-occurrences using subquery
+            co_occurrences = (
+                db.query(CoOccurrenceOrm)
+                .filter(
+                    and_(*coc_conditions),
+                    CoOccurrenceOrm.entity_one_id.in_(entity_subquery),
+                    CoOccurrenceOrm.entity_two_id.in_(entity_subquery),
+                )
+                .all()
+            )
+
+            entities = (
+                db.query(EntityOrm)
+                .filter(and_(*entity_conditions))
+                .limit(graph_filter.limit_nodes)
+                .all()
+            )
+            entity_map = {entity.id: entity for entity in entities}
+            entity_ids = list(entity_map.keys())
+
+            graph = nx.Graph()
+            graph.add_nodes_from(entity_map.items())
+            for co_occ in co_occurrences:
+                if weight_measure == "frequency":
+                    weight = co_occ.frequency
+                elif weight_measure == "pmi":
+                    weight = co_occ.pmi
+
+                graph.add_edge(
+                    co_occ.entity_one_id, co_occ.entity_two_id, weight=weight
+                )
+
+        return graph
 
     @staticmethod
     def _community_metrics(graph: nx.Graph, comm: set[int]):
@@ -338,6 +392,7 @@ class GraphService(SubService):
                     members=[
                         EntityLabel.from_orm(entity_map[entity]) for entity in comm
                     ],
+                    edges=[(edge[0], edge[1]) for edge in graph.subgraph(comm).edges()],
                     **self._community_metrics(graph, comm),
                 )
                 for comm in result

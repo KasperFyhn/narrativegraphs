@@ -1,4 +1,4 @@
-from narrativegraph.nlp.extraction.common import Triplet, TripletPart
+from narrativegraph.nlp.extraction.common import SpanAnnotation, Triplet
 from narrativegraph.nlp.extraction.spacy.dependencygraph import DependencyGraphExtractor
 from tests.extraction.common import ExtractorTest
 
@@ -14,9 +14,9 @@ class TestDependencyGraphExtractor(ExtractorTest):
 
         expected_triplets = [
             Triplet(
-                subj=TripletPart(text="John", start_char=0, end_char=4),
-                pred=TripletPart(text="hit", start_char=5, end_char=8),
-                obj=TripletPart(text="the ball", start_char=9, end_char=17),
+                subj=SpanAnnotation(text="John", start_char=0, end_char=4),
+                pred=SpanAnnotation(text="hit", start_char=5, end_char=8),
+                obj=SpanAnnotation(text="the ball", start_char=9, end_char=17),
             )
         ]
         self.assert_triplets_equal(expected_triplets, triplets)
@@ -27,9 +27,9 @@ class TestDependencyGraphExtractor(ExtractorTest):
 
         expected_triplets = [
             Triplet(
-                subj=TripletPart(text="The dog", start_char=0, end_char=7),
-                pred=TripletPart(text="chased", start_char=8, end_char=14),
-                obj=TripletPart(text="the cat", start_char=15, end_char=22),
+                subj=SpanAnnotation(text="The dog", start_char=0, end_char=7),
+                pred=SpanAnnotation(text="chased", start_char=8, end_char=14),
+                obj=SpanAnnotation(text="the cat", start_char=15, end_char=22),
             )
         ]
         self.assert_triplets_equal(expected_triplets, triplets)
@@ -40,9 +40,9 @@ class TestDependencyGraphExtractor(ExtractorTest):
 
         expected_triplets = [
             Triplet(
-                subj=TripletPart(text="The dog", start_char=0, end_char=7),
-                pred=TripletPart(text="looked", start_char=8, end_char=14),
-                obj=TripletPart(text="the sky", start_char=18, end_char=25),
+                subj=SpanAnnotation(text="The dog", start_char=0, end_char=7),
+                pred=SpanAnnotation(text="looked", start_char=8, end_char=14),
+                obj=SpanAnnotation(text="the sky", start_char=18, end_char=25),
             )
         ]
         self.assert_triplets_equal(expected_triplets, triplets)
@@ -53,9 +53,9 @@ class TestDependencyGraphExtractor(ExtractorTest):
 
         expected_triplets = [
             Triplet(
-                subj=TripletPart(text="Pam", start_char=0, end_char=3),
-                pred=TripletPart(text="is", start_char=4, end_char=6),
-                obj=TripletPart(text="a doctor", start_char=7, end_char=15),
+                subj=SpanAnnotation(text="Pam", start_char=0, end_char=3),
+                pred=SpanAnnotation(text="is", start_char=4, end_char=6),
+                obj=SpanAnnotation(text="a doctor", start_char=7, end_char=15),
             )
         ]
         self.assert_triplets_equal(expected_triplets, triplets)
@@ -80,13 +80,13 @@ class TestDependencyGraphExtractor(ExtractorTest):
 
         expected_triplets = [
             Triplet(
-                subj=TripletPart(
+                subj=SpanAnnotation(
                     text="Mary", start_char=21, end_char=25
                 ),  # Swapped subject (agent)
-                pred=TripletPart(
+                pred=SpanAnnotation(
                     text="read", start_char=13, end_char=17
                 ),  # 'was' (9-12), 'read' (13-17)
-                obj=TripletPart(
+                obj=SpanAnnotation(
                     text="The book", start_char=0, end_char=8
                 ),  # Swapped object (grammatical subject)
             )
@@ -99,9 +99,9 @@ class TestDependencyGraphExtractor(ExtractorTest):
 
         expected_triplets = [
             Triplet(
-                subj=TripletPart(text="The car", start_char=0, end_char=7),
-                pred=TripletPart(text="is", start_char=8, end_char=10),
-                obj=TripletPart(text="red", start_char=11, end_char=14),
+                subj=SpanAnnotation(text="The car", start_char=0, end_char=7),
+                pred=SpanAnnotation(text="is", start_char=8, end_char=10),
+                obj=SpanAnnotation(text="red", start_char=11, end_char=14),
             )
         ]
         self.assert_triplets_equal(expected_triplets, triplets)
@@ -114,9 +114,9 @@ class TestDependencyGraphExtractor(ExtractorTest):
         # It will likely pick 'a present' as dobj.
         expected_triplets = [
             Triplet(
-                subj=TripletPart(text="The boy", start_char=0, end_char=7),
-                pred=TripletPart(text="gave", start_char=8, end_char=12),
-                obj=TripletPart(text="a present", start_char=24, end_char=33),
+                subj=SpanAnnotation(text="The boy", start_char=0, end_char=7),
+                pred=SpanAnnotation(text="gave", start_char=8, end_char=12),
+                obj=SpanAnnotation(text="a present", start_char=24, end_char=33),
             )
         ]
         self.assert_triplets_equal(expected_triplets, triplets)
@@ -127,14 +127,14 @@ class TestDependencyGraphExtractor(ExtractorTest):
 
         expected_triplets = [
             Triplet(
-                subj=TripletPart(text="John", start_char=0, end_char=4),
-                pred=TripletPart(text="hit", start_char=5, end_char=8),
-                obj=TripletPart(text="the ball", start_char=9, end_char=17),
+                subj=SpanAnnotation(text="John", start_char=0, end_char=4),
+                pred=SpanAnnotation(text="hit", start_char=5, end_char=8),
+                obj=SpanAnnotation(text="the ball", start_char=9, end_char=17),
             ),
             Triplet(
-                subj=TripletPart(text="The dog", start_char=35, end_char=42),
-                pred=TripletPart(text="chased", start_char=43, end_char=49),
-                obj=TripletPart(text="the cat", start_char=50, end_char=57),
+                subj=SpanAnnotation(text="The dog", start_char=35, end_char=42),
+                pred=SpanAnnotation(text="chased", start_char=43, end_char=49),
+                obj=SpanAnnotation(text="the cat", start_char=50, end_char=57),
             ),
         ]
         self.assert_triplets_equal(expected_triplets, triplets)

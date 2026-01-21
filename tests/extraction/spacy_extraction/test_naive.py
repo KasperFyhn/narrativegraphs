@@ -1,4 +1,4 @@
-from narrativegraph.nlp.extraction.common import Triplet, TripletPart
+from narrativegraph.nlp.extraction.common import SpanAnnotation, Triplet
 from narrativegraph.nlp.extraction.spacy.naive import NaiveSpacyTripletExtractor
 from tests.extraction.common import ExtractorTest
 
@@ -21,9 +21,9 @@ class TestNaiveSpacyTripletExtractor(ExtractorTest):
 
         expected_triplets = [
             Triplet(
-                subj=TripletPart(text="John", start_char=0, end_char=4),
-                pred=TripletPart(text="visited", start_char=5, end_char=12),
-                obj=TripletPart(text="Paris", start_char=13, end_char=18),
+                subj=SpanAnnotation(text="John", start_char=0, end_char=4),
+                pred=SpanAnnotation(text="visited", start_char=5, end_char=12),
+                obj=SpanAnnotation(text="Paris", start_char=13, end_char=18),
             )
         ]
         self.assert_triplets_equal(expected_triplets, triplets)
@@ -36,9 +36,9 @@ class TestNaiveSpacyTripletExtractor(ExtractorTest):
 
         expected_triplets = [
             Triplet(
-                subj=TripletPart(text="The big dog", start_char=0, end_char=11),
-                pred=TripletPart(text="chased", start_char=12, end_char=18),
-                obj=TripletPart(text="the small cat", start_char=19, end_char=32),
+                subj=SpanAnnotation(text="The big dog", start_char=0, end_char=11),
+                pred=SpanAnnotation(text="chased", start_char=12, end_char=18),
+                obj=SpanAnnotation(text="the small cat", start_char=19, end_char=32),
             )
         ]
         self.assert_triplets_equal(expected_triplets, triplets)
@@ -50,9 +50,9 @@ class TestNaiveSpacyTripletExtractor(ExtractorTest):
 
         expected_triplets = [
             Triplet(
-                subj=TripletPart(text="Apple Inc.", start_char=0, end_char=10),
-                pred=TripletPart(text="released", start_char=11, end_char=19),
-                obj=TripletPart(text="a new iPhone", start_char=20, end_char=32),
+                subj=SpanAnnotation(text="Apple Inc.", start_char=0, end_char=10),
+                pred=SpanAnnotation(text="released", start_char=11, end_char=19),
+                obj=SpanAnnotation(text="a new iPhone", start_char=20, end_char=32),
             )
         ]
         self.assert_triplets_equal(expected_triplets, triplets)
@@ -76,13 +76,13 @@ class TestNaiveSpacyTripletExtractor(ExtractorTest):
 
         expected_triplets = [
             Triplet(
-                subj=TripletPart(
+                subj=SpanAnnotation(
                     text="John Smith",
                     start_char=4,
                     end_char=14,
                 ),
-                pred=TripletPart(text="visited", start_char=15, end_char=22),
-                obj=TripletPart(text="New York City", start_char=23, end_char=36),
+                pred=SpanAnnotation(text="visited", start_char=15, end_char=22),
+                obj=SpanAnnotation(text="New York City", start_char=23, end_char=36),
             )
         ]
         self.assert_triplets_equal(expected_triplets, triplets)
@@ -108,14 +108,14 @@ class TestNaiveSpacyTripletExtractor(ExtractorTest):
 
         expected_triplets = [
             Triplet(
-                subj=TripletPart(text="John", start_char=0, end_char=4),
-                pred=TripletPart(text="visited", start_char=5, end_char=12),
-                obj=TripletPart(text="Paris", start_char=13, end_char=18),
+                subj=SpanAnnotation(text="John", start_char=0, end_char=4),
+                pred=SpanAnnotation(text="visited", start_char=5, end_char=12),
+                obj=SpanAnnotation(text="Paris", start_char=13, end_char=18),
             ),
             Triplet(
-                subj=TripletPart(text="Mary", start_char=20, end_char=24),
-                pred=TripletPart(text="went to", start_char=25, end_char=32),
-                obj=TripletPart(text="London", start_char=33, end_char=39),
+                subj=SpanAnnotation(text="Mary", start_char=20, end_char=24),
+                pred=SpanAnnotation(text="went to", start_char=25, end_char=32),
+                obj=SpanAnnotation(text="London", start_char=33, end_char=39),
             ),
         ]
         self.assert_triplets_equal(expected_triplets, triplets)
@@ -165,13 +165,13 @@ class TestNaiveSpacyTripletExtractor(ExtractorTest):
 
         expected_triplets = [
             Triplet(
-                subj=TripletPart(
+                subj=SpanAnnotation(
                     text="The large red car",
                     start_char=0,
                     end_char=17,
                 ),
-                pred=TripletPart(text="hit", start_char=18, end_char=21),
-                obj=TripletPart(text="the green bike", start_char=22, end_char=36),
+                pred=SpanAnnotation(text="hit", start_char=18, end_char=21),
+                obj=SpanAnnotation(text="the green bike", start_char=22, end_char=36),
             )
         ]
         self.assert_triplets_equal(expected_triplets, triplets)

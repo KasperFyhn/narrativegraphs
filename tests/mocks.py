@@ -1,5 +1,5 @@
 from narrativegraph.nlp.extraction import TripletExtractor
-from narrativegraph.nlp.extraction.common import Triplet, TripletPart
+from narrativegraph.nlp.extraction.common import SpanAnnotation, Triplet
 from narrativegraph.nlp.mapping import Mapper
 
 
@@ -21,13 +21,13 @@ class MockTripletExtractor(TripletExtractor):
 
         return [
             Triplet(
-                subj=TripletPart(
+                subj=SpanAnnotation(
                     text=subject, start_char=subject_start, end_char=subject_end
                 ),
-                pred=TripletPart(
+                pred=SpanAnnotation(
                     text=predicate, start_char=predicate_start, end_char=predicate_end
                 ),
-                obj=TripletPart(
+                obj=SpanAnnotation(
                     text=object_, start_char=object_start, end_char=object_end
                 ),
             )
