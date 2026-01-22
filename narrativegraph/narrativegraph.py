@@ -100,7 +100,11 @@ class NarrativeGraph(QueryService):
 
     @property
     def relation_graph_(self) -> nx.Graph:
-        return self.graph.get_relation_graph()
+        return self.graph.get_graph("relation")
+
+    @property
+    def cooccurrence_graph_(self) -> nx.Graph:
+        return self.graph.get_graph("cooccurrence")
 
     def serve_visualizer(
         self,

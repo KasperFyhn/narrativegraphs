@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi_camelcase import CamelModel
 from pydantic import Field
 
@@ -25,14 +27,14 @@ class Relation(CamelModel):
 class Edge(CamelModel):
     """Edge in the graph representing grouped relations"""
 
-    id: str
-    label: str
+    id: str | int
     from_id: int = Field(serialization_alias="from", validation_alias="from_id")
     to_id: int = Field(serialization_alias="to", validation_alias="to_id")
     subject_label: str
     object_label: str
     total_frequency: int
-    group: list[Relation]
+    label: Optional[str] = None
+    group: Optional[list[Relation]] = None
 
 
 class Graph(CamelModel):

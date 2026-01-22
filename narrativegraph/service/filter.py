@@ -1,12 +1,15 @@
-from typing import Optional
+from typing import Literal, Optional
 
 from sqlalchemy import and_, between, or_
+from sqlalchemy.orm.util import AliasedClass
 
 from narrativegraph.db.cooccurrences import CoOccurrenceCategory, CoOccurrenceOrm
 from narrativegraph.db.documents import DocumentCategory, DocumentOrm
 from narrativegraph.db.entities import EntityCategory, EntityOrm
 from narrativegraph.db.relations import RelationCategory, RelationOrm
 from narrativegraph.dto.filter import GraphFilter
+
+EntityAlias = type[EntityOrm] | AliasedClass[EntityOrm]
 
 
 def date_filter(model_class, graph_filter: GraphFilter) -> list:
@@ -64,10 +67,10 @@ def frequency_filter(field, min_freq: Optional[int], max_freq: Optional[int]) ->
     return conditions
 
 
-def entity_frequency_filter(graph_filter: GraphFilter) -> list:
+def entity_frequency_filter(model_class, graph_filter: GraphFilter) -> list:
     """Create entity term frequency filter"""
     return frequency_filter(
-        EntityOrm.frequency,
+        model_class.frequency,
         graph_filter.minimum_node_frequency,
         graph_filter.maximum_node_frequency,
     )
@@ -91,10 +94,10 @@ def co_occurrence_frequency_filter(graph_filter: GraphFilter) -> list:
     )
 
 
-def entity_doc_frequency_filter(graph_filter: GraphFilter) -> list:
+def entity_doc_frequency_filter(alias: EntityAlias, graph_filter: GraphFilter) -> list:
     """Create entity term frequency filter"""
     return frequency_filter(
-        EntityOrm.doc_frequency,
+        alias.doc_frequency,
         graph_filter.minimum_node_doc_frequency,
         graph_filter.maximum_node_doc_frequency,
     )
@@ -118,11 +121,11 @@ def co_occurrence_doc_frequency_filter(graph_filter: GraphFilter) -> list:
     )
 
 
-def entity_blacklist_filter(graph_filter: GraphFilter) -> list:
+def entity_blacklist_filter(alias: EntityAlias, graph_filter: GraphFilter) -> list:
     """Filter out blacklisted entities"""
     conditions = []
     if graph_filter.blacklisted_entity_ids:
-        conditions.append(~EntityOrm.id.in_(graph_filter.blacklisted_entity_ids))
+        conditions.append(~alias.id.in_(graph_filter.blacklisted_entity_ids))
     return conditions
 
 
@@ -149,13 +152,15 @@ def combine_filters(*filter_lists: list) -> list:
     return result
 
 
-def create_entity_conditions(graph_filter: GraphFilter) -> list:
+def create_entity_conditions(
+    graph_filter: GraphFilter, alias: EntityAlias = EntityOrm
+) -> list:
     return combine_filters(
-        date_filter(EntityOrm, graph_filter),
-        category_filter(EntityOrm, graph_filter),
-        entity_frequency_filter(graph_filter),
-        entity_doc_frequency_filter(graph_filter),
-        entity_blacklist_filter(graph_filter),
+        date_filter(alias, graph_filter),
+        category_filter(alias, graph_filter),
+        entity_frequency_filter(alias, graph_filter),
+        entity_doc_frequency_filter(alias, graph_filter),
+        entity_blacklist_filter(alias, graph_filter),
     )
 
 
@@ -175,3 +180,14 @@ def create_co_occurrence_conditions(graph_filter: GraphFilter) -> list:
         co_occurrence_frequency_filter(graph_filter),
         co_occurrence_doc_frequency_filter(graph_filter),
     )
+
+
+def create_connection_conditions(
+    connection_type: Literal["relation", "cooccurrence"], graph_filter: GraphFilter
+) -> list:
+    if connection_type == "relation":
+        return create_relation_conditions(graph_filter)
+    elif connection_type == "cooccurrence":
+        return create_co_occurrence_conditions(graph_filter)
+    else:
+        raise ValueError("Invalid connection type")

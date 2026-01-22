@@ -15,7 +15,12 @@ async def get_graph(
     graph_filter: GraphFilter, service: QueryService = Depends(get_query_service)
 ):
     """Get graph data with entities and relations based on filters"""
-    return service.graph.get_relation_graph(graph_filter)
+    if graph_filter.whitelisted_entity_ids:
+        return service.graph.expand_from_focus_entities(
+            graph_filter.whitelisted_entity_ids, "relation", graph_filter
+        )
+    else:
+        return service.graph.get_graph("relation", graph_filter)
 
 
 @router.post("/communities")

@@ -28,6 +28,6 @@ class GraphFilter(CamelModel):
     label_search: Optional[str] = None
     earliest_date: Optional[date] = None
     latest_date: Optional[date] = None
-    whitelisted_entity_ids: Optional[set[str]] = None
-    blacklisted_entity_ids: Optional[set[str]] = None
+    whitelisted_entity_ids: Optional[set[int]] = None
+    blacklisted_entity_ids: Optional[set[int]] = None
     categories: Optional[dict[str, list[str]]] = None
