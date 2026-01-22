@@ -129,14 +129,6 @@ def entity_blacklist_filter(alias: EntityAlias, graph_filter: GraphFilter) -> li
     return conditions
 
 
-def entity_whitelist_filter(graph_filter: GraphFilter) -> list:
-    """Filter for whitelisted entities only"""
-    conditions = []
-    if graph_filter.whitelisted_entity_ids:
-        conditions.append(EntityOrm.id.in_(graph_filter.whitelisted_entity_ids))
-    return conditions
-
-
 def combine_filters(*filter_lists: list) -> list:
     result = []
     for filter_list in filter_lists:

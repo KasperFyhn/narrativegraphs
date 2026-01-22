@@ -6,7 +6,6 @@ export interface Identifiable {
 export interface Node extends Identifiable {
   supernode?: Identifiable;
   subnodes?: Identifiable[];
-  focus?: boolean;
 }
 
 export interface LabeledEdge extends Identifiable {

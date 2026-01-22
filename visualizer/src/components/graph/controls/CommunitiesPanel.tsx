@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useGraphFilter } from '../../../hooks/useGraphFilter';
+import { useGraphQuery } from '../../../hooks/useGraphQuery';
 import { useServiceContext } from '../../../contexts/ServiceContext';
 import { Community } from '../../../types/graph';
 import { EntityLabel } from '../../common/entity/EntityLabel';
@@ -7,7 +7,7 @@ import { ClipLoader } from 'react-spinners';
 
 export const CommunitiesPanel: React.FC = () => {
   const { graphService } = useServiceContext();
-  const { filter, setWhitelistEntities } = useGraphFilter();
+  const { filter, setFocusEntities } = useGraphQuery();
 
   const [communities, setCommunities] = useState<Community[] | null>([]);
 
@@ -56,7 +56,7 @@ export const CommunitiesPanel: React.FC = () => {
                   zIndex: 10,
                 }}
                 onClick={() =>
-                  setWhitelistEntities(c.members.map((m) => m.id.toString()))
+                  setFocusEntities(c.members.map((m) => m.id.toString()))
                 }
               >
                 Select

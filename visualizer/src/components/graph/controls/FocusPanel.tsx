@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { useGraphFilter } from '../../../hooks/useGraphFilter';
+import { useGraphQuery } from '../../../hooks/useGraphQuery';
 import { useServiceContext } from '../../../contexts/ServiceContext';
 import { Identifiable } from '../../../types/graph';
 import { EntityLabel } from '../../common/entity/EntityLabel';
 import { SubmittedTextInput } from '../../common/input/SubmittedTextInput';
 import { SubPanel } from '../../common/Panel';
 import { ClipLoader } from 'react-spinners';
+import { FocusEntitiesControl } from './subcomponents/EntityListControl';
 
-export const SearchPanel: React.FC = () => {
+export const FocusPanel: React.FC = () => {
   const { entityService } = useServiceContext();
-  const { addWhitelistedEntityId } = useGraphFilter();
+  const { addFocusEntityId } = useGraphQuery();
 
   const [labelSearch, setLabelSearch] = useState<string>('');
   const [results, setResults] = useState<Identifiable[] | null>([]);
@@ -25,8 +26,12 @@ export const SearchPanel: React.FC = () => {
 
   return (
     <div>
-      <SubmittedTextInput onSubmit={setLabelSearch} />
+      <FocusEntitiesControl />
       <hr />
+      <span>
+        Search: <SubmittedTextInput onSubmit={setLabelSearch} />
+      </span>
+      <br />
       {results == null && <ClipLoader loading={results == null} />}
       {results != null &&
         results.length > 0 &&
@@ -41,9 +46,7 @@ export const SearchPanel: React.FC = () => {
               }}
             >
               <EntityLabel {...result} />
-              <button
-                onClick={() => addWhitelistedEntityId(result.id.toString())}
-              >
+              <button onClick={() => addFocusEntityId(result.id.toString())}>
                 +
               </button>
             </SubPanel>

@@ -1,4 +1,4 @@
-import { GraphFilter } from '../types/graphFilter';
+import { GraphFilter } from '../types/graphQuery';
 
 export type GraphFilterAction =
   | {
@@ -19,31 +19,12 @@ export type GraphFilterAction =
     }
   | { type: 'SET_DATE_RANGE'; payload: { start?: Date; end?: Date } }
   | {
-      type: 'TOGGLE_WHITELIST_ENTITY';
-      payload: string;
-    }
-  | {
-      type: 'ADD_WHITELIST_ENTITY';
-      payload: string;
-    }
-  | {
-      type: 'REMOVE_WHITELIST_ENTITY';
-      payload: string;
-    }
-  | {
-      type: 'SET_WHITELIST_ENTITIES';
-      payload: string[];
-    }
-  | {
       type: 'ADD_BLACKLIST_ENTITY';
       payload: string[];
     }
   | {
       type: 'REMOVE_BLACKLIST_ENTITY';
       payload: string;
-    }
-  | {
-      type: 'CLEAR_WHITELIST';
     }
   | {
       type: 'CLEAR_BLACKLIST';
@@ -130,56 +111,15 @@ export function graphFilterReducer(
         latestDate: action.payload.end,
       };
 
-    case 'TOGGLE_WHITELIST_ENTITY':
-      const containsEntity =
-        state.whitelistedEntityIds &&
-        state.whitelistedEntityIds.includes(action.payload);
-      return {
-        ...state,
-        whitelistedEntityIds: containsEntity
-          ? removeFromArray(action.payload, state.whitelistedEntityIds)
-          : addToArray(action.payload, state.whitelistedEntityIds),
-      };
-
-    case 'ADD_WHITELIST_ENTITY':
-      return {
-        ...state,
-        whitelistedEntityIds: addToArray(
-          action.payload,
-          state.whitelistedEntityIds,
-        ),
-      };
-
-    case 'SET_WHITELIST_ENTITIES':
-      return {
-        ...state,
-        whitelistedEntityIds: action.payload,
-      };
-
     case 'ADD_BLACKLIST_ENTITY':
       const entityIds = action.payload;
       let result = state.blacklistedEntityIds;
       for (const entityId of entityIds) {
-        if (
-          state.whitelistedEntityIds &&
-          state.whitelistedEntityIds.includes(entityId)
-        ) {
-          continue;
-        }
         result = addToArray(entityId, result);
       }
       return {
         ...state,
         blacklistedEntityIds: result,
-      };
-
-    case 'REMOVE_WHITELIST_ENTITY':
-      return {
-        ...state,
-        whitelistedEntityIds: removeFromArray(
-          action.payload,
-          state.whitelistedEntityIds,
-        ),
       };
 
     case 'REMOVE_BLACKLIST_ENTITY':
@@ -189,12 +129,6 @@ export function graphFilterReducer(
           action.payload,
           state.blacklistedEntityIds,
         ),
-      };
-
-    case 'CLEAR_WHITELIST':
-      return {
-        ...state,
-        whitelistedEntityIds: undefined,
       };
 
     case 'CLEAR_BLACKLIST':

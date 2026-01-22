@@ -11,6 +11,9 @@ export const GraphOptionsPanel: React.FC = () => {
 
   return (
     <div className={'flex-container flex-container--vertical'}>
+      <NamedInput name={'Connection Type'}>
+        <input type={'radio'} name={'Connection Type'} />
+      </NamedInput>
       <NamedInput name={'Physics'}>
         <input
           type={'checkbox'}

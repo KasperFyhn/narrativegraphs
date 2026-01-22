@@ -8,7 +8,14 @@ export interface DataBounds {
   latestDate?: Date;
 }
 
+export interface GraphQuery {
+  connectionType: 'relation' | 'cooccurrence';
+  focusEntities?: string[];
+}
+
 export interface GraphFilter {
+  connectionType: 'relation' | 'cooccurrence';
+  focusEntities?: string[];
   limitNodes: number;
   limitEdges: number;
   minimumNodeFrequency?: number;
@@ -17,12 +24,12 @@ export interface GraphFilter {
   maximumEdgeFrequency?: number;
   earliestDate?: Date;
   latestDate?: Date;
-  whitelistedEntityIds?: string[];
   blacklistedEntityIds?: string[];
   categories?: { [key: string]: string[] | undefined };
 }
 
-export const initialGraphFilter: GraphFilter = {
+export const initialGraphQuery: GraphFilter = {
+  connectionType: 'relation',
   limitNodes: 100,
   limitEdges: 200,
   // ... other defaults

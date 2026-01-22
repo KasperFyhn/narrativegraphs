@@ -121,11 +121,10 @@ class GraphService(SubService):
                 RelationOrm.subject_id.in_(entity_ids),
                 RelationOrm.object_id.in_(entity_ids),
             )
-
         elif connection_type == "cooccurrence":
             connect_focus_entity = or_(
-                CoOccurrenceOrm.entity_one.in_(entity_ids),
-                CoOccurrenceOrm.entity_two.in_(entity_ids),
+                CoOccurrenceOrm.entity_one_id.in_(entity_ids),
+                CoOccurrenceOrm.entity_two_id.in_(entity_ids),
             )
         else:
             raise NotImplementedError
@@ -147,7 +146,7 @@ class GraphService(SubService):
         self,
         focus_entity_ids: set[int],
         connection_type: ConnectionType,
-        graph_filter: GraphFilter,
+        graph_filter: GraphFilter = GraphFilter(),
     ) -> Graph:
         with self._get_session_context() as db:
             # Connection conditions and DB references

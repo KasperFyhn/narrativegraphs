@@ -1,19 +1,15 @@
 import React from 'react';
 import '../graph.css';
 import { ClipLoader } from 'react-spinners';
-import { useGraphFilter } from '../../../hooks/useGraphFilter';
+import { useGraphQuery } from '../../../hooks/useGraphQuery';
 import { SubmittedNumberInput } from '../../common/input/SubmittedNumberInput';
-import { SubmittedTextInput } from '../../common/input/SubmittedTextInput';
 import {
   EdgeFrequencySlider,
   NodeFrequencySlider,
-} from './filter/FrequencySlider';
+} from './subcomponents/FrequencySlider';
 import { SubmittedDataRangeInput } from '../../common/input/SubmittedDateRangeInput';
-import {
-  EntityBlacklistControl,
-  EntityWhitelistControl,
-} from './filter/EntityListControl';
-import { CategorySelector } from './filter/CategorySelector';
+import { EntityBlacklistControl } from './subcomponents/EntityListControl';
+import { CategorySelector } from './subcomponents/CategorySelector';
 import { NamedInput } from '../../common/input/NamedInput';
 
 export const GraphFilterPanel: React.FC = () => {
@@ -24,7 +20,7 @@ export const GraphFilterPanel: React.FC = () => {
     setEdgeLimit,
     setDateRange,
     historyControls,
-  } = useGraphFilter();
+  } = useGraphQuery();
 
   if (!dataBounds) {
     return (
@@ -82,10 +78,7 @@ export const GraphFilterPanel: React.FC = () => {
           />
         </NamedInput>
       )}
-      <div className={'flex-container flex-container--vertical'}>
-        <EntityWhitelistControl />
-        <EntityBlacklistControl />
-      </div>
+      <EntityBlacklistControl />
     </div>
   );
 };

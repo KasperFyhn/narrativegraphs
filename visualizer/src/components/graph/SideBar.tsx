@@ -1,12 +1,22 @@
 import React, { useRef } from 'react';
 import { GraphOptionsPanel } from './controls/GraphOptionsPanel';
-import { Search, Filter, Puzzle, Settings, LucideIcon } from 'lucide-react';
+import {
+  ArrowRight,
+  Filter,
+  Minus,
+  LucideIcon,
+  Puzzle,
+  Search,
+  Settings,
+  ArrowBigRight,
+} from 'lucide-react';
 import { GraphFilterPanel } from './controls/GraphFilterPanel';
 import { CommunitiesPanel } from './controls/CommunitiesPanel';
 import { Panel } from '../common/Panel';
 import './SideBar.css';
-import { SearchPanel } from './controls/SearchPanel';
+import { FocusPanel } from './controls/FocusPanel';
 import { useClickOutside } from '../../hooks/useClickOutside';
+import { useGraphQuery } from '../../hooks/useGraphQuery';
 
 type ControlType = 'search' | 'filters' | 'communities' | 'settings';
 
@@ -21,8 +31,8 @@ const panels: PanelConfig[] = [
   {
     type: 'search',
     icon: Search,
-    title: 'Search Entities',
-    component: SearchPanel,
+    title: 'Focus Entities',
+    component: FocusPanel,
   },
   {
     type: 'filters',
@@ -89,8 +99,25 @@ export const SideBar: React.FC = () => {
     closePanel,
   );
 
+  const { query, setConnectionType } = useGraphQuery();
+
   return (
     <div className="side-bar">
+      <div>
+        <ToggleButton
+          onToggle={() => {
+            if (query.connectionType == 'relation') {
+              setConnectionType('cooccurrence');
+            } else {
+              setConnectionType('relation');
+            }
+          }}
+          toggled={false}
+        >
+          {query.connectionType == 'relation' ? <ArrowRight /> : <Minus />}
+        </ToggleButton>
+      </div>
+      <hr />
       {panels.map(({ type, icon: Icon, title, component: Component }) => (
         <div key={type} ref={(el) => (panelRefs.current[type] = el)}>
           <ToggleButton
