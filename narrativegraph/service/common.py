@@ -93,7 +93,7 @@ class OrmAssociatedService(SubService, ABC):
             return transform(entry)
 
     @abstractmethod
-    def by_id(self, id_: int):
+    def get_single(self, id_: int):
         pass
 
     def _get_multiple_by_ids_and_transform(

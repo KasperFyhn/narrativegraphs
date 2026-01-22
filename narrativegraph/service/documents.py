@@ -31,7 +31,7 @@ class DocService(OrmAssociatedService):
 
         return cleaned
 
-    def by_id(self, id_: int) -> Document:
+    def get_single(self, id_: int) -> Document:
         return self._get_by_id_and_transform(id_, Document.from_orm)
 
     def get_multiple(

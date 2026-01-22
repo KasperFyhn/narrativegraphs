@@ -137,14 +137,6 @@ def entity_whitelist_filter(graph_filter: GraphFilter) -> list:
     return conditions
 
 
-def entity_label_filter(graph_filter: GraphFilter) -> list:
-    """Filter entities by label search"""
-    conditions = []
-    if graph_filter.label_search:
-        conditions.append(EntityOrm.label.ilike(f"%{graph_filter.label_search}%"))
-    return conditions
-
-
 def combine_filters(*filter_lists: list) -> list:
     result = []
     for filter_list in filter_lists:

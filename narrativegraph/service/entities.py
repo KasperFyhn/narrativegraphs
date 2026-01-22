@@ -1,7 +1,7 @@
-from typing import Literal, Optional
+from typing import Optional
 
 import pandas as pd
-from sqlalchemy import select
+from sqlalchemy import case, func, select
 
 from narrativegraph.db.documents import DocumentOrm
 from narrativegraph.db.entities import EntityCategory, EntityOrm
@@ -10,7 +10,6 @@ from narrativegraph.dto.entities import (
     EntityDetails,
     EntityLabel,
 )
-from narrativegraph.errors import EntryNotFoundError
 from narrativegraph.service.common import OrmAssociatedService
 
 
@@ -38,7 +37,7 @@ class EntityService(OrmAssociatedService):
 
         return cleaned
 
-    def by_id(self, id_: int) -> EntityDetails:
+    def get_single(self, id_: int) -> EntityDetails:
         return self._get_by_id_and_transform(id_, EntityDetails.from_orm)
 
     def get_multiple(
@@ -78,32 +77,26 @@ class EntityService(OrmAssociatedService):
                 EntityLabel(id=entity.id, label=entity.label) for entity in entities
             ]
 
-    def get_connected_entities(
-        self,
-        entity_id: int,
-        limit: Optional[int] = None,
-        connection_type: Literal["relation", "cooccurrence"] = "cooccurrence",
-    ) -> list[EntityDetails]:
+    def search(self, label_search: str, limit: int = None) -> list[EntityLabel]:
         with self._get_session_context() as sc:
-            entity = sc.query(EntityOrm).get(entity_id)
-            if entity is None:
-                raise EntryNotFoundError(f"Entity with id '{entity_id}' not found.")
+            search_lower = label_search.lower()
 
-            if connection_type == "relation":
-                rels = entity.relations
-                connected_entities = [
-                    other for rel in rels for other in [rel.subject_id, rel.object_id]
-                ]
-            elif connection_type == "cooccurrence":
-                coocs = entity.co_occurrences
-                connected_entities = [
-                    other
-                    for cooc in coocs
-                    for other in [cooc.entity_one_id, cooc.entity_two_id]
-                ]
+            match_quality = case(
+                (func.lower(EntityOrm.label) == search_lower, 0),  # exact
+                (func.lower(EntityOrm.label).startswith(search_lower), 1),  # prefix
+                else_=2,  # contains
+            )
 
-            query = sc.query(EntityOrm).filter(self._orm.id.in_(connected_entities))
-            if limit:
-                query = query.limit(limit)
-
-            return [EntityDetails.from_orm(entity_orm) for entity_orm in query.all()]
+            matches = (
+                sc.query(EntityOrm.id, EntityOrm.label)
+                .filter(EntityOrm.label.ilike(f"%{label_search}%"))
+                .order_by(
+                    match_quality,
+                    EntityOrm.frequency.desc(),  # more frequent = better
+                    func.length(EntityOrm.label),  # shorter = better
+                    EntityOrm.label,  # alphabetical tiebreaker
+                )
+                .limit(limit)
+                .all()
+            )
+            return [EntityLabel.from_orm(entity) for entity in matches]

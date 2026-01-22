@@ -16,7 +16,7 @@ async def get_predicate(
     predicate_id: int, service: QueryService = Depends(get_query_service)
 ):
     """Get predicate details by ID"""
-    predicate = service.predicates.by_id(predicate_id)
+    predicate = service.predicates.get_single(predicate_id)
     return predicate
 
 

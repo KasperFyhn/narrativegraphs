@@ -15,7 +15,7 @@ async def get_entity(
     entity_id: int,
     service: QueryService = Depends(get_query_service),
 ):
-    entity = service.entities.by_id(entity_id)
+    entity = service.entities.get_single(entity_id)
     return entity
 
 
@@ -32,6 +32,15 @@ async def get_docs_by_entity(
 
     docs = service.documents.get_multiple(doc_ids, limit=limit)
     return docs
+
+
+@router.get("/search/{search_string}")
+async def search_entities(
+    search_string: str,
+    limit: Optional[int] = None,
+    service: QueryService = Depends(get_query_service),
+):
+    return service.entities.search(search_string, limit=limit)
 
 
 @router.post("/labels", response_model=list[EntityLabel])

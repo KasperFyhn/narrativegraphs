@@ -36,7 +36,3 @@
   max-height: 80%;
   transition: 0.2s;
 }
-
-.control-panel--hidden {
-  transform: translateX(500px);
-}

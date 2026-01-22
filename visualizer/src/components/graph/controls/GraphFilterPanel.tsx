@@ -4,13 +4,16 @@ import { ClipLoader } from 'react-spinners';
 import { useGraphFilter } from '../../../hooks/useGraphFilter';
 import { SubmittedNumberInput } from '../../common/input/SubmittedNumberInput';
 import { SubmittedTextInput } from '../../common/input/SubmittedTextInput';
-import { EdgeFrequencySlider, NodeFrequencySlider } from './FrequencySlider';
+import {
+  EdgeFrequencySlider,
+  NodeFrequencySlider,
+} from './filter/FrequencySlider';
 import { SubmittedDataRangeInput } from '../../common/input/SubmittedDateRangeInput';
 import {
   EntityBlacklistControl,
   EntityWhitelistControl,
-} from './EntityListControl';
-import { CategorySelector } from './CategorySelector';
+} from './filter/EntityListControl';
+import { CategorySelector } from './filter/CategorySelector';
 import { NamedInput } from '../../common/input/NamedInput';
 
 export const GraphFilterPanel: React.FC = () => {
@@ -19,7 +22,6 @@ export const GraphFilterPanel: React.FC = () => {
     filter,
     setNodeLimit,
     setEdgeLimit,
-    setLabelSearch,
     setDateRange,
     historyControls,
   } = useGraphFilter();
@@ -65,9 +67,6 @@ export const GraphFilterPanel: React.FC = () => {
       </NamedInput>
       <NamedInput name={'Edge Frequency'}>
         <EdgeFrequencySlider />
-      </NamedInput>
-      <NamedInput name={'Search'}>
-        <SubmittedTextInput onSubmit={setLabelSearch} />
       </NamedInput>
       {dataBounds.categories && (
         <NamedInput name={'Categories'}>

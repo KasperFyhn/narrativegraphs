@@ -16,7 +16,7 @@ async def get_relation(
     relation_id: int, service: QueryService = Depends(get_query_service)
 ):
     """Get relation details by ID"""
-    relation = service.relations.by_id(relation_id)
+    relation = service.relations.get_single(relation_id)
     return relation
 
 

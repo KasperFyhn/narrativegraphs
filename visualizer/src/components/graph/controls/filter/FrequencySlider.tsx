@@ -1,6 +1,6 @@
-import LogarithmicRangeSlider from '../../common/input/LogarithmicRangeSlider';
+import LogarithmicRangeSlider from '../../../common/input/LogarithmicRangeSlider';
 import React from 'react';
-import { useGraphFilter } from '../../../hooks/useGraphFilter';
+import { useGraphFilter } from '../../../../hooks/useGraphFilter';
 
 export interface FrequencySliderProps {
   min: number;

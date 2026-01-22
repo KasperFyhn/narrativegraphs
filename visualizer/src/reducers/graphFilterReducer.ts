@@ -17,7 +17,6 @@ export type GraphFilterAction =
       type: 'SET_EDGE_FREQUENCY_RANGE';
       payload: { min?: number; max?: number };
     }
-  | { type: 'SET_LABEL_SEARCH'; payload: string }
   | { type: 'SET_DATE_RANGE'; payload: { start?: Date; end?: Date } }
   | {
       type: 'TOGGLE_WHITELIST_ENTITY';
@@ -122,13 +121,6 @@ export function graphFilterReducer(
         ...state,
         minimumEdgeFrequency: action.payload.min,
         maximumEdgeFrequency: action.payload.max,
-      };
-
-    case 'SET_LABEL_SEARCH':
-      const value = action.payload === '' ? undefined : action.payload;
-      return {
-        ...state,
-        labelSearch: value,
       };
 
     case 'SET_DATE_RANGE':

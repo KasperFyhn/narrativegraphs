@@ -1,6 +1,6 @@
-import { useGraphFilter } from '../../../hooks/useGraphFilter';
+import { useGraphFilter } from '../../../../hooks/useGraphFilter';
 import React, { useEffect, useMemo } from 'react';
-import { FloatingWindow } from '../../common/FloatingWindow';
+import { FloatingWindow } from '../../../common/FloatingWindow';
 
 interface CategorySelectorInnerProps {
   name: string;

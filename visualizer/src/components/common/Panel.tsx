@@ -14,3 +14,19 @@ export const Panel: React.FC<PanelProps> = ({
     </div>
   );
 };
+
+interface SubPanelProps
+  extends PropsWithChildren,
+    ComponentPropsWithRef<'div'> {}
+
+export const SubPanel: React.FC<SubPanelProps> = ({
+  children,
+  className,
+  ...rest
+}) => {
+  return (
+    <div className={'panel__sub-panel ' + className} {...rest}>
+      {children}
+    </div>
+  );
+};

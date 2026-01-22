@@ -57,7 +57,7 @@ class RelationService(OrmAssociatedService):
 
         return cleaned
 
-    def by_id(self, id_: int) -> RelationDetails:
+    def get_single(self, id_: int) -> RelationDetails:
         return self._get_by_id_and_transform(id_, RelationDetails.from_orm)
 
     def get_multiple(

@@ -54,7 +54,7 @@ class TripletService(OrmAssociatedService):
 
         return cleaned
 
-    def by_id(self, id_: int) -> dict:
+    def get_single(self, id_: int) -> dict:
         return self._get_by_id_and_transform(id_, lambda x: x.__dict__)
 
     def get_multiple(

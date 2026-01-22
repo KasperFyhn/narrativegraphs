@@ -9,7 +9,6 @@ interface GraphFilterActions {
   setEdgeLimit: (limit: number) => void;
   setNodeFrequencyRange: (min: number, max: number) => void;
   setEdgeFrequencyRange: (min: number, max: number) => void;
-  setLabelSearch: (label: string) => void;
   setDateRange: (start: Date, end: Date) => void;
   toggleWhitelistedEntityId: (entityId: string) => void;
   addWhitelistedEntityId: (entityId: string) => void;
@@ -48,8 +47,6 @@ export function useGraphFilter(): GraphFilterAccessors {
         dispatch({ type: 'SET_NODE_FREQUENCY_RANGE', payload: { min, max } }),
       setEdgeFrequencyRange: (min: number, max: number) =>
         dispatch({ type: 'SET_EDGE_FREQUENCY_RANGE', payload: { min, max } }),
-      setLabelSearch: (label: string) =>
-        dispatch({ type: 'SET_LABEL_SEARCH', payload: label }),
       setDateRange: (start: Date, end: Date) =>
         dispatch({ type: 'SET_DATE_RANGE', payload: { start, end } }),
       toggleWhitelistedEntityId: (entityId: string) =>

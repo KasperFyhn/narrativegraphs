@@ -36,6 +36,9 @@ class QueryService(DbService):
 
     def get_bounds(self):
         with self.get_session_context() as db:
+            categories = self._compile_categories()
+            if not categories:
+                categories = None
             return DataBounds(
                 minimum_possible_node_frequency=db.query(
                     func.min(EntityOrm.frequency)
@@ -49,7 +52,7 @@ class QueryService(DbService):
                 maximum_possible_edge_frequency=db.query(
                     func.max(RelationOrm.frequency)
                 ).scalar(),
-                categories=self._compile_categories(),
+                categories=categories,
                 earliest_date=db.query(func.min(DocumentOrm.timestamp)).scalar()
                 or None,
                 latest_date=db.query(func.max(DocumentOrm.timestamp)).scalar() or None,

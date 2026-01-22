@@ -90,10 +90,15 @@ class GraphService(SubService):
         else:
             raise ValueError("Unknown connection type")
 
-    def _create_nodes(self, entities: Iterable[EntityOrm], edges: list[Edge]):
+    @staticmethod
+    def _create_nodes(
+        entities: Iterable[EntityOrm], edges: list[Edge], whitelisted: set[int] = None
+    ):
         connected_entities = {
             id_ for edge in edges for id_ in [edge.from_id, edge.to_id]
         }
+        if whitelisted is None:
+            whitelisted = set()
 
         # Prepare response
         nodes = [
@@ -103,13 +108,13 @@ class GraphService(SubService):
                 frequency=entity.frequency,
             )
             for entity in entities
-            if entity.id in connected_entities
+            if entity.id in connected_entities or entity.id in whitelisted
         ]
         return nodes
 
     @staticmethod
     def _connecting_entity_ids_condition(
-        connection_type: ConnectionType, entity_ids: list[int]
+        connection_type: ConnectionType, entity_ids: set[int]
     ):
         if connection_type == "relation":
             connect_focus_entity = or_(
@@ -140,7 +145,7 @@ class GraphService(SubService):
 
     def expand_from_focus_entities(
         self,
-        focus_entity_ids: list[int],
+        focus_entity_ids: set[int],
         connection_type: ConnectionType,
         graph_filter: GraphFilter,
     ) -> Graph:
@@ -202,6 +207,19 @@ class GraphService(SubService):
                 entities_by_id[source_entity.id] = source_entity
                 entities_by_id[target_entity.id] = target_entity
 
+            # Recover focus entities that are not connected to anything
+            unconnected_focus_entities = focus_entity_ids.difference(
+                entities_by_id.keys()
+            )
+            if unconnected_focus_entities:
+                missing_focus_entities = (
+                    db.query(EntityOrm)
+                    .filter(EntityOrm.id.in_(unconnected_focus_entities))
+                    .all()
+                )
+                for entity in missing_focus_entities:
+                    entities_by_id[entity.id] = entity
+
             # Apply node limit if specified
             if graph_filter.limit_nodes is not None:
                 # Prioritize focus entities, then sort by frequency
@@ -213,8 +231,8 @@ class GraphService(SubService):
             else:
                 entities = list(entities_by_id.values())
 
-            edges = self._create_edges(connections)
-
+            # Create edges list for graph
+            edges = self._create_edges(connections) if connections else []
             if graph_filter.limit_edges:
                 # Sort edges by focus connection and frequency
                 def edge_sort_key(edge):
@@ -229,7 +247,7 @@ class GraphService(SubService):
                 edges.sort(key=edge_sort_key)
                 edges = edges[: graph_filter.limit_edges]
 
-            nodes = self._create_nodes(entities, edges)
+            nodes = self._create_nodes(entities, edges, whitelisted=focus_entity_ids)
 
             return Graph(edges=edges, nodes=nodes)
 
@@ -255,7 +273,7 @@ class GraphService(SubService):
                 .all()
             )
 
-            top_entity_ids = list({entity.id for entity in top_entities})
+            top_entity_ids = {entity.id for entity in top_entities}
 
             connections = (
                 db.query(connection_orm_type)

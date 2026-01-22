@@ -15,7 +15,6 @@ export interface GraphFilter {
   maximumNodeFrequency?: number;
   minimumEdgeFrequency?: number;
   maximumEdgeFrequency?: number;
-  labelSearch?: string;
   earliestDate?: Date;
   latestDate?: Date;
   whitelistedEntityIds?: string[];

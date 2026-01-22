@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useServiceContext } from '../../../contexts/ServiceContext';
-import { useClickOutside } from '../../../hooks/useClickOutside';
-import { Identifiable } from '../../../types/graph';
+import { useServiceContext } from '../../../../contexts/ServiceContext';
+import { useClickOutside } from '../../../../hooks/useClickOutside';
+import { Identifiable } from '../../../../types/graph';
 import { ClipLoader } from 'react-spinners';
-import { useGraphFilter } from '../../../hooks/useGraphFilter';
-import { FloatingWindow } from '../../common/FloatingWindow';
+import { useGraphFilter } from '../../../../hooks/useGraphFilter';
+import { FloatingWindow } from '../../../common/FloatingWindow';
 
 interface EntityListEditorProps {
   ids: string[] | number[];
