@@ -99,25 +99,8 @@ export const SideBar: React.FC = () => {
     closePanel,
   );
 
-  const { query, setConnectionType } = useGraphQuery();
-
   return (
     <div className="side-bar">
-      <div>
-        <ToggleButton
-          onToggle={() => {
-            if (query.connectionType == 'relation') {
-              setConnectionType('cooccurrence');
-            } else {
-              setConnectionType('relation');
-            }
-          }}
-          toggled={false}
-        >
-          {query.connectionType == 'relation' ? <ArrowRight /> : <Minus />}
-        </ToggleButton>
-      </div>
-      <hr />
       {panels.map(({ type, icon: Icon, title, component: Component }) => (
         <div key={type} ref={(el) => (panelRefs.current[type] = el)}>
           <ToggleButton

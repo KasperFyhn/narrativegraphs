@@ -4,8 +4,10 @@ import { DataBounds, GraphFilter, GraphQuery } from '../types/graphQuery';
 import { useGraphQueryContext } from '../contexts/GraphQueryContext';
 import { HistoryControls } from '../reducers/historyReducer';
 
+export type ConnectionType = 'relation' | 'cooccurrence';
+
 interface GraphQueryActions {
-  setConnectionType: (connectionType: 'relation' | 'cooccurrence') => void;
+  setConnectionType: (connectionType: ConnectionType) => void;
   toggleFocusEntityId: (entityId: string) => void;
   addFocusEntityId: (entityId: string) => void;
   removeFocusEntityId: (entityId: string) => void;

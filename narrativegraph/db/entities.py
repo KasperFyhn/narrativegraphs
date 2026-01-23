@@ -83,17 +83,17 @@ class EntityOrm(Base, HasAltLabels, AnnotationBackedTextStatsMixin, Categorizabl
     def relations(self):
         return self.subject_relations + self.object_relations
 
-    _entity_one_co_occurrences = relationship(
-        "CoOccurrenceOrm",
+    _entity_one_cooccurrences = relationship(
+        "CooccurrenceOrm",
         back_populates="entity_one",
-        foreign_keys="CoOccurrenceOrm.entity_one_id",
+        foreign_keys="CooccurrenceOrm.entity_one_id",
     )
-    _entity_two_co_occurrences = relationship(
-        "CoOccurrenceOrm",
+    _entity_two_cooccurrences = relationship(
+        "CooccurrenceOrm",
         back_populates="entity_two",
-        foreign_keys="CoOccurrenceOrm.entity_two_id",
+        foreign_keys="CooccurrenceOrm.entity_two_id",
     )
 
     @property
-    def co_occurrences(self):
-        return self._entity_one_co_occurrences + self._entity_two_co_occurrences
+    def cooccurrences(self):
+        return self._entity_one_cooccurrences + self._entity_two_cooccurrences

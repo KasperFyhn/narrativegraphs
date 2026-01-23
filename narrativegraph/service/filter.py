@@ -3,7 +3,7 @@ from typing import Literal, Optional
 from sqlalchemy import and_, between, or_
 from sqlalchemy.orm.util import AliasedClass
 
-from narrativegraph.db.cooccurrences import CoOccurrenceCategory, CoOccurrenceOrm
+from narrativegraph.db.cooccurrences import CooccurrenceCategory, CooccurrenceOrm
 from narrativegraph.db.documents import DocumentCategory, DocumentOrm
 from narrativegraph.db.entities import EntityCategory, EntityOrm
 from narrativegraph.db.relations import RelationCategory, RelationOrm
@@ -26,7 +26,7 @@ _category_model_map = {
     EntityOrm: EntityCategory,
     RelationOrm: RelationCategory,
     DocumentOrm: DocumentCategory,
-    CoOccurrenceOrm: CoOccurrenceCategory,
+    CooccurrenceOrm: CooccurrenceCategory,
 }
 
 
@@ -85,10 +85,10 @@ def relation_frequency_filter(graph_filter: GraphFilter) -> list:
     )
 
 
-def co_occurrence_frequency_filter(graph_filter: GraphFilter) -> list:
+def cooccurrence_frequency_filter(graph_filter: GraphFilter) -> list:
     """Create relation term frequency filter"""
     return frequency_filter(
-        CoOccurrenceOrm.frequency,
+        CooccurrenceOrm.frequency,
         graph_filter.minimum_edge_frequency,
         graph_filter.maximum_edge_frequency,
     )
@@ -112,10 +112,10 @@ def relation_doc_frequency_filter(graph_filter: GraphFilter) -> list:
     )
 
 
-def co_occurrence_doc_frequency_filter(graph_filter: GraphFilter) -> list:
+def cooccurrence_doc_frequency_filter(graph_filter: GraphFilter) -> list:
     """Create relation term frequency filter"""
     return frequency_filter(
-        CoOccurrenceOrm.doc_frequency,
+        CooccurrenceOrm.doc_frequency,
         graph_filter.minimum_edge_doc_frequency,
         graph_filter.maximum_edge_doc_frequency,
     )
@@ -157,12 +157,12 @@ def create_relation_conditions(graph_filter: GraphFilter) -> list:
     )
 
 
-def create_co_occurrence_conditions(graph_filter: GraphFilter) -> list:
+def create_cooccurrence_conditions(graph_filter: GraphFilter) -> list:
     return combine_filters(
-        date_filter(CoOccurrenceOrm, graph_filter),
-        category_filter(CoOccurrenceOrm, graph_filter),
-        co_occurrence_frequency_filter(graph_filter),
-        co_occurrence_doc_frequency_filter(graph_filter),
+        date_filter(CooccurrenceOrm, graph_filter),
+        category_filter(CooccurrenceOrm, graph_filter),
+        cooccurrence_frequency_filter(graph_filter),
+        cooccurrence_doc_frequency_filter(graph_filter),
     )
 
 
@@ -172,6 +172,6 @@ def create_connection_conditions(
     if connection_type == "relation":
         return create_relation_conditions(graph_filter)
     elif connection_type == "cooccurrence":
-        return create_co_occurrence_conditions(graph_filter)
+        return create_cooccurrence_conditions(graph_filter)
     else:
         raise ValueError("Invalid connection type")

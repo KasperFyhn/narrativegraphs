@@ -10,6 +10,7 @@ from fastapi.staticfiles import StaticFiles
 
 from narrativegraph.db.engine import get_engine, get_session_factory
 from narrativegraph.errors import EntryNotFoundError
+from narrativegraph.server.routes.cooccurrences import router as cooccurrences_router
 from narrativegraph.server.routes.documents import router as docs_router
 from narrativegraph.server.routes.entities import router as entities_router
 from narrativegraph.server.routes.graph import router as graph_router
@@ -68,6 +69,9 @@ async def entry_not_found(request, exc):
 app.include_router(graph_router, prefix="/graph", tags=["Graph"])
 app.include_router(docs_router, prefix="/docs", tags=["Docs"])
 app.include_router(entities_router, prefix="/entities", tags=["Entities"])
+app.include_router(
+    cooccurrences_router, prefix="/cooccurrences", tags=["Cooccurrences"]
+)
 app.include_router(relations_router, prefix="/relations", tags=["Relations"])
 
 if __name__ == "__main__":

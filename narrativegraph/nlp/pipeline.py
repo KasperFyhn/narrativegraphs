@@ -6,8 +6,8 @@ from tqdm import tqdm
 
 from narrativegraph.nlp.extraction import TripletExtractor
 from narrativegraph.nlp.extraction.cooccurrences import (
-    ChunkCoOccurrenceExtractor,
-    CoOccurrenceExtractor,
+    ChunkCooccurrenceExtractor,
+    CooccurrenceExtractor,
 )
 from narrativegraph.nlp.extraction.spacy import NaiveSpacyTripletExtractor
 from narrativegraph.nlp.mapping import Mapper
@@ -25,7 +25,7 @@ class Pipeline:
         self,
         engine: Engine,
         triplet_extractor: TripletExtractor = None,
-        co_occurrence_extractor: CoOccurrenceExtractor = None,
+        cooccurrence_extractor: CooccurrenceExtractor = None,
         entity_mapper: Mapper = None,
         predicate_mapper: Mapper = None,
         n_cpu: int = 1,
@@ -35,8 +35,8 @@ class Pipeline:
             named_entities=(2, None),
             noun_chunks=(2, None),
         )
-        self._co_occurrence_extractor = (
-            co_occurrence_extractor or ChunkCoOccurrenceExtractor()
+        self._cooccurrence_extractor = (
+            cooccurrence_extractor or ChunkCooccurrenceExtractor()
         )
         self._entity_mapper = entity_mapper or StemmingMapper()
         self._predicate_mapper = predicate_mapper or StemmingMapper()
@@ -89,7 +89,7 @@ class Pipeline:
                 entities = [
                     e for triplet in doc_triplets for e in [triplet.subj, triplet.obj]
                 ]
-                doc_tuplets = self._co_occurrence_extractor.extract(doc, entities)
+                doc_tuplets = self._cooccurrence_extractor.extract(doc, entities)
                 self._db_service.add_tuplets(doc, doc_tuplets)
 
             _logger.info("Resolving entities and predicates")

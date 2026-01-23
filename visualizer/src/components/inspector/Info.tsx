@@ -1,35 +1,52 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Details } from '../../types/graph';
 import { Doc } from '../../types/doc';
 import { DocInfo } from './DocInfo';
 import { ClipLoader } from 'react-spinners';
 import { useServiceContext } from '../../contexts/ServiceContext';
 import './Info.css';
+import { EntityService } from '../../services/EntityService';
+import { RelationService } from '../../services/RelationService';
+import { CooccurrenceService } from '../../services/CooccurrenceService';
 
 export interface InfoProps {
   id: string | number;
-  type: 'entity' | 'relation';
+  type: 'entity' | 'relation' | 'cooccurrence';
 }
 
 export const Info: React.FC<InfoProps> = ({ type, id }) => {
-  const { entityService, relationService } = useServiceContext();
+  const { entityService, relationService, cooccurrenceService } =
+    useServiceContext();
 
   const [details, setDetails] = useState<Details>();
   const [docs, setDocs] = useState<Doc[] | null | undefined>(undefined);
 
+  const getService = useCallback(():
+    | EntityService
+    | RelationService
+    | CooccurrenceService => {
+    switch (type) {
+      case 'entity':
+        return entityService;
+      case 'relation':
+        return relationService;
+      case 'cooccurrence':
+        return cooccurrenceService;
+    }
+  }, [cooccurrenceService, entityService, relationService, type]);
+
   useEffect(() => {
     setDetails(undefined);
     setDocs(undefined);
-    (type === 'entity' ? entityService : relationService)
-      .getDetails(id)
-      .then(setDetails);
-  }, [entityService, relationService, id, type]);
+
+    getService().getDetails(id).then(setDetails);
+  }, [getService, id]);
 
   const [visibleDocs, setVisibleDocs] = React.useState(50);
 
   const loadDocs = (): void => {
     setDocs(null);
-    (type === 'entity' ? entityService : relationService)
+    getService()
       .getDocs(id)
       .then((r) => {
         setDocs(r);

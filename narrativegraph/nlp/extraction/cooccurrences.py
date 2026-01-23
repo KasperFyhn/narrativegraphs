@@ -9,12 +9,12 @@ from narrativegraph.nlp.extraction.common import SpanAnnotation, Tuplet
 from narrativegraph.nlp.utils.spacysegmentation import custom_sentencizer  # noqa
 
 
-class CoOccurrenceExtractor(ABC):
+class CooccurrenceExtractor(ABC):
     def extract(self, doc: DocumentOrm, triplets: list[SpanAnnotation]) -> list[Tuplet]:
         pass
 
 
-class ChunkCoOccurrenceExtractor(CoOccurrenceExtractor):
+class ChunkCooccurrenceExtractor(CooccurrenceExtractor):
     def __init__(
         self,
         window: int = 3,
@@ -130,7 +130,7 @@ class ChunkCoOccurrenceExtractor(CoOccurrenceExtractor):
         return all_pairs
 
 
-class DocumentCoOccurrenceExtractor(CoOccurrenceExtractor):
+class DocumentCooccurrenceExtractor(CooccurrenceExtractor):
     def extract(self, doc: DocumentOrm, entities: list[SpanAnnotation]) -> list[Tuplet]:
         pairs = []
         for i, entity in enumerate(entities):

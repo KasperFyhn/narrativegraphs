@@ -11,7 +11,7 @@ from narrativegraph.db.engine import (
     get_engine,
 )
 from narrativegraph.nlp.extraction import TripletExtractor
-from narrativegraph.nlp.extraction.cooccurrences import CoOccurrenceExtractor
+from narrativegraph.nlp.extraction.cooccurrences import CooccurrenceExtractor
 from narrativegraph.nlp.mapping import Mapper
 from narrativegraph.nlp.pipeline import Pipeline
 from narrativegraph.server.backgroundserver import BackgroundServer
@@ -26,7 +26,7 @@ class NarrativeGraph(QueryService):
     def __init__(
         self,
         triplet_extractor: TripletExtractor = None,
-        co_occurrence_extractor: CoOccurrenceExtractor = None,
+        cooccurrence_extractor: CooccurrenceExtractor = None,
         entity_mapper: Mapper = None,
         predicate_mapper: Mapper = None,
         sqlite_db_path: str = None,
@@ -49,7 +49,7 @@ class NarrativeGraph(QueryService):
         self._pipeline = Pipeline(
             self._engine,
             triplet_extractor=triplet_extractor,
-            co_occurrence_extractor=co_occurrence_extractor,
+            cooccurrence_extractor=cooccurrence_extractor,
             entity_mapper=entity_mapper,
             predicate_mapper=predicate_mapper,
             n_cpu=n_cpu,
@@ -87,8 +87,8 @@ class NarrativeGraph(QueryService):
         return self.relations.as_df()
 
     @property
-    def co_occurrences_(self) -> pd.DataFrame:
-        return self.co_occurrences.as_df()
+    def cooccurrences_(self) -> pd.DataFrame:
+        return self.cooccurrences.as_df()
 
     @property
     def documents_(self) -> pd.DataFrame:

@@ -15,8 +15,8 @@ class TupletOrm(Base, AnnotationMixin):
     entity_two_id = Column(
         Integer, ForeignKey("entities.id"), nullable=True, index=True
     )
-    co_occurrence_id = Column(
-        Integer, ForeignKey("co_occurrences.id"), nullable=True, index=True
+    cooccurrence_id = Column(
+        Integer, ForeignKey("cooccurrences.id"), nullable=True, index=True
     )
 
     entity_one_span_start = Column(Integer, nullable=False)
@@ -37,9 +37,9 @@ class TupletOrm(Base, AnnotationMixin):
         foreign_keys="TupletOrm.entity_two_id",
     )
 
-    co_occurrence = relationship(
-        "CoOccurrenceOrm",
-        foreign_keys="TupletOrm.co_occurrence_id",
+    cooccurrence = relationship(
+        "CooccurrenceOrm",
+        foreign_keys="TupletOrm.cooccurrence_id",
     )
     document = relationship(
         "DocumentOrm",

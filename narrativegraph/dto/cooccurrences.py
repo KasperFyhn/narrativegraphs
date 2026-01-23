@@ -1,15 +1,15 @@
-from narrativegraph.db.cooccurrences import CoOccurrenceOrm
+from narrativegraph.db.cooccurrences import CooccurrenceOrm
 from narrativegraph.dto.common import (
     TextOccurrence,
     TextOccurrenceStats,
 )
 
 
-class CoOccurrenceStats(TextOccurrenceStats):
+class CooccurrenceStats(TextOccurrenceStats):
     pmi: float
 
     @classmethod
-    def from_mixin(cls, orm: CoOccurrenceOrm):
+    def from_mixin(cls, orm: CooccurrenceOrm):
         base_data = TextOccurrenceStats.from_mixin(orm).model_dump()
         return cls(
             **base_data,
@@ -17,11 +17,11 @@ class CoOccurrenceStats(TextOccurrenceStats):
         )
 
 
-class CoOccurrenceDetails(TextOccurrence):
+class CooccurrenceDetails(TextOccurrence):
     @classmethod
-    def from_orm(cls, co_occurrence_orm: CoOccurrenceOrm) -> "CoOccurrenceDetails":
+    def from_orm(cls, cooccurrence_orm: CooccurrenceOrm) -> "CooccurrenceDetails":
         return cls(
-            id=co_occurrence_orm.id,
-            stats=CoOccurrenceStats.from_mixin(co_occurrence_orm),
-            categories=co_occurrence_orm.category_dict,
+            id=cooccurrence_orm.id,
+            stats=CooccurrenceStats.from_mixin(cooccurrence_orm),
+            categories=cooccurrence_orm.category_dict,
         )

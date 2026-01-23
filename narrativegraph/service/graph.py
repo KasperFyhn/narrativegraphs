@@ -8,7 +8,7 @@ from networkx.algorithms import community
 from sqlalchemy import Column, Integer, MetaData, Table, and_, or_
 from sqlalchemy.orm import aliased
 
-from narrativegraph.db.cooccurrences import CoOccurrenceOrm
+from narrativegraph.db.cooccurrences import CooccurrenceOrm
 from narrativegraph.db.entities import EntityOrm
 from narrativegraph.db.relations import RelationOrm
 from narrativegraph.dto.entities import EntityLabel
@@ -16,8 +16,8 @@ from narrativegraph.dto.filter import GraphFilter
 from narrativegraph.dto.graph import Community, Edge, Graph, Node, Relation
 from narrativegraph.service.common import SubService
 from narrativegraph.service.filter import (
-    create_co_occurrence_conditions,
     create_connection_conditions,
+    create_cooccurrence_conditions,
     create_entity_conditions,
 )
 
@@ -27,7 +27,7 @@ ConnectionType = Literal["relation", "cooccurrence"]
 class GraphService(SubService):
     @staticmethod
     def _create_edges(
-        connections: List[RelationOrm | CoOccurrenceOrm],
+        connections: List[RelationOrm | CooccurrenceOrm],
     ) -> List[Edge]:
         """Group relations into edges and create Edge objects"""
         if isinstance(connections[0], RelationOrm):
@@ -73,8 +73,8 @@ class GraphService(SubService):
                 edges.append(edge)
             return edges
 
-        elif isinstance(connections[0], CoOccurrenceOrm):
-            connections: List[CoOccurrenceOrm]
+        elif isinstance(connections[0], CooccurrenceOrm):
+            connections: List[CooccurrenceOrm]
             return [
                 Edge(
                     id=cooc.id,
@@ -105,11 +105,11 @@ class GraphService(SubService):
 
     @staticmethod
     def _get_entity_ids_from_connection(
-        orm: RelationOrm | CoOccurrenceOrm,
+        orm: RelationOrm | CooccurrenceOrm,
     ) -> list[int]:
         if isinstance(orm, RelationOrm):
             return [orm.subject_id, orm.object_id]
-        elif isinstance(orm, CoOccurrenceOrm):
+        elif isinstance(orm, CooccurrenceOrm):
             return [orm.entity_one_id, orm.entity_two_id]
         else:
             raise NotImplementedError
@@ -136,7 +136,7 @@ class GraphService(SubService):
         entity_ids: set[int],
         graph_filter: GraphFilter,
         expand: bool = False,
-    ) -> list[RelationOrm | CoOccurrenceOrm]:
+    ) -> list[RelationOrm | CooccurrenceOrm]:
         connection_conditions = create_connection_conditions(
             connection_type, graph_filter
         )
@@ -146,9 +146,9 @@ class GraphService(SubService):
             source_col = RelationOrm.subject_id
             target_col = RelationOrm.object_id
         elif connection_type == "cooccurrence":
-            connection_orm_type = CoOccurrenceOrm
-            source_col = CoOccurrenceOrm.entity_one_id
-            target_col = CoOccurrenceOrm.entity_two_id
+            connection_orm_type = CooccurrenceOrm
+            source_col = CooccurrenceOrm.entity_one_id
+            target_col = CooccurrenceOrm.entity_two_id
         else:
             raise NotImplementedError
 
@@ -182,8 +182,8 @@ class GraphService(SubService):
                     ]
                 elif connection_type == "cooccurrence":
                     connect_to_ids_conditions = [
-                        CoOccurrenceOrm.entity_one_id.in_(entity_ids),
-                        CoOccurrenceOrm.entity_two_id.in_(entity_ids),
+                        CooccurrenceOrm.entity_one_id.in_(entity_ids),
+                        CooccurrenceOrm.entity_two_id.in_(entity_ids),
                     ]
                 if expand:
                     id_filter = or_(*connect_to_ids_conditions)
@@ -399,19 +399,19 @@ class GraphService(SubService):
         entity_conditions = create_entity_conditions(graph_filter)
 
         # Build relation filter conditions
-        coc_conditions = create_co_occurrence_conditions(graph_filter)
-        coc_conditions.append(CoOccurrenceOrm.pmi >= min_weight)
+        coc_conditions = create_cooccurrence_conditions(graph_filter)
+        coc_conditions.append(CooccurrenceOrm.pmi >= min_weight)
 
         with self._get_session_context() as db:
             entity_subquery = db.query(EntityOrm.id).filter(and_(*entity_conditions))
 
             # Get co-occurrences using subquery
-            co_occurrences = (
-                db.query(CoOccurrenceOrm)
+            cooccurrences = (
+                db.query(CooccurrenceOrm)
                 .filter(
                     and_(*coc_conditions),
-                    CoOccurrenceOrm.entity_one_id.in_(entity_subquery),
-                    CoOccurrenceOrm.entity_two_id.in_(entity_subquery),
+                    CooccurrenceOrm.entity_one_id.in_(entity_subquery),
+                    CooccurrenceOrm.entity_two_id.in_(entity_subquery),
                 )
                 .all()
             )
@@ -422,7 +422,7 @@ class GraphService(SubService):
 
             graph = nx.Graph()
             graph.add_nodes_from(entity_ids)
-            for co_occ in co_occurrences:
+            for co_occ in cooccurrences:
                 if weight_measure == "frequency":
                     weight = co_occ.frequency
                 elif weight_measure == "pmi":
