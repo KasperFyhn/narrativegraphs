@@ -32,8 +32,16 @@ class EntityOrm(Base, HasAltLabels, AnnotationBackedTextStatsMixin, Categorizabl
 
     @hybrid_property
     def alt_labels(self) -> list[str]:
-        subj_labels = [triplet.subj_span_text for triplet in self.subject_triplets]
-        obj_labels = [triplet.obj_span_text for triplet in self.object_triplets]
+        subj_labels = [
+            triplet.subj_span_text
+            for triplet in self.subject_triplets
+            if triplet.subj_span_text != self.label
+        ]
+        obj_labels = [
+            triplet.obj_span_text
+            for triplet in self.object_triplets
+            if triplet.obj_span_text != self.label
+        ]
         return list(set(subj_labels + obj_labels))
 
     @alt_labels.expression

@@ -32,7 +32,13 @@ class PredicateOrm(
     @hybrid_property
     def alt_labels(self) -> list[str]:
         """Python version"""
-        return list(set(triplet.pred_span_text for triplet in self.triplets))
+        return list(
+            set(
+                triplet.pred_span_text
+                for triplet in self.triplets
+                if triplet.pred_span_text != self.label
+            )
+        )
 
     @alt_labels.expression
     def alt_labels(cls):  # noqa
