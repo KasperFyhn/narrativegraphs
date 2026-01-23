@@ -1,11 +1,13 @@
 from abc import ABC, abstractmethod
 from typing import Generator, Iterable, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from spacy.tokens import Span, Token
 
 
 class SpanAnnotation(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
     text: str
     start_char: int
     end_char: int

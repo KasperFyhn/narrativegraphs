@@ -18,10 +18,15 @@ class CooccurrenceStats(TextOccurrenceStats):
 
 
 class CooccurrenceDetails(TextOccurrence):
+    entity_one_id: int
+    entity_two_id: int
+
     @classmethod
     def from_orm(cls, cooccurrence_orm: CooccurrenceOrm) -> "CooccurrenceDetails":
         return cls(
             id=cooccurrence_orm.id,
             stats=CooccurrenceStats.from_mixin(cooccurrence_orm),
             categories=cooccurrence_orm.category_dict,
+            entity_one_id=cooccurrence_orm.entity_one_id,
+            entity_two_id=cooccurrence_orm.entity_two_id,
         )

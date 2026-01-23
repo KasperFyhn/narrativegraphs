@@ -1,0 +1,62 @@
+import React from 'react';
+import { useGraphQuery } from '../../../hooks/useGraphQuery';
+import { HighlightContext } from './types';
+import { extractHighlights } from './extractHighlights';
+import { HighlightedText } from './HighlightedText';
+import './DocInfo.css';
+import { Doc } from '../../../types/doc';
+
+function formatDate(date: Date): string {
+  return date.toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+}
+
+interface DocInfoProps {
+  document: Doc;
+  highlightContext?: HighlightContext;
+}
+
+export const DocInfo: React.FC<DocInfoProps> = ({
+  document,
+  highlightContext,
+}) => {
+  const { query } = useGraphQuery();
+
+  const highlights = highlightContext
+    ? extractHighlights(document, highlightContext, query.connectionType)
+    : [];
+
+  return (
+    <div className="doc-info">
+      <div className="doc-info__header">
+        <span className="doc-info__id">{document.id}</span>
+        {document.timestamp && (
+          <span className="doc-info__date">
+            {formatDate(document.timestamp)}
+          </span>
+        )}
+      </div>
+
+      {/*{Object.entries(document.categories).length > 0 && (*/}
+      {/*  <div className="doc-info__categories">*/}
+      {/*    {Object.entries(document.categories).map(([name, values]) => (*/}
+      {/*      <span key={name} className="doc-info__category">*/}
+      {/*        {name}: {values.join(', ')}*/}
+      {/*      </span>*/}
+      {/*    ))}*/}
+      {/*  </div>*/}
+      {/*)}*/}
+
+      <div className="doc-info__text">
+        {highlights.length > 0 ? (
+          <HighlightedText text={document.text} highlights={highlights} />
+        ) : (
+          <span>{document.text}</span>
+        )}
+      </div>
+    </div>
+  );
+};

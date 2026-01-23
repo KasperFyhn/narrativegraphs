@@ -1,8 +1,8 @@
 import { Doc } from '../types/doc';
-import { Details } from '../types/graph';
+import { CooccurrenceDetails, Details } from '../types/graph';
 
 export interface CooccurrenceService {
-  getDetails(id: string | number): Promise<Details>;
+  getDetails(id: string | number): Promise<CooccurrenceDetails>;
 
   getDocs(id: string | number, limit?: number): Promise<Doc[]>;
 }
@@ -14,7 +14,7 @@ export class CooccurrenceServiceImpl implements CooccurrenceService {
     this.baseUrl = baseUrl;
   }
 
-  async getDetails(id: string | number): Promise<Details> {
+  async getDetails(id: string | number): Promise<CooccurrenceDetails> {
     const response = await fetch(`${this.baseUrl}/cooccurrences/${id}`);
 
     if (!response.ok) {

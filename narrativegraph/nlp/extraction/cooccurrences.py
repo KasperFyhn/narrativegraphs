@@ -89,20 +89,13 @@ class ChunkCooccurrenceExtractor(CooccurrenceExtractor):
             while entity_idx < len(sorted_entities):
                 entity = sorted_entities[entity_idx]
 
-                # Entity starts after this chunk - move to next chunk
                 if entity.start_char >= end:
                     break
 
-                # Check if fully contained in this chunk
                 if self.is_entity_within_bounds(start, end, entity):
                     chunk_entities[chunk_idx].append(entity)
 
                 entity_idx += 1
-
-            # Backtrack for entities that might also fit in the next chunk
-            # (handles edge cases with overlapping or adjacent chunks)
-            while entity_idx > 0 and sorted_entities[entity_idx - 1].end_char > start:
-                entity_idx -= 1
 
         return chunk_entities
 

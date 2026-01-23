@@ -3,13 +3,14 @@ from typing import Optional
 
 from narrativegraph.db.documents import DocumentOrm
 from narrativegraph.dto.common import BaseDetails
-from narrativegraph.dto.triplets import Triplet
+from narrativegraph.dto.triplets import Triplet, Tuplet
 
 
 class Document(BaseDetails):
     text: str
     timestamp: Optional[date]
     triplets: list[Triplet]
+    tuplets: list[Tuplet]
 
     @classmethod
     def from_orm(cls, doc_orm: DocumentOrm) -> "Document":
@@ -19,5 +20,6 @@ class Document(BaseDetails):
             text=doc_orm.text,
             timestamp=doc_orm.timestamp,
             triplets=Triplet.from_orms(doc_orm.triplets),
+            tuplets=Tuplet.from_orms(doc_orm.tuplets),
             categories=doc_orm.category_dict,
         )

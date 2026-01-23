@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Graph, { GraphEvents } from 'react-vis-graph-wrapper';
 import { Edge, GraphData, Node } from '../../types/graph';
-import { NodeInfo } from '../inspector/NodeInfo';
-import { EdgeInfo } from '../inspector/EdgeInfo';
+import { NodeInfo } from '../inspector/info/NodeInfo';
+import { EdgeInfo } from '../inspector/info/EdgeInfo';
 import { useServiceContext } from '../../contexts/ServiceContext';
 import { useGraphQuery } from '../../hooks/useGraphQuery';
 import { useGraphOptionsContext } from '../../contexts/GraphOptionsContext';

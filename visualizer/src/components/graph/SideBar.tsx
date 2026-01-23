@@ -1,22 +1,12 @@
 import React, { useRef } from 'react';
 import { GraphOptionsPanel } from './controls/GraphOptionsPanel';
-import {
-  ArrowRight,
-  Filter,
-  Minus,
-  LucideIcon,
-  Puzzle,
-  Search,
-  Settings,
-  ArrowBigRight,
-} from 'lucide-react';
+import { Filter, LucideIcon, Puzzle, Search, Settings } from 'lucide-react';
 import { GraphFilterPanel } from './controls/GraphFilterPanel';
 import { CommunitiesPanel } from './controls/CommunitiesPanel';
 import { Panel } from '../common/Panel';
 import './SideBar.css';
 import { FocusPanel } from './controls/FocusPanel';
 import { useClickOutside } from '../../hooks/useClickOutside';
-import { useGraphQuery } from '../../hooks/useGraphQuery';
 
 type ControlType = 'search' | 'filters' | 'communities' | 'settings';
 

@@ -86,9 +86,9 @@ class Pipeline:
                     doc,
                     doc_triplets,
                 )
-                entities = [
-                    e for triplet in doc_triplets for e in [triplet.subj, triplet.obj]
-                ]
+                entities = list(
+                    {e for triplet in doc_triplets for e in [triplet.subj, triplet.obj]}
+                )
                 doc_tuplets = self._cooccurrence_extractor.extract(doc, entities)
                 self._db_service.add_tuplets(doc, doc_tuplets)
 

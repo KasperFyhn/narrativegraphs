@@ -49,3 +49,14 @@ export interface Details extends Identifiable {
   altLabels?: string[];
   categories: { [key: string]: string[] };
 }
+
+export interface CooccurrenceDetails extends Details {
+  entityOneId: number | string;
+  entityTwoId: number | string;
+}
+
+export interface RelationDetails extends Details {
+  subjectId: number | string;
+  predicateId: number | string;
+  objectId: number | string;
+}

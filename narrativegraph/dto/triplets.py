@@ -1,6 +1,7 @@
 from fastapi_camelcase import CamelModel
 
 from narrativegraph.db.triplets import TripletOrm
+from narrativegraph.db.tuplets import TupletOrm
 
 
 class SpanEntity(CamelModel):
@@ -23,7 +24,7 @@ class Triplet(CamelModel):
                 end=triplet_orm.subj_span_end,
             ),
             predicate=SpanEntity(
-                id=triplet_orm.relation_id,
+                id=triplet_orm.predicate_id,
                 start=triplet_orm.pred_span_start,
                 end=triplet_orm.pred_span_end,
             ),
@@ -37,3 +38,27 @@ class Triplet(CamelModel):
     @classmethod
     def from_orms(cls, triplet_orms: list[TripletOrm]) -> list["Triplet"]:
         return [cls.from_orm(orm) for orm in triplet_orms]
+
+
+class Tuplet(CamelModel):
+    entity_one: SpanEntity
+    entity_two: SpanEntity
+
+    @classmethod
+    def from_orm(cls, tuplet_orm: TupletOrm) -> "Tuplet":
+        return cls(
+            entity_one=SpanEntity(
+                id=tuplet_orm.entity_one_id,
+                start=tuplet_orm.entity_one_span_start,
+                end=tuplet_orm.entity_one_span_end,
+            ),
+            entity_two=SpanEntity(
+                id=tuplet_orm.entity_two_id,
+                start=tuplet_orm.entity_two_span_start,
+                end=tuplet_orm.entity_two_span_end,
+            ),
+        )
+
+    @classmethod
+    def from_orms(cls, tuplet_orms: list[TupletOrm]) -> list["Tuplet"]:
+        return [cls.from_orm(orm) for orm in tuplet_orms]
