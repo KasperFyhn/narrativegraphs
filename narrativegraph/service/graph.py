@@ -5,8 +5,8 @@ from typing import Callable, Iterable, List, Literal
 import networkx
 import networkx as nx
 from networkx.algorithms import community
-from sqlalchemy import and_, or_
-from sqlalchemy.orm import Query, aliased
+from sqlalchemy import Column, Integer, MetaData, Table, and_, or_
+from sqlalchemy.orm import aliased
 
 from narrativegraph.db.cooccurrences import CoOccurrenceOrm
 from narrativegraph.db.entities import EntityOrm
@@ -91,15 +91,7 @@ class GraphService(SubService):
             raise ValueError("Unknown connection type")
 
     @staticmethod
-    def _create_nodes(
-        entities: Iterable[EntityOrm], edges: list[Edge], whitelisted: set[int] = None
-    ):
-        connected_entities = {
-            id_ for edge in edges for id_ in [edge.from_id, edge.to_id]
-        }
-        if whitelisted is None:
-            whitelisted = set()
-
+    def _create_nodes(entities: Iterable[EntityOrm]):
         # Prepare response
         nodes = [
             Node(
@@ -108,26 +100,8 @@ class GraphService(SubService):
                 frequency=entity.frequency,
             )
             for entity in entities
-            if entity.id in connected_entities or entity.id in whitelisted
         ]
         return nodes
-
-    @staticmethod
-    def _connecting_entity_ids_conditions(
-        connection_type: ConnectionType, entity_ids: set[int] | Query[EntityOrm]
-    ) -> list:
-        if connection_type == "relation":
-            return [
-                RelationOrm.subject_id.in_(entity_ids),
-                RelationOrm.object_id.in_(entity_ids),
-            ]
-        elif connection_type == "cooccurrence":
-            return [
-                CoOccurrenceOrm.entity_one_id.in_(entity_ids),
-                CoOccurrenceOrm.entity_two_id.in_(entity_ids),
-            ]
-        else:
-            raise NotImplementedError
 
     @staticmethod
     def _get_entity_ids_from_connection(
@@ -140,97 +114,141 @@ class GraphService(SubService):
         else:
             raise NotImplementedError
 
-    def expand_from_focus_entities(
-        self,
-        focus_entity_ids: set[int],
-        connection_type: ConnectionType,
-        graph_filter: GraphFilter = GraphFilter(),
-    ) -> Graph:
+    def _get_node_ids_temp_table(self, entity_ids: Iterable[int]) -> Table:
         with self._get_session_context() as db:
-            # Connection conditions and DB references
-            connection_conditions = create_connection_conditions(
-                connection_type, graph_filter
+            conn = db.connection()
+            metadata = MetaData()
+            temp_ids = Table(
+                "temp_node_ids",
+                metadata,
+                Column("id", Integer, primary_key=True),
+                prefixes=["TEMPORARY"],
             )
-            connection_conditions.append(
-                or_(
-                    *self._connecting_entity_ids_conditions(
-                        connection_type, focus_entity_ids
-                    )
-                ),
-            )
-            if connection_type == "relation":
-                connection_orm_type = RelationOrm
-                source_col = RelationOrm.subject_id
-                target_col = RelationOrm.object_id
-            elif connection_type == "cooccurrence":
-                connection_orm_type = CoOccurrenceOrm
-                source_col = CoOccurrenceOrm.entity_one_id
-                target_col = CoOccurrenceOrm.entity_two_id
-            else:
-                raise NotImplementedError
+            temp_ids.create(conn, checkfirst=True)
 
-            # Entity conditions and DB references
-            source_entity = aliased(EntityOrm)
-            target_entity = aliased(EntityOrm)
-            source_entity_conditions = create_entity_conditions(
-                graph_filter, alias=source_entity
-            )
-            target_entity_conditions = create_entity_conditions(
-                graph_filter, alias=target_entity
-            )
+            conn.execute(temp_ids.delete())
+            conn.execute(temp_ids.insert(), [{"id": nid} for nid in entity_ids])
+            return temp_ids
 
-            connections_with_entities = (
-                db.query(
-                    connection_orm_type,
-                    source_entity,
-                    target_entity,
-                )
+    def _get_connections(
+        self,
+        connection_type: ConnectionType,
+        entity_ids: set[int],
+        graph_filter: GraphFilter,
+        expand: bool = False,
+    ) -> list[RelationOrm | CoOccurrenceOrm]:
+        connection_conditions = create_connection_conditions(
+            connection_type, graph_filter
+        )
+
+        if connection_type == "relation":
+            connection_orm_type = RelationOrm
+            source_col = RelationOrm.subject_id
+            target_col = RelationOrm.object_id
+        elif connection_type == "cooccurrence":
+            connection_orm_type = CoOccurrenceOrm
+            source_col = CoOccurrenceOrm.entity_one_id
+            target_col = CoOccurrenceOrm.entity_two_id
+        else:
+            raise NotImplementedError
+
+        # Entity conditions and DB references
+        source_entity = aliased(EntityOrm)
+        target_entity = aliased(EntityOrm)
+        source_entity_conditions = create_entity_conditions(
+            graph_filter, alias=source_entity
+        )
+        target_entity_conditions = create_entity_conditions(
+            graph_filter, alias=target_entity
+        )
+
+        with self._get_session_context() as db:
+            base_query = (
+                db.query(connection_orm_type)
                 .join(source_entity, source_col == source_entity.id)
                 .join(target_entity, target_col == target_entity.id)
                 .filter(
-                    and_(
-                        *connection_conditions,
-                        and_(*source_entity_conditions),
-                        and_(*target_entity_conditions),
-                    )
+                    *connection_conditions,
+                    *source_entity_conditions,
+                    *target_entity_conditions,
                 )
-                .all()
             )
 
-            # Extract unique entities and connections
-            connections = []
-            entities_by_id: dict[int, EntityOrm] = {}
+            if len(entity_ids) < 1000:  # use in_ condition
+                if connection_type == "relation":
+                    connect_to_ids_conditions = [
+                        RelationOrm.subject_id.in_(entity_ids),
+                        RelationOrm.object_id.in_(entity_ids),
+                    ]
+                elif connection_type == "cooccurrence":
+                    connect_to_ids_conditions = [
+                        CoOccurrenceOrm.entity_one_id.in_(entity_ids),
+                        CoOccurrenceOrm.entity_two_id.in_(entity_ids),
+                    ]
+                if expand:
+                    id_filter = or_(*connect_to_ids_conditions)
+                else:
+                    id_filter = and_(*connect_to_ids_conditions)
 
-            for conn, source_entity, target_entity in connections_with_entities:
-                connections.append(conn)
-                entities_by_id[source_entity.id] = source_entity
-                entities_by_id[target_entity.id] = target_entity
+                return base_query.filter(id_filter).all()
 
-            # Recover focus entities that are not connected to anything
-            unconnected_focus_entities = focus_entity_ids.difference(
-                entities_by_id.keys()
-            )
-            if unconnected_focus_entities:
-                missing_focus_entities = (
+            else:  # use temp_table for join operations
+                temp_ids = self._get_node_ids_temp_table(entity_ids)
+
+                if expand:
+                    source_query = base_query(db).join(
+                        temp_ids, source_col == temp_ids.c.id
+                    )
+                    target_query = base_query(db).join(
+                        temp_ids, target_col == temp_ids.c.id
+                    )
+                    return source_query.union(target_query).all()
+                else:
+                    temp_source = temp_ids.alias("temp_source")
+                    temp_target = temp_ids.alias("temp_target")
+                    return (
+                        base_query(db)
+                        .join(temp_source, source_col == temp_source.c.id)
+                        .join(temp_target, target_col == temp_target.c.id)
+                        .all()
+                    )
+
+    def _get_entities(self, entity_ids: set[int]) -> list[EntityOrm]:
+        with self._get_session_context() as db:
+            if len(entity_ids) < 1000:
+                return db.query(EntityOrm).filter(EntityOrm.id.in_(entity_ids)).all()
+            else:
+                temp_ids = self._get_node_ids_temp_table(entity_ids)
+                return (
                     db.query(EntityOrm)
-                    .filter(EntityOrm.id.in_(unconnected_focus_entities))
+                    .join(temp_ids, EntityOrm.id == temp_ids.c.id)
                     .all()
                 )
-                for entity in missing_focus_entities:
-                    entities_by_id[entity.id] = entity
 
+    def _get_subgraph(
+        self,
+        entity_ids: set[int],
+        connection_type: ConnectionType,
+        graph_filter: GraphFilter,
+        focus_entity_ids: set[int] = None,
+    ) -> Graph:
+        if focus_entity_ids is None:
+            focus_entity_ids = set()
+        with self._get_session_context():
+            entities = self._get_entities(entity_ids)
             # Apply node limit if specified
             if graph_filter.limit_nodes is not None:
                 # Prioritize focus entities, then sort by frequency
                 sorted_entities = sorted(
-                    entities_by_id.values(),
+                    entities,
                     key=lambda e: (e.id not in focus_entity_ids, -e.frequency),
                 )
                 entities = sorted_entities[: graph_filter.limit_nodes]
-            else:
-                entities = list(entities_by_id.values())
+                entity_ids = {e.id for e in entities}
 
-            # Create edges list for graph
+            connections = self._get_connections(
+                connection_type, entity_ids, graph_filter
+            )
             edges = self._create_edges(connections) if connections else []
             if graph_filter.limit_edges:
                 # Sort edges by focus connection and frequency
@@ -246,9 +264,53 @@ class GraphService(SubService):
                 edges.sort(key=edge_sort_key)
                 edges = edges[: graph_filter.limit_edges]
 
-            nodes = self._create_nodes(entities, edges, whitelisted=focus_entity_ids)
+            connected_entities = {
+                id_ for edge in edges for id_ in [edge.from_id, edge.to_id]
+            }
+            entities = [
+                e
+                for e in entities
+                # if connected by edges or an orphaned focus entity
+                if e.id in connected_entities or e.id in focus_entity_ids
+            ]
+            nodes = self._create_nodes(entities)
 
             return Graph(edges=edges, nodes=nodes)
+
+    def expand_from_focus_entities(
+        self,
+        focus_entity_ids: set[int],
+        connection_type: ConnectionType,
+        graph_filter: GraphFilter = GraphFilter(),
+    ) -> Graph:
+        with self._get_session_context():
+            connections = self._get_connections(
+                connection_type, focus_entity_ids, graph_filter, expand=True
+            )
+            connected_entities = set()
+            for connection in connections:
+                if connection_type == "relation":
+                    connected_entities.add(connection.subject_id)
+                    connected_entities.add(connection.object_id)
+                elif connection_type == "cooccurrence":
+                    connected_entities.add(connection.entity_one_id)
+                    connected_entities.add(connection.entity_two_id)
+            connected_entities.update(focus_entity_ids)
+
+        return self._get_subgraph(
+            connected_entities,
+            connection_type,
+            graph_filter,
+            focus_entity_ids=focus_entity_ids,
+        )
+
+    def get_subgraph(
+        self,
+        entity_ids: set[int],
+        connection_type: ConnectionType,
+        graph_filter: GraphFilter,
+    ) -> Graph:
+        return self._get_subgraph(entity_ids, connection_type, graph_filter)
 
     def get_graph(
         self,
@@ -256,67 +318,18 @@ class GraphService(SubService):
         graph_filter: GraphFilter,
     ):
         entity_conditions = create_entity_conditions(graph_filter)
-        connection_conditions = create_connection_conditions(
-            connection_type, graph_filter
-        )
-        if connection_type == "relation":
-            connection_orm_type = RelationOrm
-            source_col = RelationOrm.subject_id
-            target_col = RelationOrm.object_id
-        elif connection_type == "cooccurrence":
-            connection_orm_type = CoOccurrenceOrm
-            source_col = CoOccurrenceOrm.entity_one_id
-            target_col = CoOccurrenceOrm.entity_two_id
-        else:
-            raise NotImplementedError
 
         with self._get_session_context() as db:
-            top_entity_ids_sub_query = (
-                db.query(EntityOrm.id)
+            top_entity_ids = {
+                row[0]
+                for row in db.query(EntityOrm.id)
                 .filter(and_(*entity_conditions))
                 .order_by(EntityOrm.frequency.desc())
                 .limit(graph_filter.limit_nodes)
-            )
-
-            source_entity = aliased(EntityOrm)
-            target_entity = aliased(EntityOrm)
-
-            connections_with_entities = (
-                db.query(connection_orm_type, source_entity, target_entity)
-                .filter(
-                    and_(
-                        *connection_conditions,
-                        and_(
-                            *self._connecting_entity_ids_conditions(
-                                connection_type, top_entity_ids_sub_query
-                            )
-                        ),
-                    )
-                )
-                .join(source_entity, source_col == source_entity.id)
-                .join(target_entity, target_col == target_entity.id)
-                .order_by(connection_orm_type.frequency.desc())  # noqa; dynamic ref
                 .all()
-            )
+            }
 
-            # Extract unique entities and connections
-            connections = []
-            entities_by_id: dict[int, EntityOrm] = {}
-
-            for conn, source_entity, target_entity in connections_with_entities:
-                connections.append(conn)
-                entities_by_id[source_entity.id] = source_entity
-                entities_by_id[target_entity.id] = target_entity
-
-            # Create edges from relations
-            edges = self._create_edges(connections) if connections else []
-            if graph_filter.limit_edges:
-                edges.sort(key=lambda e: -e.total_frequency)
-                edges = edges[: graph_filter.limit_edges]
-
-            nodes = self._create_nodes(entities_by_id.values(), edges)
-
-            return Graph(edges=edges, nodes=nodes)
+            return self._get_subgraph(top_entity_ids, connection_type, graph_filter)
 
     @staticmethod
     def _community_metrics(graph: nx.Graph, comm: set[int]):
