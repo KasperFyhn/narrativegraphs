@@ -4,6 +4,7 @@ import {
   useContext,
   useState,
   useEffect,
+  useReducer,
 } from 'react';
 import { DataBounds, GraphFilter, GraphQuery } from '../types/graphQuery';
 import {
@@ -44,8 +45,9 @@ interface GraphQueryContextProviderProps {
 export const GraphQueryContextProvider: React.FC<
   GraphQueryContextProviderProps
 > = ({ children, initialFilter = initialGraphQuery }) => {
-  const [query, dispatchQueryAction, queryHistoryContols] =
-    useReducerWithHistory(graphQueryReducer, { connectionType: 'relation' });
+  const [query, dispatchQueryAction] = useReducer(graphQueryReducer, {
+    connectionType: 'relation',
+  });
 
   const [filter, dispatchFilterAction, historyControls] = useReducerWithHistory(
     graphFilterReducer,

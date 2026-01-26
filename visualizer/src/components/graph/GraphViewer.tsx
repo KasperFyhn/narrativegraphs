@@ -49,10 +49,11 @@ export const GraphViewer: React.FC = () => {
       })),
     };
   }, [
-    filter.blacklistedEntityIds,
-    query.focusEntities,
     graphData.edges,
     graphData.nodes,
+    query.focusEntities,
+    query.connectionType,
+    filter.blacklistedEntityIds,
   ]);
 
   const graphDataMaps = useMemo(() => {

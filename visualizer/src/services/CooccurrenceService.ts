@@ -1,5 +1,5 @@
 import { Doc } from '../types/doc';
-import { CooccurrenceDetails, Details } from '../types/graph';
+import { CooccurrenceDetails } from '../types/graph';
 
 export interface CooccurrenceService {
   getDetails(id: string | number): Promise<CooccurrenceDetails>;
