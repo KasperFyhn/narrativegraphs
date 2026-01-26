@@ -60,30 +60,3 @@
     rgba(249, 115, 22, 0.3) 100%
   );
 }
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .highlight--primary.highlight--subject {
-    background-color: rgba(96, 165, 250, 0.4);
-  }
-
-  .highlight--primary.highlight--predicate {
-    background-color: rgba(74, 222, 128, 0.4);
-  }
-
-  .highlight--primary.highlight--object {
-    background-color: rgba(251, 146, 60, 0.4);
-  }
-
-  .highlight--secondary.highlight--subject {
-    background-color: rgba(96, 165, 250, 0.2);
-  }
-
-  .highlight--secondary.highlight--predicate {
-    background-color: rgba(74, 222, 128, 0.2);
-  }
-
-  .highlight--secondary.highlight--object {
-    background-color: rgba(251, 146, 60, 0.2);
-  }
-}

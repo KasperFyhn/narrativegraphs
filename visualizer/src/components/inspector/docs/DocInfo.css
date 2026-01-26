@@ -47,27 +47,3 @@
   word-break: break-word;
 }
 
-/* Dark mode */
-@media (prefers-color-scheme: dark) {
-  .doc-info {
-    background-color: #1f2937;
-    border-color: #374151;
-  }
-
-  .doc-info__id {
-    color: #e5e7eb;
-  }
-
-  .doc-info__date {
-    color: #9ca3af;
-  }
-
-  .doc-info__category {
-    background-color: #374151;
-    color: #d1d5db;
-  }
-
-  .doc-info__text {
-    color: #e5e7eb;
-  }
-}
