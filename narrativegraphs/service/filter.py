@@ -1,6 +1,6 @@
 from typing import Literal, Optional
 
-from sqlalchemy import and_, between, or_
+from sqlalchemy import and_, between, inspect, or_
 from sqlalchemy.orm.util import AliasedClass
 
 from narrativegraphs.db.cooccurrences import CooccurrenceCategory, CooccurrenceOrm
@@ -34,8 +34,10 @@ def category_filter(model_class, graph_filter: GraphFilter) -> list:
     """Create category filtering conditions"""
     if graph_filter.categories is None:
         return []
-
-    category_model_class = _category_model_map[model_class]
+    if isinstance(model_class, AliasedClass):
+        category_model_class = _category_model_map[inspect(model_class).class_]
+    else:
+        category_model_class = _category_model_map[model_class]
 
     conditions = []
     for cat_name, cat_values in graph_filter.categories.items():

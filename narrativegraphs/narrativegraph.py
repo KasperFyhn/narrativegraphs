@@ -23,6 +23,8 @@ _logger.setLevel(logging.INFO)
 
 
 class NarrativeGraph(QueryService):
+    """The"""
+
     def __init__(
         self,
         triplet_extractor: TripletExtractor = None,
@@ -33,6 +35,17 @@ class NarrativeGraph(QueryService):
         on_existing_db: Literal["stop", "overwrite", "reuse"] = "stop",
         n_cpu: int = -1,
     ):
+        """
+
+        Args:
+            triplet_extractor:
+            cooccurrence_extractor:
+            entity_mapper:
+            predicate_mapper:
+            sqlite_db_path:
+            on_existing_db:
+            n_cpu:
+        """
         # Check if DB exists and has data
         if sqlite_db_path and os.path.exists(sqlite_db_path):
             if on_existing_db == "overwrite":
@@ -66,6 +79,55 @@ class NarrativeGraph(QueryService):
             | list[dict[str, str | list[str]]]
         ) = None,
     ) -> "NarrativeGraph":
+        """
+        Fit a narrative graph from documents. The docs can be accompanied by lists with
+        the same length of IDs, timestamps and categories.
+
+        Categories can be given in many ways.
+
+        1. Single list with single label per category.
+
+        >>> single_level_single_label = ["Politics", "Sports", "Food"]
+
+        2. Single list with multiple label per category.
+
+        >>> single_level_multi_label = [
+        >>>    ["Politics", "Celebrities"],
+        >>>    ["Sports", "Celebrities"],
+        >>>    ["Sports", "Food"]
+        >>> ]
+
+        3. A dict with category names as keys and labels values (given as shown above).
+
+        >>> multi_level_multi_label = {
+        >>>     "section": [
+        >>>         ["Politics", "Celebrities"],
+        >>>         ["Sports", "Celebrities"],
+        >>>         ["Sports", "Food"]
+        >>>     ],
+        >>>     "sentiment": ["positive", "negative", "positive"]
+        >>> }
+
+        4. A list of dicts, one per doc, with category names as keys and labels values.
+
+        >>> multi_level_multi_label = [
+        >>>     {"section": ["Politics", "Celebrities"], "sentiment": "positive"},
+        >>>     {"section": ["Sports", "Celebrities"], "sentiment": "negative"},
+        >>>     {"section": ["Sports", "Food"], "sentiment": "positive"},
+        >>> ]
+
+        Args:
+            docs: Required argument, a list of documents as strings.
+            doc_ids: Optional list of document ids. Same length as docs.
+            timestamps: Optional list of document timestamps. Same length as docs.
+            categories: Optional list of document categories. Supports single or
+                multiple categories. A document can have a single or multiple labels
+                per category. See further down for examples.
+
+        Returns:
+            A fitted NarrativeGraph instance.
+
+        """
         self._pipeline.run(
             docs,
             doc_ids=doc_ids,
@@ -99,30 +161,42 @@ class NarrativeGraph(QueryService):
         return self.triplets.as_df()
 
     @property
-    def relation_graph_(self) -> nx.Graph:
-        return self.graph.get_graph("relation")
+    def relation_graph_(self) -> nx.DiGraph:
+        """The full relation graph as a directed NetworkX graph."""
+        rg = self.graph.get_graph("relation")
+        g = nx.DiGraph()
+        g.add_nodes_from((n.id, n) for n in rg.nodes)
+        g.add_edges_from((e.from_id, e.to_id, e) for e in rg.edges)
+        return g
 
     @property
     def cooccurrence_graph_(self) -> nx.Graph:
-        return self.graph.get_graph("cooccurrence")
+        """The full cooccurrence graph as an undirected NetworkX graph."""
+        cg = self.graph.get_graph("cooccurrence")
+        g = nx.Graph()
+        g.add_nodes_from((n.id, n) for n in cg.nodes)
+        g.add_edges_from((e.from_id, e.to_id) for e in cg.edges)
+        return g
 
     def serve_visualizer(
         self,
         port: int = 8001,
         block: bool = True,
         autostart: bool = True,
-    ):
-        """
-        Serve the visualizer application.
+    ) -> BackgroundServer | None:
+        """Serve the visualizer application.
 
-        :param port: The port number on which the visualizer should be served.
-        :param block: If True (default), the function will block until the server is
-            stopped.
-        If False, the server will run in the background.
-        :param autostart: If True (default), the server is started automatically. Only
-            relevant for background servers.
+        Args:
+            port: The port that the visualizer should be served on.
+            block: If True (default), the function will block until the server is
+                stopped. If False, the server will run in the background.
+            autostart: If True (default), the server is started automatically. Only
+                relevant for background servers.
 
-        :return: None
+        Returns:
+            If not blocking, return a BackgroundServer object. If blocking, return
+                None after termination.
+
         """
         server = BackgroundServer(self._engine, port=port)
         if autostart:
@@ -134,10 +208,16 @@ class NarrativeGraph(QueryService):
 
     def save_to_file(self, file_path: str, overwrite: bool = True):
         """Save in-memory database to file"""
-        if os.path.exists(file_path) and not overwrite:
-            raise FileExistsError(
-                f"File exists: {file_path}. Set overwrite=True to replace."
-            )
+        if not file_path.endswith(".db"):
+            file_path += ".db"
+
+        if os.path.exists(file_path):
+            if not overwrite:
+                raise FileExistsError(
+                    f"File exists: {file_path}. Set overwrite=True to replace."
+                )
+            else:
+                os.remove(file_path)
 
         if str(self._engine.url) == "sqlite:///:memory:":
             with self.get_session_context() as session:
@@ -146,7 +226,18 @@ class NarrativeGraph(QueryService):
             raise ValueError("Database is already file-based.")
 
     @classmethod
-    def load(cls, sqlite_db_path: str):
-        if not os.path.exists(sqlite_db_path):
-            raise FileNotFoundError(f"Database not found: {sqlite_db_path}")
-        return cls(sqlite_db_path=sqlite_db_path, on_existing_db="reuse")
+    def load(cls, file_path: str) -> "NarrativeGraph":
+        """
+
+        Args:
+            file_path: path to a SQLite database to load a NarrativeGraph from.
+
+        Returns:
+            A NarrativeGraph object
+        """
+        if not file_path.endswith(".db"):
+            file_path += ".db"
+
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"Database not found: {file_path}")
+        return cls(sqlite_db_path=file_path, on_existing_db="reuse")
