@@ -1,8 +1,10 @@
-import { Doc } from "../types/doc";
-import { Details, Identifiable } from "../types/graph";
+import { Doc } from '../types/doc';
+import { Details, Identifiable } from '../types/graph';
 
 export interface EntityService {
   getDetails(id: string | number): Promise<Details>;
+
+  search(searchString: string): Promise<Identifiable[]>;
 
   getLabels(ids: string[] | number[]): Promise<Identifiable[]>;
 
@@ -26,10 +28,25 @@ export class EntityServiceImpl implements EntityService {
     return await response.json();
   }
 
+  async search(searchString: string): Promise<Identifiable[]> {
+    const response = await fetch(
+      `${this.baseUrl}/entities/search/${searchString}`,
+      {
+        headers: { 'Content-Type': 'application/json' },
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to search entity labels: ${response.statusText}`);
+    }
+
+    return await response.json();
+  }
+
   async getLabels(ids: string[] | number[]): Promise<Identifiable[]> {
     const response = await fetch(`${this.baseUrl}/entities/labels`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ids: ids }),
     });
 
@@ -42,7 +59,7 @@ export class EntityServiceImpl implements EntityService {
 
   async getDocs(id: string | number, limit?: number): Promise<Doc[]> {
     const response = await fetch(
-      `${this.baseUrl}/entities/${id}/docs${limit ? "?limit=" + limit : ""}`,
+      `${this.baseUrl}/entities/${id}/docs${limit ? '?limit=' + limit : ''}`,
     );
 
     if (!response.ok) {

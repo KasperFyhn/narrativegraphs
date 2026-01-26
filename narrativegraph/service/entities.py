@@ -1,7 +1,7 @@
 from typing import Optional
 
 import pandas as pd
-from sqlalchemy import select
+from sqlalchemy import case, func, select
 
 from narrativegraph.db.documents import DocumentOrm
 from narrativegraph.db.entities import EntityCategory, EntityOrm
@@ -18,7 +18,7 @@ class EntityService(OrmAssociatedService):
     _category_orm = EntityCategory
 
     def as_df(self) -> pd.DataFrame:
-        with self.get_session_context() as session:
+        with self._get_session_context() as session:
             engine = session.get_bind()
 
             df = pd.read_sql(
@@ -37,7 +37,7 @@ class EntityService(OrmAssociatedService):
 
         return cleaned
 
-    def by_id(self, id_: int) -> EntityDetails:
+    def get_single(self, id_: int) -> EntityDetails:
         return self._get_by_id_and_transform(id_, EntityDetails.from_orm)
 
     def get_multiple(
@@ -50,7 +50,7 @@ class EntityService(OrmAssociatedService):
     def doc_ids_by_entity(
         self, entity_id: int, limit: Optional[int] = None
     ) -> list[int]:
-        with self.get_session_context() as sc:
+        with self._get_session_context() as sc:
             query = (
                 sc.query(DocumentOrm.id)
                 .join(TripletOrm)
@@ -66,7 +66,7 @@ class EntityService(OrmAssociatedService):
         return [doc.id for doc in query.all()]
 
     def labels_by_ids(self, entity_ids: list[int]) -> list[EntityLabel]:
-        with self.get_session_context() as sc:
+        with self._get_session_context() as sc:
             entities = (
                 sc.query(EntityOrm.id, EntityOrm.label)
                 .filter(EntityOrm.id.in_(entity_ids))
@@ -76,3 +76,27 @@ class EntityService(OrmAssociatedService):
             return [
                 EntityLabel(id=entity.id, label=entity.label) for entity in entities
             ]
+
+    def search(self, label_search: str, limit: int = None) -> list[EntityLabel]:
+        with self._get_session_context() as sc:
+            search_lower = label_search.lower()
+
+            match_quality = case(
+                (func.lower(EntityOrm.label) == search_lower, 0),  # exact
+                (func.lower(EntityOrm.label).startswith(search_lower), 1),  # prefix
+                else_=2,  # contains
+            )
+
+            matches = (
+                sc.query(EntityOrm.id, EntityOrm.label)
+                .filter(EntityOrm.label.ilike(f"%{label_search}%"))
+                .order_by(
+                    match_quality,
+                    EntityOrm.frequency.desc(),  # more frequent = better
+                    func.length(EntityOrm.label),  # shorter = better
+                    EntityOrm.label,  # alphabetical tiebreaker
+                )
+                .limit(limit)
+                .all()
+            )
+            return [EntityLabel.from_orm(entity) for entity in matches]

@@ -1,11 +1,8 @@
-from datetime import date
-
-from sqlalchemy import Column, Date, ForeignKey, Integer, String, Text
+from sqlalchemy import Column, Date, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, relationship
 
 from narrativegraph.db.common import CategorizableMixin, CategoryMixin
 from narrativegraph.db.engine import Base
-from narrativegraph.db.triplets import TripletOrm
 
 
 class DocumentCategory(Base, CategoryMixin):
@@ -22,28 +19,40 @@ class DocumentOrm(Base, CategorizableMixin):
     timestamp = Column(Date, nullable=True)
 
     # Relationships
-    triplets: Mapped[list[TripletOrm]] = relationship(
-        "TripletOrm", back_populates="document"
-    )
+    tuplets = relationship("TupletOrm", back_populates="document")
+    triplets = relationship("TripletOrm", back_populates="document")
 
     categories: Mapped[list[DocumentCategory]] = relationship(
         "DocumentCategory", foreign_keys=[DocumentCategory.target_id]
     )
 
 
-class DocumentAnchoredAnnotationMixin:
+class AnnotationMixin(CategorizableMixin):
     doc_id = Column(Integer, ForeignKey("documents.id"), nullable=False, index=True)
+    timestamp = Column(Date, nullable=True)
 
-    document = relationship(
-        "DocumentOrm",
-        foreign_keys="TripletOrm.doc_id",
-        back_populates="triplets",
-    )
+    document: DocumentOrm = None  # Should be overridden
 
     @property
     def categories(self) -> list[CategoryMixin]:
         return self.document.categories
 
-    @property
-    def timestamp(self) -> date:
-        return self.document.timestamp
+
+class AnnotationBackedTextStatsMixin:
+    frequency = Column(Integer, default=-1, nullable=False)
+    doc_frequency = Column(Integer, default=-1, nullable=False)
+    spread = Column(Float, default=-1, nullable=False)
+    adjusted_tf_idf = Column(Float, default=-1, nullable=False)
+    first_occurrence = Column(Date, nullable=True)
+    last_occurrence = Column(Date, nullable=True)
+
+    @classmethod
+    def stats_columns(cls):
+        return [
+            cls.frequency,
+            cls.doc_frequency,
+            cls.spread,
+            cls.adjusted_tf_idf,
+            cls.first_occurrence,
+            cls.last_occurrence,
+        ]

@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useServiceContext } from '../../../contexts/ServiceContext';
-import { useClickOutside } from '../../../hooks/useClickOutside';
-import { Identifiable } from '../../../types/graph';
+import { useServiceContext } from '../../../../contexts/ServiceContext';
+import { useClickOutside } from '../../../../hooks/useClickOutside';
+import { Identifiable } from '../../../../types/graph';
 import { ClipLoader } from 'react-spinners';
-import { useGraphFilter } from '../../../hooks/useGraphFilter';
-import { FloatingWindow } from '../../common/FloatingWindow';
+import { useGraphQuery } from '../../../../hooks/useGraphQuery';
+import { FloatingWindow } from '../../../common/FloatingWindow';
 
 interface EntityListEditorProps {
   ids: string[] | number[];
@@ -60,9 +60,8 @@ export const EntityListEditor: React.FC<EntityListEditorProps> = ({
   );
 };
 
-export const EntityWhitelistControl: React.FC = () => {
-  const { filter, removeWhitelistedEntityId, clearWhitelist } =
-    useGraphFilter();
+export const FocusEntitiesControl: React.FC = () => {
+  const { query, removeFocusEntityId, clearFocusEntities } = useGraphQuery();
 
   const [editing, setEditing] = useState(false);
 
@@ -70,27 +69,26 @@ export const EntityWhitelistControl: React.FC = () => {
     <div className={'flex-container flex-container--vertical'}>
       <div>
         <span>
-          <b>Double-click</b> to add or remove nodes from whitelist.
+          <b>Double-click</b> to add or remove focus entities.
         </span>
       </div>
       <button
         disabled={
-          filter.whitelistedEntityIds === undefined ||
-          filter.whitelistedEntityIds.length === 0
+          query.focusEntities === undefined || query.focusEntities.length === 0
         }
         onClick={(e) => {
           e.stopPropagation();
           setEditing(true);
         }}
       >
-        Edit whitelist
+        Edit focus entities
       </button>
-      {filter.whitelistedEntityIds !== undefined && editing && (
+      {query.focusEntities !== undefined && editing && (
         <EntityListEditor
-          ids={filter.whitelistedEntityIds}
+          ids={query.focusEntities}
           onCloseOrClickOutside={() => setEditing(false)}
-          onRemove={removeWhitelistedEntityId}
-          onClear={clearWhitelist}
+          onRemove={removeFocusEntityId}
+          onClear={clearFocusEntities}
         />
       )}
     </div>
@@ -98,8 +96,7 @@ export const EntityWhitelistControl: React.FC = () => {
 };
 
 export const EntityBlacklistControl: React.FC = () => {
-  const { filter, removeBlacklistedEntityId, clearBlacklist } =
-    useGraphFilter();
+  const { filter, removeBlacklistedEntityId, clearBlacklist } = useGraphQuery();
 
   const [editing, setEditing] = useState(false);
 

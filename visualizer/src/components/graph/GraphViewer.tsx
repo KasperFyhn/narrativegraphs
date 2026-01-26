@@ -1,18 +1,18 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Graph, { GraphEvents } from 'react-vis-graph-wrapper';
 import { Edge, GraphData, Node } from '../../types/graph';
-import { NodeInfo } from '../inspector/NodeInfo';
-import { EdgeInfo } from '../inspector/EdgeInfo';
+import { NodeInfo } from '../inspector/info/NodeInfo';
+import { EdgeInfo } from '../inspector/info/EdgeInfo';
 import { useServiceContext } from '../../contexts/ServiceContext';
-import { useGraphFilter } from '../../hooks/useGraphFilter';
+import { useGraphQuery } from '../../hooks/useGraphQuery';
 import { useGraphOptionsContext } from '../../contexts/GraphOptionsContext';
 import { SideBar } from './SideBar';
 
 export const GraphViewer: React.FC = () => {
   const { graphService } = useServiceContext();
 
-  const { filter, toggleWhitelistedEntityId, addBlacklistedEntityId } =
-    useGraphFilter();
+  const { query, filter, toggleFocusEntityId, addBlacklistedEntityId } =
+    useGraphQuery();
 
   const { options } = useGraphOptionsContext();
 
@@ -24,25 +24,24 @@ export const GraphViewer: React.FC = () => {
     nodes: [],
   });
   useEffect(() => {
-    graphService.getGraph(filter).then((r) => setGraphData(r));
-  }, [graphService, filter]);
+    graphService.getGraph(query, filter).then((r) => setGraphData(r));
+  }, [graphService, filter, query]);
 
   const coloredGraphData = useMemo(() => {
     const colorNode = (n: Node): string => {
-      if (filter.whitelistedEntityIds?.includes(n.id.toString())) {
+      if (query.focusEntities?.includes(n.id.toString())) {
         return 'lightgreen';
-      } else if (n.focus) {
-        return 'yellow';
-      } else if (!filter.blacklistedEntityIds?.includes(n.id.toString())) {
-        return 'cyan';
-      } else {
+      } else if (filter.blacklistedEntityIds?.includes(n.id.toString())) {
         return 'red';
+      } else {
+        return 'cyan';
       }
     };
     return {
       edges: graphData.edges.map((e) => ({
         ...e,
         width: Math.log10(e.totalFrequency || 10),
+        arrows: query.connectionType == 'cooccurrence' ? '' : undefined,
       })),
       nodes: graphData.nodes.map((n) => ({
         ...n,
@@ -50,10 +49,11 @@ export const GraphViewer: React.FC = () => {
       })),
     };
   }, [
-    filter.blacklistedEntityIds,
-    filter.whitelistedEntityIds,
     graphData.edges,
     graphData.nodes,
+    query.focusEntities,
+    query.connectionType,
+    filter.blacklistedEntityIds,
   ]);
 
   const graphDataMaps = useMemo(() => {
@@ -67,7 +67,7 @@ export const GraphViewer: React.FC = () => {
     doubleClick: ({ nodes }) => {
       if (nodes.length === 0) return;
       const node: string = nodes.map((v: number) => v.toString())[0];
-      toggleWhitelistedEntityId(node);
+      toggleFocusEntityId(node);
     },
     hold: ({ nodes }) => {
       if (nodes.length === 0) return;

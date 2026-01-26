@@ -3,7 +3,7 @@ from typing import Optional
 
 from fastapi_camelcase import CamelModel
 
-from narrativegraph.db.triplets import TripletBackedTextStatsMixin
+from narrativegraph.db.documents import AnnotationBackedTextStatsMixin
 
 
 class BaseDetails(CamelModel):
@@ -19,7 +19,7 @@ class TextOccurrenceStats(CamelModel):
     last_occurrence: Optional[date] = None
 
     @classmethod
-    def from_mixin(cls, orm: TripletBackedTextStatsMixin):
+    def from_mixin(cls, orm: AnnotationBackedTextStatsMixin):
         return cls(
             frequency=orm.frequency,
             doc_frequency=orm.doc_frequency,

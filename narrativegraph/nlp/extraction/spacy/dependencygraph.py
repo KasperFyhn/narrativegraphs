@@ -2,7 +2,7 @@ from typing import List, Optional, Tuple
 
 from spacy.tokens import Span, Token
 
-from narrativegraph.nlp.extraction.common import Triplet, TripletPart
+from narrativegraph.nlp.extraction.common import SpanAnnotation, Triplet
 from narrativegraph.nlp.extraction.spacy.common import SpacyTripletExtractor
 
 
@@ -135,9 +135,9 @@ class DependencyGraphExtractor(SpacyTripletExtractor):
             if all(t.pos_ == "PRON" for t in span):
                 return []
 
-        subject_part = TripletPart.from_span(subject_span)
-        predicate_part = TripletPart.from_span(verb_token)
-        obj_part = TripletPart.from_span(obj_span)
+        subject_part = SpanAnnotation.from_span(subject_span)
+        predicate_part = SpanAnnotation.from_span(verb_token)
+        obj_part = SpanAnnotation.from_span(obj_span)
 
         if subject_part and predicate_part and obj_part:
             if is_passive:

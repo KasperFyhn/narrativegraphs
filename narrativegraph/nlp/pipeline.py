@@ -5,6 +5,10 @@ from sqlalchemy import Engine
 from tqdm import tqdm
 
 from narrativegraph.nlp.extraction import TripletExtractor
+from narrativegraph.nlp.extraction.cooccurrences import (
+    ChunkCooccurrenceExtractor,
+    CooccurrenceExtractor,
+)
 from narrativegraph.nlp.extraction.spacy import NaiveSpacyTripletExtractor
 from narrativegraph.nlp.mapping import Mapper
 from narrativegraph.nlp.mapping.linguistic import StemmingMapper
@@ -21,16 +25,23 @@ class Pipeline:
         self,
         engine: Engine,
         triplet_extractor: TripletExtractor = None,
+        cooccurrence_extractor: CooccurrenceExtractor = None,
         entity_mapper: Mapper = None,
         predicate_mapper: Mapper = None,
+        n_cpu: int = 1,
     ):
         # Analysis components
         self._triplet_extractor = triplet_extractor or NaiveSpacyTripletExtractor(
             named_entities=(2, None),
             noun_chunks=(2, None),
         )
+        self._cooccurrence_extractor = (
+            cooccurrence_extractor or ChunkCooccurrenceExtractor()
+        )
         self._entity_mapper = entity_mapper or StemmingMapper()
         self._predicate_mapper = predicate_mapper or StemmingMapper()
+
+        self.n_cpu = n_cpu
 
         self._db_service = PopulationService(engine)
         self.predicate_mapping = None
@@ -63,7 +74,7 @@ class Pipeline:
             # TODO: use generators instead of lists here
             doc_orms = self._db_service.get_docs()
             extracted_triplets = self._triplet_extractor.batch_extract(
-                [d.text for d in doc_orms]
+                [d.text for d in doc_orms], n_cpu=self.n_cpu
             )
             docs_and_triplets = zip(doc_orms, extracted_triplets)
             if _logger.isEnabledFor(logging.INFO):
@@ -75,8 +86,13 @@ class Pipeline:
                     doc,
                     doc_triplets,
                 )
+                entities = list(
+                    {e for triplet in doc_triplets for e in [triplet.subj, triplet.obj]}
+                )
+                doc_tuplets = self._cooccurrence_extractor.extract(doc, entities)
+                self._db_service.add_tuplets(doc, doc_tuplets)
 
-            _logger.info("Mapping entities and predicates")
+            _logger.info("Resolving entities and predicates")
             triplets = self._db_service.get_triplets()
             entities = [
                 entity
@@ -88,10 +104,13 @@ class Pipeline:
             predicates = [triplet.pred_span_text for triplet in triplets]
             self.predicate_mapping = self._predicate_mapper.create_mapping(predicates)
 
-            _logger.info("Mapping triplets")
-            self._db_service.map_triplets(
+            _logger.info("Mapping triplets and tuplets")
+            self._db_service.map_triplets_and_tuplets(
                 self.entity_mapping,
                 self.predicate_mapping,
             )
+
+            _logger.info("Calculating stats")
+            self._db_service.calculate_stats()
 
             return self

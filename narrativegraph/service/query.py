@@ -7,7 +7,7 @@ from narrativegraph.db.entities import EntityOrm
 from narrativegraph.db.relations import RelationOrm
 from narrativegraph.dto.filter import DataBounds
 from narrativegraph.service.common import DbService
-from narrativegraph.service.cooccurrences import CoOccurrencesService
+from narrativegraph.service.cooccurrences import CooccurrenceService
 from narrativegraph.service.documents import DocService
 from narrativegraph.service.entities import EntityService
 from narrativegraph.service.graph import GraphService
@@ -23,7 +23,7 @@ class QueryService(DbService):
         self.entities = EntityService(lambda: self.get_session_context())
         self.relations = RelationService(lambda: self.get_session_context())
         self.predicates = PredicateService(lambda: self.get_session_context())
-        self.co_occurrences = CoOccurrencesService(lambda: self.get_session_context())
+        self.cooccurrences = CooccurrenceService(lambda: self.get_session_context())
         self.triplets = TripletService(lambda: self.get_session_context())
         self.graph = GraphService(lambda: self.get_session_context())
 
@@ -36,6 +36,9 @@ class QueryService(DbService):
 
     def get_bounds(self):
         with self.get_session_context() as db:
+            categories = self._compile_categories()
+            if not categories:
+                categories = None
             return DataBounds(
                 minimum_possible_node_frequency=db.query(
                     func.min(EntityOrm.frequency)
@@ -49,7 +52,7 @@ class QueryService(DbService):
                 maximum_possible_edge_frequency=db.query(
                     func.max(RelationOrm.frequency)
                 ).scalar(),
-                categories=self._compile_categories(),
+                categories=categories,
                 earliest_date=db.query(func.min(DocumentOrm.timestamp)).scalar()
                 or None,
                 latest_date=db.query(func.max(DocumentOrm.timestamp)).scalar() or None,

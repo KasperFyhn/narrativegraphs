@@ -1,18 +1,20 @@
 from abc import ABC, abstractmethod
 from typing import Generator, Iterable, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from spacy.tokens import Span, Token
 
 
-class TripletPart(BaseModel):
+class SpanAnnotation(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
     text: str
     start_char: int
     end_char: int
     normalized_text: Optional[str] = None
 
     @classmethod
-    def from_span(cls, span: Span | Token) -> "TripletPart":
+    def from_span(cls, span: Span | Token) -> "SpanAnnotation":
         start = span.start_char if isinstance(span, Span) else span.idx
         end = span.end_char if isinstance(span, Span) else span.idx + len(span.text)
         return cls(
@@ -24,9 +26,39 @@ class TripletPart(BaseModel):
 
 
 class Triplet(BaseModel):
-    subj: TripletPart
-    pred: TripletPart
-    obj: TripletPart
+    subj: SpanAnnotation
+    pred: SpanAnnotation
+    obj: SpanAnnotation
+
+
+class Tuplet(BaseModel):
+    entity_one: SpanAnnotation
+    entity_two: SpanAnnotation
+    entity_one_extra_mentions: list[SpanAnnotation] = []
+    entity_two_extra_mentions: list[SpanAnnotation] = []
+
+    def combine(self, other: "Tuplet") -> "Tuplet":
+        if (
+            self.entity_one.text == other.entity_one.text
+            and self.entity_two.text == other.entity_two.text
+        ):
+            self.entity_one_extra_mentions.append(other.entity_one)
+            self.entity_two_extra_mentions.append(other.entity_two)
+        elif (
+            self.entity_one.text == other.entity_two.text
+            and self.entity_two.text == other.entity_one.text
+        ):
+            self.entity_two_extra_mentions.append(other.entity_one)
+            self.entity_one_extra_mentions.append(other.entity_two)
+        else:
+            raise ValueError("Tuplet entities must have same text")
+        return self
+
+    @property
+    def frequency(self) -> int:
+        entity_one_mentions = 1 + len(self.entity_one_extra_mentions)
+        entity_two_mentions = 1 + len(self.entity_two_extra_mentions)
+        return entity_one_mentions * entity_two_mentions
 
 
 class TripletExtractor(ABC):

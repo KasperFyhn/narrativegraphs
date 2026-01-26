@@ -2,7 +2,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends
 
-from narrativegraph.dto.filter import DataBounds, GraphFilter
+from narrativegraph.dto.filter import DataBounds, GraphFilter, GraphQuery
 from narrativegraph.dto.graph import Community
 from narrativegraph.server.routes.common import get_query_service
 from narrativegraph.service import QueryService
@@ -12,10 +12,18 @@ router = APIRouter()
 
 @router.post("/")
 async def get_graph(
-    graph_filter: GraphFilter, service: QueryService = Depends(get_query_service)
+    query: GraphQuery,
+    service: QueryService = Depends(get_query_service),
 ):
     """Get graph data with entities and relations based on filters"""
-    return service.graph.get_graph(graph_filter)
+    if query.focus_entities:
+        return service.graph.expand_from_focus_entities(
+            query.focus_entities,
+            query.connection_type,
+            query.filter,
+        )
+    else:
+        return service.graph.get_graph(query.connection_type, query.filter)
 
 
 @router.post("/communities")

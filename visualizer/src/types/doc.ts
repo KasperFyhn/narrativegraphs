@@ -1,13 +1,18 @@
-export interface TripletField {
+export interface Span {
   id: string | number;
   start: number;
   end: number;
 }
 
 export interface Triplet {
-  subject: TripletField;
-  predicate: TripletField;
-  object: TripletField;
+  subject: Span;
+  predicate: Span;
+  object: Span;
+}
+
+export interface Tuplet {
+  entityOne: Span;
+  entityTwo: Span;
 }
 
 export interface Doc {
@@ -15,5 +20,6 @@ export interface Doc {
   text: string;
   timestamp?: Date;
   triplets: Triplet[];
+  tuplets: Tuplet[];
   categories: { [key: string]: string[] };
 }

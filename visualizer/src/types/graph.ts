@@ -6,7 +6,6 @@ export interface Identifiable {
 export interface Node extends Identifiable {
   supernode?: Identifiable;
   subnodes?: Identifiable[];
-  focus?: boolean;
 }
 
 export interface LabeledEdge extends Identifiable {
@@ -49,4 +48,15 @@ export interface Details extends Identifiable {
   docs?: string[] | number[];
   altLabels?: string[];
   categories: { [key: string]: string[] };
+}
+
+export interface CooccurrenceDetails extends Details {
+  entityOneId: number | string;
+  entityTwoId: number | string;
+}
+
+export interface RelationDetails extends Details {
+  subjectId: number | string;
+  predicateId: number | string;
+  objectId: number | string;
 }

@@ -41,17 +41,13 @@ class DbService:
                 setattr(self._local, name, None)
                 session.close()
 
-    @property
-    def engine(self) -> Engine:
-        return self._engine
-
 
 class SubService:
     def __init__(
         self,
         get_session_context: Callable[[], _GeneratorContextManager[Session]],
     ):
-        self.get_session_context = get_session_context
+        self._get_session_context = get_session_context
 
 
 class OrmAssociatedService(SubService, ABC):
@@ -59,7 +55,7 @@ class OrmAssociatedService(SubService, ABC):
     _category_orm: type[CategoryMixin] = None
 
     def _add_category_columns(self, df: pd.DataFrame = None):
-        with self.get_session_context() as session:
+        with self._get_session_context() as session:
             categories_df = pd.read_sql(
                 select(
                     self._category_orm.target_id,
@@ -86,10 +82,8 @@ class OrmAssociatedService(SubService, ABC):
         pass
 
     def _get_by_id_and_transform(self, id_: int, transform: Callable[[Any], Any]):
-        with self.get_session_context() as sc:
-            entry = (
-                sc.query(self._orm).filter(self._orm.id == id_).first()  # noqa; id must be there
-            )  # noqa; the id ref works
+        with self._get_session_context() as sc:
+            entry = sc.query(self._orm).get(id_)
             if entry is None:
                 raise EntryNotFoundError(
                     f"No entry with id '{id_}' in table {self._orm.__tablename__}"
@@ -97,16 +91,16 @@ class OrmAssociatedService(SubService, ABC):
             return transform(entry)
 
     @abstractmethod
-    def by_id(self, id_: int):
+    def get_single(self, id_: int):
         pass
 
     def _get_multiple_by_ids_and_transform(
         self, transform: Callable[[Any], Any], ids: list[int] = None, limit: int = None
     ):
-        with self.get_session_context() as sc:
+        with self._get_session_context() as sc:
             query = sc.query(self._orm)
             if ids is not None:
-                query = query.filter(self._orm.id.in_(ids))  # noqa; the id ref works
+                query = query.filter(self._orm.id.in_(ids))
                 # FIXME: what to do in case of missing entries?
             if limit:
                 query = query.limit(limit)

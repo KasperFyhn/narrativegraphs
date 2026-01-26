@@ -12,3 +12,15 @@
   align-items: flex-start;
   gap: 15px;
 }
+
+.info-pane {
+  position: fixed;
+  top: 5px;
+  left: 5px;
+  z-index: 3;
+  font-size: small;
+  width: 25%;
+  min-width: 250px;
+  max-width: 450px;
+  max-height: calc(95vh);
+}

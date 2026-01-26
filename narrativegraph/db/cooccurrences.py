@@ -1,22 +1,31 @@
-from sqlalchemy import Column, Float, ForeignKey, Integer
+from sqlalchemy import (
+    CheckConstraint,
+    Column,
+    Float,
+    ForeignKey,
+    Integer,
+)
 from sqlalchemy.orm import Mapped, relationship
 
-from narrativegraph.db.common import CategorizableMixin, CategoryMixin
+from narrativegraph.db.common import (
+    CategorizableMixin,
+    CategoryMixin,
+)
+from narrativegraph.db.documents import AnnotationBackedTextStatsMixin
 from narrativegraph.db.engine import Base
 from narrativegraph.db.entities import EntityOrm
-from narrativegraph.db.relations import RelationOrm
-from narrativegraph.db.triplets import TripletBackedTextStatsMixin, TripletOrm
+from narrativegraph.db.tuplets import TupletOrm
 
 
-class CoOccurrenceCategory(Base, CategoryMixin):
-    __tablename__ = "co_occurrences_categories"
+class CooccurrenceCategory(Base, CategoryMixin):
+    __tablename__ = "cooccurrences_categories"
     target_id = Column(
-        Integer, ForeignKey("co_occurrences.id"), nullable=False, index=True
+        Integer, ForeignKey("cooccurrences.id"), nullable=False, index=True
     )
 
 
-class CoOccurrenceOrm(Base, TripletBackedTextStatsMixin, CategorizableMixin):
-    __tablename__ = "co_occurrences"
+class CooccurrenceOrm(Base, AnnotationBackedTextStatsMixin, CategorizableMixin):
+    __tablename__ = "cooccurrences"
     id = Column(Integer, primary_key=True, autoincrement=True)
     entity_one_id = Column(
         Integer, ForeignKey("entities.id"), nullable=False, index=True
@@ -29,25 +38,24 @@ class CoOccurrenceOrm(Base, TripletBackedTextStatsMixin, CategorizableMixin):
 
     entity_one: Mapped["EntityOrm"] = relationship(
         "EntityOrm",
-        foreign_keys="CoOccurrenceOrm.entity_one_id",
+        foreign_keys="CooccurrenceOrm.entity_one_id",
     )
     entity_two: Mapped["EntityOrm"] = relationship(
         "EntityOrm",
-        foreign_keys="CoOccurrenceOrm.entity_two_id",
+        foreign_keys="CooccurrenceOrm.entity_two_id",
     )
 
-    relations: Mapped[list[RelationOrm]] = relationship(
-        "RelationOrm",
-        back_populates="co_occurrence",
-        foreign_keys="RelationOrm.co_occurrence_id",
-    )
-    triplets: Mapped[list["TripletOrm"]] = relationship(
-        "TripletOrm",
-        back_populates="co_occurrence",
-        foreign_keys="TripletOrm.co_occurrence_id",
+    __table_args__ = (
+        CheckConstraint("entity_one_id <= entity_two_id", name="entity_order_check"),
     )
 
-    categories: Mapped[list[CoOccurrenceCategory]] = relationship(
-        "CoOccurrenceCategory",
-        foreign_keys="CoOccurrenceCategory.target_id",
+    tuplets: Mapped[list["TupletOrm"]] = relationship(
+        "TupletOrm",
+        back_populates="cooccurrence",
+        foreign_keys="TupletOrm.cooccurrence_id",
+    )
+
+    categories: Mapped[list[CooccurrenceCategory]] = relationship(
+        "CooccurrenceCategory",
+        foreign_keys="CooccurrenceCategory.target_id",
     )

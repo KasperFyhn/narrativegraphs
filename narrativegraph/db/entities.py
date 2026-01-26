@@ -15,8 +15,9 @@ from narrativegraph.db.common import (
     CategoryMixin,
     HasAltLabels,
 )
+from narrativegraph.db.documents import AnnotationBackedTextStatsMixin
 from narrativegraph.db.engine import Base
-from narrativegraph.db.triplets import TripletBackedTextStatsMixin, TripletOrm
+from narrativegraph.db.triplets import TripletOrm
 
 
 class EntityCategory(Base, CategoryMixin):
@@ -24,15 +25,23 @@ class EntityCategory(Base, CategoryMixin):
     target_id = Column(Integer, ForeignKey("entities.id"), nullable=False, index=True)
 
 
-class EntityOrm(Base, HasAltLabels, TripletBackedTextStatsMixin, CategorizableMixin):
+class EntityOrm(Base, HasAltLabels, AnnotationBackedTextStatsMixin, CategorizableMixin):
     __tablename__ = "entities"
     id = Column(Integer, primary_key=True, autoincrement=True)
     label: str = Column(String, nullable=False, index=True)
 
     @hybrid_property
     def alt_labels(self) -> list[str]:
-        subj_labels = [triplet.subj_span_text for triplet in self.subject_triplets]
-        obj_labels = [triplet.obj_span_text for triplet in self.object_triplets]
+        subj_labels = [
+            triplet.subj_span_text
+            for triplet in self.subject_triplets
+            if triplet.subj_span_text != self.label
+        ]
+        obj_labels = [
+            triplet.obj_span_text
+            for triplet in self.object_triplets
+            if triplet.obj_span_text != self.label
+        ]
         return list(set(subj_labels + obj_labels))
 
     @alt_labels.expression
@@ -82,17 +91,17 @@ class EntityOrm(Base, HasAltLabels, TripletBackedTextStatsMixin, CategorizableMi
     def relations(self):
         return self.subject_relations + self.object_relations
 
-    _entity_one_co_occurrences = relationship(
-        "CoOccurrenceOrm",
+    _entity_one_cooccurrences = relationship(
+        "CooccurrenceOrm",
         back_populates="entity_one",
-        foreign_keys="CoOccurrenceOrm.entity_one_id",
+        foreign_keys="CooccurrenceOrm.entity_one_id",
     )
-    _entity_two_co_occurrences = relationship(
-        "CoOccurrenceOrm",
+    _entity_two_cooccurrences = relationship(
+        "CooccurrenceOrm",
         back_populates="entity_two",
-        foreign_keys="CoOccurrenceOrm.entity_two_id",
+        foreign_keys="CooccurrenceOrm.entity_two_id",
     )
 
     @property
-    def co_occurrences(self):
-        return self._entity_one_co_occurrences + self._entity_two_co_occurrences
+    def cooccurrences(self):
+        return self._entity_one_cooccurrences + self._entity_two_cooccurrences

@@ -22,6 +22,7 @@ export const SubmittedTextInput: React.FC<SubmittedTextInputProps> = ({
       <input
         type={'search'}
         value={value}
+        autoFocus={true}
         onChange={(event) => {
           const newValue = event.target.value;
           setValue(newValue);

@@ -15,7 +15,7 @@ async def get_doc(
     service: QueryService = Depends(get_query_service),
 ):
     """Get a single document by ID"""
-    doc = service.documents.by_id(doc_id)
+    doc = service.documents.get_single(doc_id)
     if doc is None:
         raise HTTPException(status_code=404, detail="Could not find document!")
     return doc

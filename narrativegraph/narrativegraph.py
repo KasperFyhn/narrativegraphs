@@ -3,20 +3,15 @@ import os
 from datetime import date, datetime
 from typing import Literal
 
+import networkx as nx
 import pandas as pd
 from sqlalchemy import text
 
 from narrativegraph.db.engine import (
     get_engine,
 )
-from narrativegraph.dto.cooccurrences import CoOccurrenceDetails
-from narrativegraph.dto.documents import Document
-from narrativegraph.dto.entities import EntityDetails
-from narrativegraph.dto.filter import GraphFilter
-from narrativegraph.dto.graph import Community
-from narrativegraph.dto.predicates import PredicateDetails
-from narrativegraph.dto.relations import RelationDetails
 from narrativegraph.nlp.extraction import TripletExtractor
+from narrativegraph.nlp.extraction.cooccurrences import CooccurrenceExtractor
 from narrativegraph.nlp.mapping import Mapper
 from narrativegraph.nlp.pipeline import Pipeline
 from narrativegraph.server.backgroundserver import BackgroundServer
@@ -27,14 +22,16 @@ _logger = logging.getLogger("narrativegraph")
 _logger.setLevel(logging.INFO)
 
 
-class NarrativeGraph:
+class NarrativeGraph(QueryService):
     def __init__(
         self,
         triplet_extractor: TripletExtractor = None,
+        cooccurrence_extractor: CooccurrenceExtractor = None,
         entity_mapper: Mapper = None,
         predicate_mapper: Mapper = None,
         sqlite_db_path: str = None,
         on_existing_db: Literal["stop", "overwrite", "reuse"] = "stop",
+        n_cpu: int = -1,
     ):
         # Check if DB exists and has data
         if sqlite_db_path and os.path.exists(sqlite_db_path):
@@ -48,13 +45,14 @@ class NarrativeGraph:
                         "on_existing_db to 'overwrite' or 'reuse'."
                     )
 
-        self._engine = get_engine(sqlite_db_path)
-        self._db_service = QueryService(self._engine)
+        super().__init__(get_engine(sqlite_db_path))
         self._pipeline = Pipeline(
             self._engine,
             triplet_extractor=triplet_extractor,
+            cooccurrence_extractor=cooccurrence_extractor,
             entity_mapper=entity_mapper,
             predicate_mapper=predicate_mapper,
+            n_cpu=n_cpu,
         )
 
     def fit(
@@ -78,53 +76,35 @@ class NarrativeGraph:
 
     @property
     def entities_(self) -> pd.DataFrame:
-        return self._db_service.entities.as_df()
+        return self.entities.as_df()
 
     @property
     def predicates_(self) -> pd.DataFrame:
-        return self._db_service.predicates.as_df()
+        return self.predicates.as_df()
 
     @property
     def relations_(self) -> pd.DataFrame:
-        return self._db_service.relations.as_df()
+        return self.relations.as_df()
 
     @property
-    def co_occurrences_(self) -> pd.DataFrame:
-        return self._db_service.co_occurrences.as_df()
+    def cooccurrences_(self) -> pd.DataFrame:
+        return self.cooccurrences.as_df()
 
     @property
     def documents_(self) -> pd.DataFrame:
-        return self._db_service.documents.as_df()
+        return self.documents.as_df()
 
     @property
     def triplets_(self) -> pd.DataFrame:
-        return self._db_service.triplets.as_df()
+        return self.triplets.as_df()
 
-    def get_entities(
-        self, ids: list[int] = None, limit: int = None
-    ) -> list[EntityDetails]:
-        return self._db_service.entities.get_multiple(ids=ids, limit=limit)
+    @property
+    def relation_graph_(self) -> nx.Graph:
+        return self.graph.get_graph("relation")
 
-    def get_predicates(
-        self, ids: list[int] = None, limit: int = None
-    ) -> list[PredicateDetails]:
-        return self._db_service.predicates.get_multiple(ids=ids, limit=limit)
-
-    def get_relations(
-        self, ids: list[int] = None, limit: int = None
-    ) -> list[RelationDetails]:
-        return self._db_service.relations.get_multiple(ids=ids, limit=limit)
-
-    def get_co_occurrences(
-        self, ids: list[int] = None, limit: int = None
-    ) -> list[CoOccurrenceDetails]:
-        return self._db_service.co_occurrences.get_multiple(ids=ids, limit=limit)
-
-    def get_documents(self, ids: list[int] = None, limit: int = None) -> list[Document]:
-        return self._db_service.documents.get_multiple(ids=ids, limit=limit)
-
-    def find_communities(self, graph_filter: GraphFilter = None) -> list[Community]:
-        return self._db_service.graph.find_communities(graph_filter=graph_filter)
+    @property
+    def cooccurrence_graph_(self) -> nx.Graph:
+        return self.graph.get_graph("cooccurrence")
 
     def serve_visualizer(
         self,
@@ -144,7 +124,7 @@ class NarrativeGraph:
 
         :return: None
         """
-        server = BackgroundServer(self._db_service.engine, port=port)
+        server = BackgroundServer(self._engine, port=port)
         if autostart:
             server.start(block=block)
         if not block:
@@ -160,7 +140,7 @@ class NarrativeGraph:
             )
 
         if str(self._engine.url) == "sqlite:///:memory:":
-            with self._db_service.get_session_context() as session:
+            with self.get_session_context() as session:
                 session.execute(text(f"VACUUM main INTO '{file_path}'"))
         else:
             raise ValueError("Database is already file-based.")

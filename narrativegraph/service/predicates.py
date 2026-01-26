@@ -17,7 +17,7 @@ class PredicateService(OrmAssociatedService):
     _category_orm = PredicateCategory
 
     def as_df(self) -> pd.DataFrame:
-        with self.get_session_context() as session:
+        with self._get_session_context() as session:
             engine = session.get_bind()
 
             df = pd.read_sql(
@@ -35,7 +35,7 @@ class PredicateService(OrmAssociatedService):
 
         return cleaned
 
-    def by_id(self, id_: int) -> PredicateDetails:
+    def get_single(self, id_: int) -> PredicateDetails:
         return self._get_by_id_and_transform(id_, PredicateDetails.from_orm)
 
     def get_multiple(
@@ -48,7 +48,7 @@ class PredicateService(OrmAssociatedService):
     def doc_ids_by_predicate(
         self, predicate_id: int, limit: Optional[int] = None
     ) -> list[int]:
-        with self.get_session_context() as sc:
+        with self._get_session_context() as sc:
             query = (
                 sc.query(DocumentOrm.id)
                 .join(TripletOrm)

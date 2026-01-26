@@ -13,7 +13,7 @@ class DocService(OrmAssociatedService):
     _category_orm = DocumentCategory
 
     def as_df(self) -> pd.DataFrame:
-        with self.get_session_context() as session:
+        with self._get_session_context() as session:
             engine = session.get_bind()
 
             df = pd.read_sql(
@@ -31,7 +31,7 @@ class DocService(OrmAssociatedService):
 
         return cleaned
 
-    def by_id(self, id_: int) -> Document:
+    def get_single(self, id_: int) -> Document:
         return self._get_by_id_and_transform(id_, Document.from_orm)
 
     def get_multiple(
@@ -45,7 +45,7 @@ class DocService(OrmAssociatedService):
         self,
         limit: Optional[int] = None,
     ) -> list[Document]:
-        with self.get_session_context() as sc:
+        with self._get_session_context() as sc:
             query = sc.query(DocumentOrm)
             if limit:
                 query = query.limit(limit)

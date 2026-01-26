@@ -4,20 +4,20 @@ import pandas as pd
 from sqlalchemy import select
 from sqlalchemy.orm import aliased
 
-from narrativegraph.db.cooccurrences import CoOccurrenceCategory, CoOccurrenceOrm
+from narrativegraph.db.cooccurrences import CooccurrenceCategory, CooccurrenceOrm
 from narrativegraph.db.documents import DocumentOrm
 from narrativegraph.db.entities import EntityOrm
-from narrativegraph.db.triplets import TripletOrm
-from narrativegraph.dto.cooccurrences import CoOccurrenceDetails
+from narrativegraph.db.tuplets import TupletOrm
+from narrativegraph.dto.cooccurrences import CooccurrenceDetails
 from narrativegraph.service.common import OrmAssociatedService
 
 
-class CoOccurrencesService(OrmAssociatedService):
-    _orm = CoOccurrenceOrm
-    _category_orm = CoOccurrenceCategory
+class CooccurrenceService(OrmAssociatedService):
+    _orm = CooccurrenceOrm
+    _category_orm = CooccurrenceCategory
 
     def as_df(self) -> pd.DataFrame:
-        with self.get_session_context() as session:
+        with self._get_session_context() as session:
             engine = session.get_bind()
 
             # Create aliases for the two entity joins
@@ -26,21 +26,23 @@ class CoOccurrencesService(OrmAssociatedService):
 
             df = pd.read_sql(
                 select(
-                    CoOccurrenceOrm.id.label("id"),
+                    CooccurrenceOrm.id.label("id"),
                     entity_one.label.label("entity_one"),
+                    entity_one.frequency.label("entity_one_frequency"),
                     entity_two.label.label("entity_two"),
-                    *CoOccurrenceOrm.stats_columns(),
-                    CoOccurrenceOrm.pmi.label("pmi"),
+                    entity_two.frequency.label("entity_two_frequency"),
+                    *CooccurrenceOrm.stats_columns(),
+                    CooccurrenceOrm.pmi.label("pmi"),
                     entity_one.id.label("entity_one_id"),
                     entity_two.id.label("entity_two_id"),
                 )
                 .join(
                     entity_one,
-                    CoOccurrenceOrm.entity_one_id == entity_one.id,
+                    CooccurrenceOrm.entity_one_id == entity_one.id,
                 )
                 .join(
                     entity_two,
-                    CoOccurrenceOrm.entity_two_id == entity_two.id,
+                    CooccurrenceOrm.entity_two_id == entity_two.id,
                 ),
                 engine,
             )
@@ -50,24 +52,24 @@ class CoOccurrencesService(OrmAssociatedService):
 
         return cleaned
 
-    def by_id(self, id_: int) -> CoOccurrenceDetails:
-        return self._get_by_id_and_transform(id_, CoOccurrenceDetails.from_orm)
+    def get_single(self, id_: int) -> CooccurrenceDetails:
+        return self._get_by_id_and_transform(id_, CooccurrenceDetails.from_orm)
 
     def get_multiple(
         self, ids: list[int] = None, limit: Optional[int] = None
-    ) -> list[CoOccurrenceDetails]:
+    ) -> list[CooccurrenceDetails]:
         return self._get_multiple_by_ids_and_transform(
-            CoOccurrenceDetails.from_orm, ids=ids, limit=limit
+            CooccurrenceDetails.from_orm, ids=ids, limit=limit
         )
 
-    def doc_ids_by_co_occurrence(
-        self, co_occurrence_id: int, limit: Optional[int] = None
+    def doc_ids_by_cooccurrence(
+        self, cooccurrence_id: int, limit: Optional[int] = None
     ) -> list[int]:
-        with self.get_session_context() as sc:
+        with self._get_session_context() as sc:
             query = (
                 sc.query(DocumentOrm.id)
-                .join(TripletOrm)
-                .filter(TripletOrm.co_occurrence_id == co_occurrence_id)
+                .join(TupletOrm)
+                .filter(TupletOrm.cooccurrence_id == cooccurrence_id)
                 .distinct()
             )
             if limit:

@@ -1,9 +1,14 @@
 from pathlib import Path
 
-from sqlalchemy import Engine, create_engine
+from sqlalchemy import Column, Engine, Integer, create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-Base = declarative_base()
+_Base = declarative_base()
+
+
+class Base(_Base):
+    __abstract__ = True
+    id = Column(Integer, autoincrement=True, primary_key=True)
 
 
 def get_engine(filepath: str | Path = None) -> Engine:

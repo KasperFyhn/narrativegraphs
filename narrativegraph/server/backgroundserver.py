@@ -23,7 +23,7 @@ class BackgroundServer:
         self._server = server
 
         try:
-            app.state.db_engine = self._db_engine  # noqa; state is there
+            app.state.db_engine = self._db_engine  # noqa
             await server.serve()
         except asyncio.CancelledError:
             logging.info("Server cancelled")

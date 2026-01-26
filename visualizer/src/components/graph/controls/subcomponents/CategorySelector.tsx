@@ -1,6 +1,6 @@
-import { useGraphFilter } from '../../../hooks/useGraphFilter';
+import { useGraphQuery } from '../../../../hooks/useGraphQuery';
 import React, { useEffect, useMemo } from 'react';
-import { FloatingWindow } from '../../common/FloatingWindow';
+import { FloatingWindow } from '../../../common/FloatingWindow';
 
 interface CategorySelectorInnerProps {
   name: string;
@@ -13,7 +13,7 @@ const CategorySelectorInner: React.FC<CategorySelectorInnerProps> = ({
   values,
   showHeader,
 }) => {
-  const { filter, toggleCategoryValue, resetCategory } = useGraphFilter();
+  const { filter, toggleCategoryValue, resetCategory } = useGraphQuery();
 
   const capitalizedName = useMemo(
     () => name.charAt(0).toUpperCase() + name.slice(1),
@@ -102,7 +102,7 @@ const CategorySelectorInner: React.FC<CategorySelectorInnerProps> = ({
 };
 
 export const CategorySelector: React.FC = () => {
-  const { dataBounds } = useGraphFilter();
+  const { dataBounds } = useGraphQuery();
 
   return (
     <div className={'flex-container'} style={{ maxWidth: '175px' }}>

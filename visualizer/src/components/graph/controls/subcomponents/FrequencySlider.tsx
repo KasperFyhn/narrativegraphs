@@ -1,6 +1,6 @@
-import LogarithmicRangeSlider from '../../common/input/LogarithmicRangeSlider';
+import LogarithmicRangeSlider from '../../../common/input/LogarithmicRangeSlider';
 import React from 'react';
-import { useGraphFilter } from '../../../hooks/useGraphFilter';
+import { useGraphQuery } from '../../../../hooks/useGraphQuery';
 
 export interface FrequencySliderProps {
   min: number;
@@ -24,7 +24,7 @@ const FrequencySlider: React.FC<FrequencySliderProps> = (
 };
 
 export const NodeFrequencySlider: React.FC = () => {
-  const { dataBounds, filter, setNodeFrequencyRange } = useGraphFilter();
+  const { dataBounds, filter, setNodeFrequencyRange } = useGraphQuery();
   return (
     <FrequencySlider
       onChange={(e) => {
@@ -43,7 +43,7 @@ export const NodeFrequencySlider: React.FC = () => {
 };
 
 export const EdgeFrequencySlider: React.FC = () => {
-  const { dataBounds, filter, setEdgeFrequencyRange } = useGraphFilter();
+  const { dataBounds, filter, setEdgeFrequencyRange } = useGraphQuery();
   return (
     <FrequencySlider
       onChange={(e) => {

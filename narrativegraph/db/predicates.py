@@ -9,8 +9,9 @@ from narrativegraph.db.common import (
     CategoryMixin,
     HasAltLabels,
 )
+from narrativegraph.db.documents import AnnotationBackedTextStatsMixin
 from narrativegraph.db.engine import Base
-from narrativegraph.db.triplets import TripletBackedTextStatsMixin, TripletOrm
+from narrativegraph.db.triplets import TripletOrm
 
 if TYPE_CHECKING:
     from narrativegraph.db.relations import RelationOrm
@@ -21,7 +22,9 @@ class PredicateCategory(Base, CategoryMixin):
     target_id = Column(Integer, ForeignKey("predicates.id"), nullable=False, index=True)
 
 
-class PredicateOrm(Base, TripletBackedTextStatsMixin, CategorizableMixin, HasAltLabels):
+class PredicateOrm(
+    Base, AnnotationBackedTextStatsMixin, CategorizableMixin, HasAltLabels
+):
     __tablename__ = "predicates"
     id = Column(Integer, primary_key=True, autoincrement=True)
     label: str = Column(String, nullable=False, index=True)
@@ -29,7 +32,13 @@ class PredicateOrm(Base, TripletBackedTextStatsMixin, CategorizableMixin, HasAlt
     @hybrid_property
     def alt_labels(self) -> list[str]:
         """Python version"""
-        return list(set(triplet.pred_span_text for triplet in self.triplets))
+        return list(
+            set(
+                triplet.pred_span_text
+                for triplet in self.triplets
+                if triplet.pred_span_text != self.label
+            )
+        )
 
     @alt_labels.expression
     def alt_labels(cls):  # noqa
