@@ -20,7 +20,7 @@ export const CooccurrenceInfo: React.FC<CooccurrenceInfoProps> = ({ id }) => {
 
     cooccurrenceService
       .getDetails(id)
-      .then((result) => setDetails(result))
+      .then((result) => setDetails(result as CooccurrenceDetails))
       .finally(() => setLoading(false));
   }, [cooccurrenceService, id]);
 

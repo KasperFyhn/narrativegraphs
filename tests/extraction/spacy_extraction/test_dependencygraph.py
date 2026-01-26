@@ -1,5 +1,7 @@
-from narrativegraph.nlp.extraction.common import SpanAnnotation, Triplet
-from narrativegraph.nlp.extraction.spacy.dependencygraph import DependencyGraphExtractor
+from narrativegraphs.nlp.extraction.common import SpanAnnotation, Triplet
+from narrativegraphs.nlp.extraction.spacy.dependencygraph import (
+    DependencyGraphExtractor,
+)
 from tests.extraction.common import ExtractorTest
 
 

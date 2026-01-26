@@ -10,8 +10,8 @@ npm run build
 echo "Copying static files to package..."
 cd ..
 
-rm -rf narrativegraph/server/static
-cp -r visualizer/build narrativegraph/server/static
+rm -rf narrativegraphs/server/static
+cp -r visualizer/build narrativegraphs/server/static
 
 echo "Building Python package..."
 python -m build

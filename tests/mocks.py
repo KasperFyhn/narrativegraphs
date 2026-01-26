@@ -1,6 +1,6 @@
-from narrativegraph.nlp.extraction import TripletExtractor
-from narrativegraph.nlp.extraction.common import SpanAnnotation, Triplet
-from narrativegraph.nlp.mapping import Mapper
+from narrativegraphs.nlp.extraction import TripletExtractor
+from narrativegraphs.nlp.extraction.common import SpanAnnotation, Triplet
+from narrativegraphs.nlp.mapping import Mapper
 
 
 class MockTripletExtractor(TripletExtractor):

@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from narrativegraph import NarrativeGraph
+from narrativegraphs import NarrativeGraph
 from tests.mocks import MockMapper, MockTripletExtractor
 
 
@@ -29,7 +29,7 @@ class TestNarrativeGraphFileHandling:
             ng = NarrativeGraph(sqlite_db_path=tmp.name)
             assert str(ng._engine.url) == "sqlite:///" + tmp.name
 
-    @patch("narrativegraph.narrativegraph.QueryService")
+    @patch("narrativegraphs.narrativegraph.QueryService")
     def test_init_file_db_exists_with_data_stop_raises(self, mock_query_service):
         """Test initialization with existing database containing data raises error"""
         with tempfile.NamedTemporaryFile() as tmp:
@@ -40,7 +40,7 @@ class TestNarrativeGraphFileHandling:
             with pytest.raises(FileExistsError, match="Database contains data"):
                 NarrativeGraph(sqlite_db_path=tmp.name, on_existing_db="stop")
 
-    @patch("narrativegraph.narrativegraph.QueryService")
+    @patch("narrativegraphs.narrativegraph.QueryService")
     def test_init_file_db_exists_reuse(self, mock_query_service):
         """Test reuse behavior with existing database"""
         with tempfile.NamedTemporaryFile() as tmp:

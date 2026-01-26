@@ -1,6 +1,6 @@
 import unittest
 
-from narrativegraph.nlp.extraction.common import Triplet
+from narrativegraphs.nlp.extraction.common import Triplet
 
 
 class ExtractorTest(unittest.TestCase):

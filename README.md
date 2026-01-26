@@ -3,7 +3,7 @@
 ## Basic usage
 
 ```python
-from narrativegraph import NarrativeGraph
+from narrativegraphs import NarrativeGraph
 docs = ...  # list[str], provided by user
 model = NarrativeGraph().fit(docs)
 model.serve_visualizer()
