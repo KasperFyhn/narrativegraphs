@@ -41,6 +41,7 @@ export const GraphViewer: React.FC = () => {
       edges: graphData.edges.map((e) => ({
         ...e,
         width: Math.log10(e.totalFrequency || 10),
+        arrows: query.connectionType == 'cooccurrence' ? '' : undefined,
       })),
       nodes: graphData.nodes.map((n) => ({
         ...n,
