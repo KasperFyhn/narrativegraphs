@@ -83,9 +83,7 @@ class OrmAssociatedService(SubService, ABC):
 
     def _get_by_id_and_transform(self, id_: int, transform: Callable[[Any], Any]):
         with self._get_session_context() as sc:
-            entry = (
-                sc.query(self._orm).get(id_)  # noqa; id must be there
-            )  # noqa; the id ref works
+            entry = sc.query(self._orm).get(id_)
             if entry is None:
                 raise EntryNotFoundError(
                     f"No entry with id '{id_}' in table {self._orm.__tablename__}"
@@ -102,7 +100,7 @@ class OrmAssociatedService(SubService, ABC):
         with self._get_session_context() as sc:
             query = sc.query(self._orm)
             if ids is not None:
-                query = query.filter(self._orm.id.in_(ids))  # noqa; the id ref works
+                query = query.filter(self._orm.id.in_(ids))
                 # FIXME: what to do in case of missing entries?
             if limit:
                 query = query.limit(limit)

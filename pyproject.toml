@@ -85,6 +85,7 @@ python_functions = ["test_*"]
 [tool.ruff]
 line-length = 88
 target-version = "py310"
+extend-exclude = ["*.ipynb"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W"]
