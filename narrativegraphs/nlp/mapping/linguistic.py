@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Counter, Literal
+from typing import Callable, Counter, Literal
 
 import nltk
 from nltk import PorterStemmer, pos_tag, word_tokenize
@@ -53,47 +53,53 @@ class StemmingMapper(Mapper):
 class SubgramStemmingMapper(StemmingMapper):
     def __init__(
         self,
-        head_word_subtag: str,
+        head_word_type: Literal["noun", "verb"],
         ignore_determiners: bool = True,
         ranking: Literal["shortest", "most_frequent"] = "shortest",
     ):
-        self._head_word_subtag = head_word_subtag
+        self._head_word_subtag = "NN" if head_word_type == "noun" else "VB"
         super().__init__(ignore_determiners=ignore_determiners, ranking=ranking)
 
-    def create_mapping(self, labels: list[str]) -> dict[str, str]:
+    def _ranker(self, labels: list[str]) -> Callable[[str], tuple[int, int]]:
         counter = Counter(labels)
+        if self._ranking == "shortest":
+            return lambda x: (self._negative_length(x), counter.__getitem__(x))
+        elif self._ranking == "most_frequent":
+            return lambda x: (counter.__getitem__(x), self._negative_length(x))
+        else:
+            raise NotImplementedError("Unknown ranking")
+
+    def create_mapping(self, labels: list[str]) -> dict[str, str]:
+        labels_set = set(labels)
 
         norm_map = {
             label: " "
             + self._normalize(label)
             + " "  # surrounding spaces avoids matches like evil <-> devil
-            for label in counter.keys()
+            for label in labels_set
         }
-        cluster_map = {
-            label: []
-            for label in counter.keys()
-            if self._head_word_subtag in pos_tag([label])[0][1]
+        cluster_map = defaultdict(list)
+        ranker = self._ranker(labels)
+
+        main_label_candidates = {
+            label
+            for label in labels_set
+            if self._head_word_subtag in pos_tag(label.lower().split())[0][1]
         }
 
-        unclustered = []
-        for label in counter.keys():
+        for label in labels_set:
             norm_label = norm_map[label]
             matches = [
                 candidate
-                for candidate in cluster_map.keys()
+                for candidate in main_label_candidates
                 if norm_map[candidate] in norm_label
             ]
             if not matches:
-                unclustered.append(label)
                 continue
 
-            # best match is the shortest norm match; then the most frequent label
-            best_match = min(
+            best_match = max(
                 matches,
-                key=lambda match: (
-                    len(match.strip().split()),
-                    -counter[match],
-                ),
+                key=ranker,
             )
             if best_match != label:
                 cluster_map[best_match].append(label)
@@ -103,6 +109,7 @@ class SubgramStemmingMapper(StemmingMapper):
             for main_label, alt_labels in cluster_map.items()
             for alt_label in alt_labels + [main_label]
         }
-        for uc in unclustered:
-            result[uc] = uc
+        for label in labels_set:
+            if label not in result:
+                result[label] = label
         return result

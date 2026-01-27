@@ -10,12 +10,13 @@ class DependencyGraphExtractor(SpacyTripletExtractor):
     def __init__(
         self,
         model_name: str = None,
+        named_entities: bool | tuple[int, int | None] = (1, None),
+        noun_chunks: bool | tuple[int, int | None] = (2, None),
         remove_pronoun_entities: bool = True,
         direct_objects: bool = True,
         preposition_objects: bool = True,
         passive_sentences: bool = True,
         copula_attribute: bool = True,
-        xcomp_as_objects: bool = True,
         split_sentence_on_double_line_break: bool = True,
     ):
         super().__init__(
@@ -23,12 +24,14 @@ class DependencyGraphExtractor(SpacyTripletExtractor):
             split_sentence_on_double_line_break=split_sentence_on_double_line_break,
         )
 
+        self.ner = named_entities
+        self.noun_chunks = noun_chunks
+
         self.remove_pronoun_entities = remove_pronoun_entities
         self.direct_objects = direct_objects
         self.preposition_objects = preposition_objects
         self.passive_sentences = passive_sentences
         self.copula_attribute = copula_attribute
-        self.xcomp_as_objects = xcomp_as_objects
 
     def _find_subject(self, verb_token: Token, sent: Span) -> Optional[Span]:
         subject_span: Optional[Span] = None
@@ -38,7 +41,10 @@ class DependencyGraphExtractor(SpacyTripletExtractor):
 
                 # find its noun chunk
                 for chunk in sent.noun_chunks:
-                    if chunk.start <= subj_token.i < chunk.end:
+                    if (
+                        chunk.start <= subj_token.i < chunk.end
+                        and self._is_allowed_entity(chunk)
+                    ):
                         subject_span = chunk
                         break
         return subject_span
@@ -55,7 +61,9 @@ class DependencyGraphExtractor(SpacyTripletExtractor):
         for child in verb_token.children:
             if self.direct_objects and child.dep_ == "dobj":  # Direct Object
                 for chunk in sent.noun_chunks:
-                    if chunk.start <= child.i < chunk.end:
+                    if chunk.start <= child.i < chunk.end and self._is_allowed_entity(
+                        chunk
+                    ):
                         potential_objects.append(("dobj", chunk))
                         break
 
@@ -68,7 +76,10 @@ class DependencyGraphExtractor(SpacyTripletExtractor):
                 for grandchild in child.children:
                     if grandchild.dep_ == "pobj":
                         for chunk in sent.noun_chunks:
-                            if chunk.start <= grandchild.i < chunk.end:
+                            if (
+                                chunk.start <= grandchild.i < chunk.end
+                                and self._is_allowed_entity(chunk)
+                            ):
                                 potential_objects.append(("pobj", chunk))
                                 break
                         break
@@ -79,7 +90,10 @@ class DependencyGraphExtractor(SpacyTripletExtractor):
                 for grandchild in child.children:
                     if grandchild.dep_ == "pobj":
                         for chunk in sent.noun_chunks:
-                            if chunk.start <= grandchild.i < chunk.end:
+                            if (
+                                chunk.start <= grandchild.i < chunk.end
+                                and self._is_allowed_entity(chunk)
+                            ):
                                 potential_objects.append(("passive", chunk))
                                 break
                         break
@@ -91,7 +105,9 @@ class DependencyGraphExtractor(SpacyTripletExtractor):
                 # or adjective
                 attr_comp_span: Optional[Span] = None
                 for chunk in sent.noun_chunks:
-                    if chunk.start <= child.i < chunk.end:
+                    if chunk.start <= child.i < chunk.end and self._is_allowed_entity(
+                        chunk
+                    ):
                         attr_comp_span = chunk
                         break
                 if not attr_comp_span and child.pos_ == "ADJ":
@@ -99,7 +115,7 @@ class DependencyGraphExtractor(SpacyTripletExtractor):
                         child.i : child.i + 1
                     ]  # Create a Span from the adjective token
 
-                if attr_comp_span:
+                if attr_comp_span and self._is_allowed_entity(attr_comp_span):
                     potential_objects.append(("attr", attr_comp_span))
 
         if not potential_objects:
@@ -119,6 +135,25 @@ class DependencyGraphExtractor(SpacyTripletExtractor):
                 verb_token = token
                 verbs.append(verb_token)
         return verbs
+
+    @staticmethod
+    def _fits_in_range_tuple(span: Span, range_: tuple[int, int | None]):
+        lower_bound, upper_bound = range_
+        return len(span) >= lower_bound and (
+            upper_bound is None or len(span) < upper_bound
+        )
+
+    def _is_allowed_entity(self, span: Span) -> bool:
+        if all(t.ent_type_ for t in span):  # NER land
+            if isinstance(self.ner, tuple):
+                return self._fits_in_range_tuple(span, self.ner)
+            else:
+                return self.ner
+        else:  # NP land
+            if isinstance(self.noun_chunks, tuple):
+                return self._fits_in_range_tuple(span, self.noun_chunks)
+            else:
+                return self.noun_chunks
 
     def extract_triplets_from_sent(self, sent: Span) -> list[Triplet]:
         verbs = self._find_verbs(sent)

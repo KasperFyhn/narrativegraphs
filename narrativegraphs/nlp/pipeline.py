@@ -4,14 +4,13 @@ from datetime import date, datetime
 from sqlalchemy import Engine
 from tqdm import tqdm
 
-from narrativegraphs.nlp.extraction import TripletExtractor
+from narrativegraphs.nlp.extraction import DependencyGraphExtractor, TripletExtractor
 from narrativegraphs.nlp.extraction.cooccurrences import (
     ChunkCooccurrenceExtractor,
     CooccurrenceExtractor,
 )
-from narrativegraphs.nlp.extraction.spacy import NaiveSpacyTripletExtractor
 from narrativegraphs.nlp.mapping import Mapper
-from narrativegraphs.nlp.mapping.linguistic import StemmingMapper
+from narrativegraphs.nlp.mapping.linguistic import SubgramStemmingMapper
 from narrativegraphs.service import PopulationService
 from narrativegraphs.utils.transform import normalize_categories
 
@@ -31,15 +30,12 @@ class Pipeline:
         n_cpu: int = 1,
     ):
         # Analysis components
-        self._triplet_extractor = triplet_extractor or NaiveSpacyTripletExtractor(
-            named_entities=(2, None),
-            noun_chunks=(2, None),
-        )
+        self._triplet_extractor = triplet_extractor or DependencyGraphExtractor()
         self._cooccurrence_extractor = (
             cooccurrence_extractor or ChunkCooccurrenceExtractor()
         )
-        self._entity_mapper = entity_mapper or StemmingMapper()
-        self._predicate_mapper = predicate_mapper or StemmingMapper()
+        self._entity_mapper = entity_mapper or SubgramStemmingMapper("noun")
+        self._predicate_mapper = predicate_mapper or SubgramStemmingMapper("verb")
 
         self.n_cpu = n_cpu
 
