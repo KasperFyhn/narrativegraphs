@@ -55,10 +55,12 @@ class SubgramStemmingMapper(StemmingMapper):
         self,
         head_word_type: Literal["noun", "verb"],
         ignore_determiners: bool = True,
+        min_main_label_frequency: int = 5,
         ranking: Literal["shortest", "most_frequent"] = "shortest",
     ):
-        self._head_word_subtag = "NN" if head_word_type == "noun" else "VB"
         super().__init__(ignore_determiners=ignore_determiners, ranking=ranking)
+        self._head_word_subtag = "NN" if head_word_type == "noun" else "VB"
+        self._min_main_label_frequency = min_main_label_frequency
 
     def _ranker(self, labels: list[str]) -> Callable[[str], tuple[int, int]]:
         counter = Counter(labels)
@@ -69,7 +71,7 @@ class SubgramStemmingMapper(StemmingMapper):
         else:
             raise NotImplementedError("Unknown ranking")
 
-    def create_mapping(self, labels: list[str]) -> dict[str, str]:
+    def _subgram_mapping(self, labels: list[str]) -> dict[str, str]:
         labels_set = set(labels)
 
         norm_map = {
@@ -81,10 +83,14 @@ class SubgramStemmingMapper(StemmingMapper):
         cluster_map = defaultdict(list)
         ranker = self._ranker(labels)
 
+        counter = Counter(labels)
         main_label_candidates = {
             label
             for label in labels_set
             if self._head_word_subtag in pos_tag(label.lower().split())[0][1]
+            # TODO: Minimum quantitative support for being a main label from a context
+            #  object of sorts. This is a temporary hack.
+            and counter[label] >= self._min_main_label_frequency
         }
 
         for label in labels_set:
@@ -104,12 +110,22 @@ class SubgramStemmingMapper(StemmingMapper):
             if best_match != label:
                 cluster_map[best_match].append(label)
 
-        result = {
+        return {
             alt_label: main_label
             for main_label, alt_labels in cluster_map.items()
             for alt_label in alt_labels + [main_label]
         }
-        for label in labels_set:
-            if label not in result:
-                result[label] = label
+
+    def create_mapping(self, labels: list[str]) -> dict[str, str]:
+        stem_mapping = super().create_mapping(labels)
+        subgram_mapping = self._subgram_mapping(
+            [stem_mapping[label] for label in labels]
+        )
+        result = {}
+        for label in labels:
+            stemmed = stem_mapping[label]
+            if stemmed in subgram_mapping:
+                result[label] = subgram_mapping[stemmed]
+            else:
+                result[label] = stemmed
         return result
