@@ -34,40 +34,41 @@ class Triplet(BaseModel):
 class Tuplet(BaseModel):
     entity_one: SpanAnnotation
     entity_two: SpanAnnotation
-    entity_one_extra_mentions: list[SpanAnnotation] = []
-    entity_two_extra_mentions: list[SpanAnnotation] = []
-
-    def combine(self, other: "Tuplet") -> "Tuplet":
-        if (
-            self.entity_one.text == other.entity_one.text
-            and self.entity_two.text == other.entity_two.text
-        ):
-            self.entity_one_extra_mentions.append(other.entity_one)
-            self.entity_two_extra_mentions.append(other.entity_two)
-        elif (
-            self.entity_one.text == other.entity_two.text
-            and self.entity_two.text == other.entity_one.text
-        ):
-            self.entity_two_extra_mentions.append(other.entity_one)
-            self.entity_one_extra_mentions.append(other.entity_two)
-        else:
-            raise ValueError("Tuplet entities must have same text")
-        return self
-
-    @property
-    def frequency(self) -> int:
-        entity_one_mentions = 1 + len(self.entity_one_extra_mentions)
-        entity_two_mentions = 1 + len(self.entity_two_extra_mentions)
-        return entity_one_mentions * entity_two_mentions
 
 
 class TripletExtractor(ABC):
+    """
+    Abstract base class for triplet extraction algorithms.
+
+    Triplets are instantiated as Triplet objects that consist of SpanAnnotation objects.
+
+    Thus, to create a Triplet, you create the
+    """
+
     @abstractmethod
     def extract(self, text: str) -> list[Triplet]:
+        """Single document extraction
+        Args:
+            text: a raw text string
+
+        Returns:
+            extracted triplets
+        """
         pass
 
     def batch_extract(
         self, texts: Iterable[str], n_cpu: int = 1, **kwargs
     ) -> Generator[list[Triplet], None, None]:
+        """Multiple-document extraction
+        Args:
+            texts: an iterable of raw text strings; may be a generator, so be mindful
+                of consuming items
+            n_cpu: number of CPUs to use
+            **kwargs: other keyword arguments for your own class
+
+        Returns:
+            should yield triplets per text in the same order as texts iterable
+
+        """
         for text in texts:
             yield self.extract(text)

@@ -59,4 +59,5 @@ nav:
   - API Reference:
       - Overview: api/index.md
       - Graph: api/graph.md
+      - Triplet Extraction: api/triplet_extraction.md
   - Contributing: contributing.md
