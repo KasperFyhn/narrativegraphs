@@ -66,6 +66,7 @@ docs = [
 ]
 
 [project.urls]
+Documentation = "https://kasperfyhn.github.io/narrativegraphs"
 Repository = "https://github.com/KasperFyhn/narrativegraphs"
 "Bug Tracker" = "https://github.com/your-username/narrativegraphs/issues"
 
