@@ -6,14 +6,6 @@ import { HighlightedText } from './HighlightedText';
 import './DocInfo.css';
 import { Doc } from '../../../types/doc';
 
-function formatDate(date: Date): string {
-  return date.toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
-}
-
 interface DocInfoProps {
   document: Doc;
   highlightContext?: HighlightContext;
@@ -35,20 +27,20 @@ export const DocInfo: React.FC<DocInfoProps> = ({
         <span className="doc-info__id">{document.id}</span>
         {document.timestamp && (
           <span className="doc-info__date">
-            {formatDate(document.timestamp)}
+            {document.timestamp.toString()}
           </span>
         )}
       </div>
 
-      {/*{Object.entries(document.categories).length > 0 && (*/}
-      {/*  <div className="doc-info__categories">*/}
-      {/*    {Object.entries(document.categories).map(([name, values]) => (*/}
-      {/*      <span key={name} className="doc-info__category">*/}
-      {/*        {name}: {values.join(', ')}*/}
-      {/*      </span>*/}
-      {/*    ))}*/}
-      {/*  </div>*/}
-      {/*)}*/}
+      {Object.entries(document.categories).length > 0 && (
+        <div className="doc-info__categories">
+          {Object.entries(document.categories).map(([name, values]) => (
+            <span key={name} className="doc-info__category">
+              {name}: {values.join(', ')}
+            </span>
+          ))}
+        </div>
+      )}
 
       <div className="doc-info__text">
         {highlights.length > 0 ? (
