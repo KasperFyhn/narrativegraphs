@@ -8,7 +8,9 @@ from tests.extraction.common import ExtractorTest
 class TestDependencyGraphExtractor(ExtractorTest):
     @classmethod
     def setUpClass(cls):
-        cls.extractor = DependencyGraphExtractor()
+        cls.extractor = DependencyGraphExtractor(
+            noun_chunks=True  # allow all noun chunks
+        )
 
     def test_active_voice(self):
         text = "John hit the ball."
