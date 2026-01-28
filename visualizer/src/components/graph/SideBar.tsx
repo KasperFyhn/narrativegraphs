@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import { GraphOptionsPanel } from './controls/GraphOptionsPanel';
 import { Filter, LucideIcon, Puzzle, Search, Settings } from 'lucide-react';
 import { GraphFilterPanel } from './controls/GraphFilterPanel';
@@ -6,7 +6,6 @@ import { CommunitiesPanel } from './controls/CommunitiesPanel';
 import { Panel } from '../common/Panel';
 import './SideBar.css';
 import { FocusPanel } from './controls/FocusPanel';
-import { useClickOutside } from '../../hooks/useClickOutside';
 
 type ControlType = 'search' | 'filters' | 'communities' | 'settings';
 
@@ -70,29 +69,15 @@ export const SideBar: React.FC = () => {
   const [activePanel, setActivePanel] = React.useState<ControlType | null>(
     null,
   );
-  const panelRefs = useRef<Record<ControlType, HTMLDivElement | null>>({
-    search: null,
-    filters: null,
-    communities: null,
-    settings: null,
-  });
 
   const togglePanel = (panel: ControlType): void => {
     setActivePanel((prev) => (prev === panel ? null : panel));
   };
 
-  const closePanel = (): void => setActivePanel(null);
-
-  // Call the hook for whichever panel is active
-  useClickOutside(
-    { current: activePanel ? panelRefs.current[activePanel] : null },
-    closePanel,
-  );
-
   return (
     <div className="side-bar">
       {panels.map(({ type, icon: Icon, title, component: Component }) => (
-        <div key={type} ref={(el) => (panelRefs.current[type] = el)}>
+        <div key={type}>
           <ToggleButton
             onToggle={() => togglePanel(type)}
             toggled={activePanel === type}

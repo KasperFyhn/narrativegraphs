@@ -1,3 +1,4 @@
+import logging
 from abc import abstractmethod
 from typing import Generator
 
@@ -7,6 +8,8 @@ from spacy.tokens import Doc, Span
 
 from narrativegraphs.nlp.extraction.common import Triplet, TripletExtractor
 from narrativegraphs.nlp.utils.spacysegmentation import custom_sentencizer  # noqa
+
+_logger = logging.getLogger("narrativegraphs.nlp.extraction")
 
 
 def _calculate_batch_size(texts: list[str], n_cpu: int = -1) -> int:
@@ -102,5 +105,6 @@ class SpacyTripletExtractor(TripletExtractor):
     ) -> Generator[list[Triplet], None, None]:
         if batch_size is None:
             batch_size = _calculate_batch_size(texts, n_cpu)
+        _logger.info("Using multiple CPU cores.Progress bars may stand still at first.")
         for doc in self.nlp.pipe(texts, n_process=n_cpu, batch_size=batch_size):
             yield self.extract_triplets_from_doc(doc)
