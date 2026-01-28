@@ -538,13 +538,7 @@ class Cache:
     def get_entity_id(self, label: InstrumentedAttribute[str] | str) -> int:
         """Fetch an entity by label, or create it if it doesn't exist."""
         mapped_entity = self._entity_mappings[label]
-
         entity = self._entities.get(mapped_entity, None)
-        if entity is None:
-            entity = EntityOrm(label=mapped_entity)
-            self._session.add(entity)
-            self._session.flush()  # Get the ID immediately
-            self._entities[mapped_entity] = entity
         return entity.id
 
     def get_predicate_id(
@@ -553,15 +547,7 @@ class Cache:
     ):
         """Fetch a predicate by label, or create it if it doesn't exist."""
         mapped_predicate = self._predicate_mappings[label]
-
         predicate = self._predicates.get(mapped_predicate, None)
-        if predicate is None:
-            predicate = PredicateOrm(
-                label=mapped_predicate,
-            )
-            self._session.add(predicate)
-            self._session.flush()  # Get the ID immediately
-            self._predicates[mapped_predicate] = predicate
         return predicate.id
 
     def get_relation_id(self, subject_id: int, predicate_id: int, object_id: int):
@@ -570,17 +556,7 @@ class Cache:
             predicate_id,
             object_id,
         )
-
         relation = self._relations.get(relation_key, None)
-        if relation is None:
-            relation = RelationOrm(
-                subject_id=subject_id,
-                predicate_id=predicate_id,
-                object_id=object_id,
-            )
-            self._session.add(relation)
-            self._session.flush()  # Get the ID immediately
-            self._relations[relation_key] = relation
         return relation.id
 
     def get_cooccurrence_id(
@@ -592,12 +568,4 @@ class Cache:
             entity_id_2, entity_id_1 = entity_id_1, entity_id_2
         key = entity_id_1, entity_id_2
         cooccurrence = self._cooccurrences.get(key, None)
-        if cooccurrence is None:
-            cooccurrence = CooccurrenceOrm(
-                entity_one_id=entity_id_1,
-                entity_two_id=entity_id_2,
-            )
-            self._session.add(cooccurrence)
-            self._session.flush()  # Get the ID immediately
-            self._cooccurrences[key] = cooccurrence
         return cooccurrence.id

@@ -196,10 +196,10 @@ class GraphService(SubService):
                 temp_ids = self._get_node_ids_temp_table(entity_ids)
 
                 if expand:
-                    source_query = base_query(db).join(
+                    source_query = base_query.join(
                         temp_ids, source_col == temp_ids.c.id
                     )
-                    target_query = base_query(db).join(
+                    target_query = base_query.join(
                         temp_ids, target_col == temp_ids.c.id
                     )
                     return source_query.union(target_query).all()
@@ -207,8 +207,7 @@ class GraphService(SubService):
                     temp_source = temp_ids.alias("temp_source")
                     temp_target = temp_ids.alias("temp_target")
                     return (
-                        base_query(db)
-                        .join(temp_source, source_col == temp_source.c.id)
+                        base_query.join(temp_source, source_col == temp_source.c.id)
                         .join(temp_target, target_col == temp_target.c.id)
                         .all()
                     )
@@ -308,14 +307,14 @@ class GraphService(SubService):
         self,
         entity_ids: set[int],
         connection_type: ConnectionType,
-        graph_filter: GraphFilter,
+        graph_filter: GraphFilter = GraphFilter(),
     ) -> Graph:
         return self._get_subgraph(entity_ids, connection_type, graph_filter)
 
     def get_graph(
         self,
         connection_type: ConnectionType,
-        graph_filter: GraphFilter,
+        graph_filter: GraphFilter = GraphFilter(),
     ):
         entity_conditions = create_entity_conditions(graph_filter)
 

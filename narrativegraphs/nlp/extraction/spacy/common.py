@@ -42,9 +42,25 @@ def _calculate_batch_size(texts: list[str], n_cpu: int = -1) -> int:
 
 
 class SpacyTripletExtractor(TripletExtractor):
+    """Base class for implementing triplet extraction based on spaCy docs.
+
+    Override `extract_triplets_from_sent` for extracting triplets sentence by sentence.
+
+    Override `extract_triplets_from_doc` for extracting with the full Doc context.
+
+    The `SpanAnnotation` objects of `Triplet` objects can conveniently be created from
+    a spaCy `Span` object with `SpanAnnotation.from_span()`.
+    """
+
     def __init__(
         self, model_name: str = None, split_sentence_on_double_line_break: bool = True
     ):
+        """
+        Args:
+            model_name: name of the spaCy model to use
+            split_sentence_on_double_line_break: adds extra sentence boundaries on
+                double line breaks ("\n\n")
+        """
         if model_name is None:
             model_name = "en_core_web_sm"
         self.nlp = spacy.load(model_name)
@@ -53,9 +69,23 @@ class SpacyTripletExtractor(TripletExtractor):
 
     @abstractmethod
     def extract_triplets_from_sent(self, sent: Span) -> list[Triplet]:
+        """Extract triplets from a SpaCy sentence.
+        Args:
+            sent: A SpaCy Span object representing the whole sentence
+
+        Returns:
+            extracted triplets
+        """
         pass
 
     def extract_triplets_from_doc(self, doc: Doc) -> list[Triplet]:
+        """Extract triplets from a Doc
+        Args:
+            doc: A SpaCy Doc object
+
+        Returns:
+            extracted triplets
+        """
         triplets = []
         for sent in doc.sents:
             sent_triplets = self.extract_triplets_from_sent(sent)

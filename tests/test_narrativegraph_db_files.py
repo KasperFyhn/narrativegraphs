@@ -54,7 +54,7 @@ class TestNarrativeGraphFileHandling:
 
     def test_load_file_exists(self):
         """Test loading existing database file"""
-        with tempfile.NamedTemporaryFile() as tmp:
+        with tempfile.NamedTemporaryFile(suffix=".db") as tmp:
             # Create database
             NarrativeGraph(sqlite_db_path=tmp.name)
 
@@ -71,7 +71,7 @@ class TestNarrativeGraphFileHandling:
         """Test saving to existing file without overwrite raises error"""
         ng = NarrativeGraph()  # Memory database
 
-        with tempfile.NamedTemporaryFile() as tmp:
+        with tempfile.NamedTemporaryFile(suffix=".db") as tmp:
             with pytest.raises(FileExistsError, match="File exists"):
                 ng.save_to_file(tmp.name, overwrite=False)
 

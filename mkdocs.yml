@@ -1,0 +1,63 @@
+site_name: narrativegraphs
+site_description: A Python package for building and analyzing narrative graphs from text corpora
+site_url: https://kasperfyhn.github.io/narrativegraphs/
+repo_url: https://github.com/kasperfyhn/narrativegraphs
+repo_name: narrativegraphs
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - content.code.copy
+    - content.code.annotate
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: google
+            show_source: true
+            show_root_heading: true
+            show_root_full_path: false
+            members_order: source
+  - mkdocs-jupyter:
+      include_source: true
+      execute: false
+      # execute_ignore:
+      #   - "notebooks/slow_example.ipynb"  # Ignore specific notebooks
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: getting-started/installation.md
+      - Quick Start: getting-started/quickstart.md
+  - Tutorials:
+      - Building Your First Graph: notebooks/01_creating_and_inspecting_a_graph.ipynb
+  - API Reference:
+      - Overview: api/index.md
+      - Graph: api/graph.md
+      - Triplet Extraction: api/triplet_extraction.md
+  - Contributing: contributing.md
