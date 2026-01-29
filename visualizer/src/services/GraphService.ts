@@ -1,12 +1,20 @@
 import { Community, GraphData } from '../types/graph';
-import { DataBounds, GraphFilter, GraphQuery } from '../types/graphQuery';
+import {
+  CommunitiesRequest,
+  DataBounds,
+  GraphFilter,
+  GraphQuery,
+} from '../types/graphQuery';
 
 export interface GraphService {
   getDataBounds(): Promise<DataBounds>;
 
   getGraph(query: GraphQuery, filter: GraphFilter): Promise<GraphData>;
 
-  findCommunities(filter?: GraphFilter): Promise<Community[]>;
+  findCommunities(
+    commRequest: CommunitiesRequest,
+    filter?: GraphFilter,
+  ): Promise<Community[]>;
 }
 
 export class GraphServiceImpl implements GraphService {
@@ -48,11 +56,17 @@ export class GraphServiceImpl implements GraphService {
     return await response.json();
   }
 
-  async findCommunities(filter: GraphFilter | undefined): Promise<Community[]> {
+  async findCommunities(
+    commRequest: CommunitiesRequest,
+    filter?: GraphFilter | undefined,
+  ): Promise<Community[]> {
     const response = await fetch(`${this.baseUrl}/graph/communities`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(filter),
+      body: JSON.stringify({
+        ...commRequest,
+        graphFilter: filter,
+      }),
     });
 
     if (!response.ok) {

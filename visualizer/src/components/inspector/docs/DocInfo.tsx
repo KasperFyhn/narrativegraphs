@@ -32,6 +32,8 @@ export const DocInfo: React.FC<DocInfoProps> = ({
         )}
       </div>
 
+      {document.strId && <p className="doc-info__id">{document.strId}</p>}
+
       {Object.entries(document.categories).length > 0 && (
         <div className="doc-info__categories">
           {Object.entries(document.categories).map(([name, values]) => (

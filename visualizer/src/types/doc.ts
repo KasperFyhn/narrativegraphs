@@ -17,6 +17,7 @@ export interface Tuplet {
 
 export interface Doc {
   id: string | number;
+  strId: string;
   text: string;
   timestamp?: Date;
   triplets: Triplet[];

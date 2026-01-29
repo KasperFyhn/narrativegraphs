@@ -172,7 +172,9 @@ cython_debug/
 .idea
 
 # input and output data
-input
+input/
 output/
 *.sqlite
 *.db
+
+ignored/

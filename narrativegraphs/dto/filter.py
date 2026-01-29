@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Literal, Optional
+from typing import Optional
 
 from fastapi_camelcase import CamelModel
 
@@ -29,9 +29,3 @@ class GraphFilter(CamelModel):
     latest_date: Optional[date] = None
     blacklisted_entity_ids: Optional[set[int]] = None
     categories: Optional[dict[str, list[str]]] = None
-
-
-class GraphQuery(CamelModel):
-    connection_type: Literal["relation", "cooccurrence"] = "relation"
-    focus_entities: Optional[set[int]] = None
-    filter: Optional[GraphFilter] = None

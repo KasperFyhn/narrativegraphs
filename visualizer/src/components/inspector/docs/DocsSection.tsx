@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ClipLoader } from 'react-spinners';
 import { Doc } from '../../../types/doc';
 import { DocInfo } from './DocInfo';
@@ -17,7 +17,7 @@ export const DocsSection: React.FC<DocsSectionProps> = ({
   loadDocs,
   highlightContext,
 }) => {
-  const [loadingState, setLoadingState] = useState<LoadingState>('idle');
+  const [loadingState, setLoadingState] = useState<LoadingState>('loading');
   const [docs, setDocs] = useState<Doc[]>([]);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
@@ -42,6 +42,12 @@ export const DocsSection: React.FC<DocsSectionProps> = ({
   const handleLoadMore = (): void => {
     setVisibleCount((prev) => prev + PAGE_SIZE);
   };
+
+  useEffect(() => {
+    handleLoad();
+    // Should just run in the beginning
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (loadingState === 'idle') {
     return <button onClick={handleLoad}>Load docs</button>;

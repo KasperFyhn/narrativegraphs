@@ -4,8 +4,9 @@ import {
   isSmoothEnabled,
   useGraphOptionsContext,
 } from '../../../contexts/GraphOptionsContext';
-import { NamedInput } from '../../common/input/NamedInput';
+import { NamedInput } from '../../common/userinput/NamedInput';
 import { ConnectionType, useGraphQuery } from '../../../hooks/useGraphQuery';
+import { RadioGroup } from '../../common/userinput/RadioGroup';
 
 export const GraphOptionsPanel: React.FC = () => {
   const { options, setOptions } = useGraphOptionsContext();
@@ -14,19 +15,12 @@ export const GraphOptionsPanel: React.FC = () => {
     <div className={'flex-container flex-container--vertical'}>
       <h3>Graph creation</h3>
       <NamedInput name={'Connection Type'}>
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          {['relation', 'cooccurrence'].map((ct) => (
-            <label key={ct}>
-              <input
-                type="radio"
-                name="connectionType"
-                checked={query.connectionType === ct}
-                onChange={() => setConnectionType(ct as ConnectionType)}
-              />
-              {ct.slice(0, 1).toUpperCase() + ct.slice(1)}
-            </label>
-          ))}
-        </div>
+        <RadioGroup
+          name={'connectionType'}
+          options={['relation', 'cooccurrence']}
+          value={query.connectionType}
+          onChange={(choice) => setConnectionType(choice as ConnectionType)}
+        />
       </NamedInput>
 
       <h3>Visuals</h3>

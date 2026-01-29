@@ -1,4 +1,4 @@
-import LogarithmicRangeSlider from '../../../common/input/LogarithmicRangeSlider';
+import LogarithmicRangeSlider from '../../../common/userinput/LogarithmicRangeSlider';
 import React from 'react';
 import { useGraphQuery } from '../../../../hooks/useGraphQuery';
 

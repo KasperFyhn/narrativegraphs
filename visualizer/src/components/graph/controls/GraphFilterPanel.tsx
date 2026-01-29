@@ -2,15 +2,15 @@ import React from 'react';
 import '../graph.css';
 import { ClipLoader } from 'react-spinners';
 import { useGraphQuery } from '../../../hooks/useGraphQuery';
-import { SubmittedNumberInput } from '../../common/input/SubmittedNumberInput';
+import { SubmittedNumberInput } from '../../common/userinput/SubmittedNumberInput';
 import {
   EdgeFrequencySlider,
   NodeFrequencySlider,
 } from './subcomponents/FrequencySlider';
-import { SubmittedDataRangeInput } from '../../common/input/SubmittedDateRangeInput';
+import { SubmittedDataRangeInput } from '../../common/userinput/SubmittedDateRangeInput';
 import { EntityBlacklistControl } from './subcomponents/EntityListControl';
 import { CategorySelector } from './subcomponents/CategorySelector';
-import { NamedInput } from '../../common/input/NamedInput';
+import { NamedInput } from '../../common/userinput/NamedInput';
 
 export const GraphFilterPanel: React.FC = () => {
   const {

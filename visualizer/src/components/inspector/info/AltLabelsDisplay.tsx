@@ -11,7 +11,11 @@ export const AltLabelsDisplay: React.FC<AltLabelsDisplayProps> = ({
 
   return (
     <p>
-      Alternative Labels: <i>{altLabels.join(', ')}</i>
+      Alternative Labels:{' '}
+      <i>
+        {altLabels.slice(0, 10).join(', ')}
+        {altLabels.length > 10 ? '...' : ''}
+      </i>
     </p>
   );
 };

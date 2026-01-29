@@ -386,7 +386,7 @@ class GraphService(SubService):
             args.update(community_detection_method_args)
             community_detection_method = partial(community.louvain_communities, **args)
         elif community_detection_method == "k_clique":
-            args = dict(k=4)
+            args = dict(k=3)
             args.update(community_detection_method_args)
             community_detection_method = partial(community.k_clique_communities, **args)
         elif community_detection_method == "connected_components":
