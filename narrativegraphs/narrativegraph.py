@@ -5,6 +5,7 @@ from typing import Literal
 
 import networkx as nx
 import pandas as pd
+import spacy
 from sqlalchemy import text
 
 from narrativegraphs.db.engine import (
@@ -83,39 +84,6 @@ class NarrativeGraph(QueryService):
         Fit a narrative graph from documents. The docs can be accompanied by lists with
         the same length of IDs, timestamps and categories.
 
-        Categories can be given in many ways.
-
-        1. Single list with single label per category.
-
-        >>> single_level_single_label = ["Politics", "Sports", "Food"]
-
-        2. Single list with multiple label per category.
-
-        >>> single_level_multi_label = [
-        >>>    ["Politics", "Celebrities"],
-        >>>    ["Sports", "Celebrities"],
-        >>>    ["Sports", "Food"]
-        >>> ]
-
-        3. A dict with category names as keys and labels values (given as shown above).
-
-        >>> multi_level_multi_label = {
-        >>>     "section": [
-        >>>         ["Politics", "Celebrities"],
-        >>>         ["Sports", "Celebrities"],
-        >>>         ["Sports", "Food"]
-        >>>     ],
-        >>>     "sentiment": ["positive", "negative", "positive"]
-        >>> }
-
-        4. A list of dicts, one per doc, with category names as keys and labels values.
-
-        >>> multi_level_multi_label = [
-        >>>     {"section": ["Politics", "Celebrities"], "sentiment": "positive"},
-        >>>     {"section": ["Sports", "Celebrities"], "sentiment": "negative"},
-        >>>     {"section": ["Sports", "Food"], "sentiment": "positive"},
-        >>> ]
-
         Args:
             docs: Required argument, a list of documents as strings.
             doc_ids: Optional list of document ids. Same length as docs.
@@ -138,6 +106,7 @@ class NarrativeGraph(QueryService):
 
     @property
     def entities_(self) -> pd.DataFrame:
+        spacy.blank("en")
         return self.entities.as_df()
 
     @property
