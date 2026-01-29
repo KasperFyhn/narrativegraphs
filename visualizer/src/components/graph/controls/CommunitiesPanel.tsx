@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useGraphQuery } from '../../../hooks/useGraphQuery';
 import { useServiceContext } from '../../../contexts/ServiceContext';
 import { Community } from '../../../types/graph';
@@ -19,7 +19,7 @@ export const CommunitiesPanel: React.FC = () => {
 
   const [communities, setCommunities] = useState<Community[] | null>([]);
 
-  const [showIsolated, setShowIsolated] = useState(false);
+  const [showIsolated, setShowIsolated] = useState(true);
 
   const [commRequest, setCommRequest] = useState<CommunitiesRequest>({
     weightMeasure: 'pmi',
@@ -27,6 +27,10 @@ export const CommunitiesPanel: React.FC = () => {
     communityDetectionMethod: 'louvain',
     communityDetectionMethodArgs: {},
   });
+
+  useEffect(() => {
+    setCommunities([]);
+  }, [commRequest]);
 
   return (
     <div>
@@ -58,7 +62,7 @@ export const CommunitiesPanel: React.FC = () => {
               })
             }
           />
-          <div>{commRequest.minWeight.toPrecision(3)} </div>
+          <div>{commRequest.minWeight.toPrecision(2)} </div>
         </NamedInput>
         <NamedInput name={'Algorithm'}>
           <RadioGroup
@@ -105,7 +109,11 @@ export const CommunitiesPanel: React.FC = () => {
         {communities !== null &&
           communities
             .filter((c) => c.conductance > 0 || showIsolated)
-            .sort((c1, c2) => c2.score - c1.score)
+            .sort((c1, c2) =>
+              commRequest.communityDetectionMethod === 'louvain'
+                ? c2.members.length - c1.members.length
+                : c2.score - c1.score,
+            )
             .map((c, i) => (
               <div
                 key={i}
