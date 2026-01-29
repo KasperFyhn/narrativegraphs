@@ -4,6 +4,7 @@ import { useServiceContext } from '../../../contexts/ServiceContext';
 import { StatsDisplay } from './StatsDisplay';
 import { DocsSection } from '../docs/DocsSection';
 import { CooccurrenceDetails } from '../../../types/graph';
+import { CategoriesDisplay } from './CategoriesDisplay';
 
 interface CooccurrenceInfoProps {
   id: string | number;
@@ -34,7 +35,11 @@ export const CooccurrenceInfo: React.FC<CooccurrenceInfoProps> = ({ id }) => {
 
   return (
     <>
-      <StatsDisplay stats={details.stats} />
+      <StatsDisplay
+        stats={details.stats}
+        extra={[{ name: 'PMI', value: details.stats.pmi.toPrecision(3) }]}
+      />
+      <CategoriesDisplay categories={details.categories} />
       <DocsSection
         loadDocs={() => cooccurrenceService.getDocs(id)}
         highlightContext={{

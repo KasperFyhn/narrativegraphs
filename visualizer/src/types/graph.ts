@@ -50,13 +50,23 @@ export interface Details extends Identifiable {
   categories: { [key: string]: string[] };
 }
 
+export interface CooccurrenceStats extends TextStats {
+  pmi: number;
+}
+
 export interface CooccurrenceDetails extends Details {
   entityOneId: number | string;
   entityTwoId: number | string;
+  stats: CooccurrenceStats;
+}
+
+export interface RelationStats extends TextStats {
+  significance: number;
 }
 
 export interface RelationDetails extends Details {
   subjectId: number | string;
   predicateId: number | string;
   objectId: number | string;
+  stats: RelationStats;
 }

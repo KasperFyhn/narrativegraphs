@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Column, ForeignKey, Integer, func, select
+from sqlalchemy import Column, Float, ForeignKey, Integer, func, select
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, relationship
 
@@ -34,6 +34,8 @@ class RelationOrm(
         Integer, ForeignKey("predicates.id"), nullable=False, index=True
     )
     object_id = Column(Integer, ForeignKey("entities.id"), nullable=False, index=True)
+
+    significance = Column(Float, default=-1, nullable=False)
 
     @property
     def label(self) -> str:
