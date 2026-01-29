@@ -246,7 +246,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../getting-started/installation/" class="md-tabs__link">
+        <a href="../../getting-started/00_installation/" class="md-tabs__link">
           
   
   
@@ -266,7 +266,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../notebooks/01_creating_and_inspecting_a_graph/" class="md-tabs__link">
+        <a href="../../notebooks/01_demo/" class="md-tabs__link">
           
   
   
@@ -452,7 +452,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../getting-started/installation/" class="md-nav__link">
+      <a href="../../getting-started/00_installation/" class="md-nav__link">
         
   
   
@@ -480,14 +480,70 @@
   
   
     <li class="md-nav__item">
-      <a href="../../getting-started/quickstart/" class="md-nav__link">
+      <a href="../../getting-started/01_create-and-inspect/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Quick Start
+    Create and Inspect
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/02_save-and-load/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Save and Load
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/03_adding-metadata/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adding Metadata
   
 
     
@@ -569,14 +625,42 @@
   
   
     <li class="md-nav__item">
-      <a href="../../notebooks/01_creating_and_inspecting_a_graph/" class="md-nav__link">
+      <a href="../../notebooks/01_demo/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Creating and inspecting a narrative graph
+    Demo: Creating and inspecting a narrative graph
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../notebooks/02_categories/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Categories metadata
   
 
     
@@ -1377,10 +1461,7 @@ a spaCy <code>Span</code> object with <code>SpanAnnotation.from_span()</code>.</
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>narrativegraphs/nlp/extraction/spacy/common.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-44"> 44</a></span>
-<span class="normal"><a href="#__codelineno-0-45"> 45</a></span>
-<span class="normal"><a href="#__codelineno-0-46"> 46</a></span>
-<span class="normal"><a href="#__codelineno-0-47"> 47</a></span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-47"> 47</a></span>
 <span class="normal"><a href="#__codelineno-0-48"> 48</a></span>
 <span class="normal"><a href="#__codelineno-0-49"> 49</a></span>
 <span class="normal"><a href="#__codelineno-0-50"> 50</a></span>
@@ -1439,69 +1520,74 @@ a spaCy <code>Span</code> object with <code>SpanAnnotation.from_span()</code>.</
 <span class="normal"><a href="#__codelineno-0-103">103</a></span>
 <span class="normal"><a href="#__codelineno-0-104">104</a></span>
 <span class="normal"><a href="#__codelineno-0-105">105</a></span>
-<span class="normal"><a href="#__codelineno-0-106">106</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-44" name="__codelineno-0-44"></a><span class="k">class</span><span class="w"> </span><span class="nc">SpacyTripletExtractor</span><span class="p">(</span><span class="n">TripletExtractor</span><span class="p">):</span>
-<a id="__codelineno-0-45" name="__codelineno-0-45"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for implementing triplet extraction based on spaCy docs.</span>
-<a id="__codelineno-0-46" name="__codelineno-0-46"></a>
-<a id="__codelineno-0-47" name="__codelineno-0-47"></a><span class="sd">    Override `extract_triplets_from_sent` for extracting triplets sentence by sentence.</span>
-<a id="__codelineno-0-48" name="__codelineno-0-48"></a>
-<a id="__codelineno-0-49" name="__codelineno-0-49"></a><span class="sd">    Override `extract_triplets_from_doc` for extracting with the full Doc context.</span>
-<a id="__codelineno-0-50" name="__codelineno-0-50"></a>
-<a id="__codelineno-0-51" name="__codelineno-0-51"></a><span class="sd">    The `SpanAnnotation` objects of `Triplet` objects can conveniently be created from</span>
-<a id="__codelineno-0-52" name="__codelineno-0-52"></a><span class="sd">    a spaCy `Span` object with `SpanAnnotation.from_span()`.</span>
-<a id="__codelineno-0-53" name="__codelineno-0-53"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-54" name="__codelineno-0-54"></a>
-<a id="__codelineno-0-55" name="__codelineno-0-55"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
-<a id="__codelineno-0-56" name="__codelineno-0-56"></a>        <span class="bp">self</span><span class="p">,</span> <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">split_sentence_on_double_line_break</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
-<a id="__codelineno-0-57" name="__codelineno-0-57"></a>    <span class="p">):</span>
-<a id="__codelineno-0-58" name="__codelineno-0-58"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-0-59" name="__codelineno-0-59"></a><span class="sd">        Args:</span>
-<a id="__codelineno-0-60" name="__codelineno-0-60"></a><span class="sd">            model_name: name of the spaCy model to use</span>
-<a id="__codelineno-0-61" name="__codelineno-0-61"></a><span class="sd">            split_sentence_on_double_line_break: adds extra sentence boundaries on</span>
-<a id="__codelineno-0-62" name="__codelineno-0-62"></a><span class="sd">                double line breaks (&quot;\n\n&quot;)</span>
-<a id="__codelineno-0-63" name="__codelineno-0-63"></a><span class="sd">        &quot;&quot;&quot;</span>
-<a id="__codelineno-0-64" name="__codelineno-0-64"></a>        <span class="k">if</span> <span class="n">model_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-65" name="__codelineno-0-65"></a>            <span class="n">model_name</span> <span class="o">=</span> <span class="s2">&quot;en_core_web_sm&quot;</span>
-<a id="__codelineno-0-66" name="__codelineno-0-66"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">nlp</span> <span class="o">=</span> <span class="n">spacy</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">model_name</span><span class="p">)</span>
-<a id="__codelineno-0-67" name="__codelineno-0-67"></a>        <span class="k">if</span> <span class="n">split_sentence_on_double_line_break</span><span class="p">:</span>
-<a id="__codelineno-0-68" name="__codelineno-0-68"></a>            <span class="bp">self</span><span class="o">.</span><span class="n">nlp</span><span class="o">.</span><span class="n">add_pipe</span><span class="p">(</span><span class="s2">&quot;custom_sentencizer&quot;</span><span class="p">,</span> <span class="n">before</span><span class="o">=</span><span class="s2">&quot;parser&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-69" name="__codelineno-0-69"></a>
-<a id="__codelineno-0-70" name="__codelineno-0-70"></a>    <span class="nd">@abstractmethod</span>
-<a id="__codelineno-0-71" name="__codelineno-0-71"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">extract_triplets_from_sent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sent</span><span class="p">:</span> <span class="n">Span</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Triplet</span><span class="p">]:</span>
-<a id="__codelineno-0-72" name="__codelineno-0-72"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Extract triplets from a SpaCy sentence.</span>
-<a id="__codelineno-0-73" name="__codelineno-0-73"></a><span class="sd">        Args:</span>
-<a id="__codelineno-0-74" name="__codelineno-0-74"></a><span class="sd">            sent: A SpaCy Span object representing the whole sentence</span>
-<a id="__codelineno-0-75" name="__codelineno-0-75"></a>
-<a id="__codelineno-0-76" name="__codelineno-0-76"></a><span class="sd">        Returns:</span>
-<a id="__codelineno-0-77" name="__codelineno-0-77"></a><span class="sd">            extracted triplets</span>
-<a id="__codelineno-0-78" name="__codelineno-0-78"></a><span class="sd">        &quot;&quot;&quot;</span>
-<a id="__codelineno-0-79" name="__codelineno-0-79"></a>        <span class="k">pass</span>
-<a id="__codelineno-0-80" name="__codelineno-0-80"></a>
-<a id="__codelineno-0-81" name="__codelineno-0-81"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">extract_triplets_from_doc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">doc</span><span class="p">:</span> <span class="n">Doc</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Triplet</span><span class="p">]:</span>
-<a id="__codelineno-0-82" name="__codelineno-0-82"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Extract triplets from a Doc</span>
-<a id="__codelineno-0-83" name="__codelineno-0-83"></a><span class="sd">        Args:</span>
-<a id="__codelineno-0-84" name="__codelineno-0-84"></a><span class="sd">            doc: A SpaCy Doc object</span>
-<a id="__codelineno-0-85" name="__codelineno-0-85"></a>
-<a id="__codelineno-0-86" name="__codelineno-0-86"></a><span class="sd">        Returns:</span>
-<a id="__codelineno-0-87" name="__codelineno-0-87"></a><span class="sd">            extracted triplets</span>
-<a id="__codelineno-0-88" name="__codelineno-0-88"></a><span class="sd">        &quot;&quot;&quot;</span>
-<a id="__codelineno-0-89" name="__codelineno-0-89"></a>        <span class="n">triplets</span> <span class="o">=</span> <span class="p">[]</span>
-<a id="__codelineno-0-90" name="__codelineno-0-90"></a>        <span class="k">for</span> <span class="n">sent</span> <span class="ow">in</span> <span class="n">doc</span><span class="o">.</span><span class="n">sents</span><span class="p">:</span>
-<a id="__codelineno-0-91" name="__codelineno-0-91"></a>            <span class="n">sent_triplets</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_triplets_from_sent</span><span class="p">(</span><span class="n">sent</span><span class="p">)</span>
-<a id="__codelineno-0-92" name="__codelineno-0-92"></a>            <span class="k">if</span> <span class="n">sent_triplets</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-93" name="__codelineno-0-93"></a>                <span class="n">triplets</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">sent_triplets</span><span class="p">)</span>
-<a id="__codelineno-0-94" name="__codelineno-0-94"></a>        <span class="k">return</span> <span class="n">triplets</span>
-<a id="__codelineno-0-95" name="__codelineno-0-95"></a>
-<a id="__codelineno-0-96" name="__codelineno-0-96"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">extract</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Triplet</span><span class="p">]:</span>
-<a id="__codelineno-0-97" name="__codelineno-0-97"></a>        <span class="n">text</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlp</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
-<a id="__codelineno-0-98" name="__codelineno-0-98"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_triplets_from_doc</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
-<a id="__codelineno-0-99" name="__codelineno-0-99"></a>
-<a id="__codelineno-0-100" name="__codelineno-0-100"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">batch_extract</span><span class="p">(</span>
-<a id="__codelineno-0-101" name="__codelineno-0-101"></a>        <span class="bp">self</span><span class="p">,</span> <span class="n">texts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">n_cpu</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span>
-<a id="__codelineno-0-102" name="__codelineno-0-102"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Triplet</span><span class="p">],</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
-<a id="__codelineno-0-103" name="__codelineno-0-103"></a>        <span class="k">if</span> <span class="n">batch_size</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-104" name="__codelineno-0-104"></a>            <span class="n">batch_size</span> <span class="o">=</span> <span class="n">_calculate_batch_size</span><span class="p">(</span><span class="n">texts</span><span class="p">,</span> <span class="n">n_cpu</span><span class="p">)</span>
-<a id="__codelineno-0-105" name="__codelineno-0-105"></a>        <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlp</span><span class="o">.</span><span class="n">pipe</span><span class="p">(</span><span class="n">texts</span><span class="p">,</span> <span class="n">n_process</span><span class="o">=</span><span class="n">n_cpu</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">):</span>
-<a id="__codelineno-0-106" name="__codelineno-0-106"></a>            <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_triplets_from_doc</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>
+<span class="normal"><a href="#__codelineno-0-106">106</a></span>
+<span class="normal"><a href="#__codelineno-0-107">107</a></span>
+<span class="normal"><a href="#__codelineno-0-108">108</a></span>
+<span class="normal"><a href="#__codelineno-0-109">109</a></span>
+<span class="normal"><a href="#__codelineno-0-110">110</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-47" name="__codelineno-0-47"></a><span class="k">class</span><span class="w"> </span><span class="nc">SpacyTripletExtractor</span><span class="p">(</span><span class="n">TripletExtractor</span><span class="p">):</span>
+<a id="__codelineno-0-48" name="__codelineno-0-48"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for implementing triplet extraction based on spaCy docs.</span>
+<a id="__codelineno-0-49" name="__codelineno-0-49"></a>
+<a id="__codelineno-0-50" name="__codelineno-0-50"></a><span class="sd">    Override `extract_triplets_from_sent` for extracting triplets sentence by sentence.</span>
+<a id="__codelineno-0-51" name="__codelineno-0-51"></a>
+<a id="__codelineno-0-52" name="__codelineno-0-52"></a><span class="sd">    Override `extract_triplets_from_doc` for extracting with the full Doc context.</span>
+<a id="__codelineno-0-53" name="__codelineno-0-53"></a>
+<a id="__codelineno-0-54" name="__codelineno-0-54"></a><span class="sd">    The `SpanAnnotation` objects of `Triplet` objects can conveniently be created from</span>
+<a id="__codelineno-0-55" name="__codelineno-0-55"></a><span class="sd">    a spaCy `Span` object with `SpanAnnotation.from_span()`.</span>
+<a id="__codelineno-0-56" name="__codelineno-0-56"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-57" name="__codelineno-0-57"></a>
+<a id="__codelineno-0-58" name="__codelineno-0-58"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+<a id="__codelineno-0-59" name="__codelineno-0-59"></a>        <span class="bp">self</span><span class="p">,</span> <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">split_sentence_on_double_line_break</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+<a id="__codelineno-0-60" name="__codelineno-0-60"></a>    <span class="p">):</span>
+<a id="__codelineno-0-61" name="__codelineno-0-61"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-0-62" name="__codelineno-0-62"></a><span class="sd">        Args:</span>
+<a id="__codelineno-0-63" name="__codelineno-0-63"></a><span class="sd">            model_name: name of the spaCy model to use</span>
+<a id="__codelineno-0-64" name="__codelineno-0-64"></a><span class="sd">            split_sentence_on_double_line_break: adds extra sentence boundaries on</span>
+<a id="__codelineno-0-65" name="__codelineno-0-65"></a><span class="sd">                double line breaks (&quot;\n\n&quot;)</span>
+<a id="__codelineno-0-66" name="__codelineno-0-66"></a><span class="sd">        &quot;&quot;&quot;</span>
+<a id="__codelineno-0-67" name="__codelineno-0-67"></a>        <span class="k">if</span> <span class="n">model_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-68" name="__codelineno-0-68"></a>            <span class="n">model_name</span> <span class="o">=</span> <span class="s2">&quot;en_core_web_sm&quot;</span>
+<a id="__codelineno-0-69" name="__codelineno-0-69"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">nlp</span> <span class="o">=</span> <span class="n">spacy</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">model_name</span><span class="p">)</span>
+<a id="__codelineno-0-70" name="__codelineno-0-70"></a>        <span class="k">if</span> <span class="n">split_sentence_on_double_line_break</span><span class="p">:</span>
+<a id="__codelineno-0-71" name="__codelineno-0-71"></a>            <span class="bp">self</span><span class="o">.</span><span class="n">nlp</span><span class="o">.</span><span class="n">add_pipe</span><span class="p">(</span><span class="s2">&quot;custom_sentencizer&quot;</span><span class="p">,</span> <span class="n">before</span><span class="o">=</span><span class="s2">&quot;parser&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-72" name="__codelineno-0-72"></a>
+<a id="__codelineno-0-73" name="__codelineno-0-73"></a>    <span class="nd">@abstractmethod</span>
+<a id="__codelineno-0-74" name="__codelineno-0-74"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">extract_triplets_from_sent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sent</span><span class="p">:</span> <span class="n">Span</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Triplet</span><span class="p">]:</span>
+<a id="__codelineno-0-75" name="__codelineno-0-75"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Extract triplets from a SpaCy sentence.</span>
+<a id="__codelineno-0-76" name="__codelineno-0-76"></a><span class="sd">        Args:</span>
+<a id="__codelineno-0-77" name="__codelineno-0-77"></a><span class="sd">            sent: A SpaCy Span object representing the whole sentence</span>
+<a id="__codelineno-0-78" name="__codelineno-0-78"></a>
+<a id="__codelineno-0-79" name="__codelineno-0-79"></a><span class="sd">        Returns:</span>
+<a id="__codelineno-0-80" name="__codelineno-0-80"></a><span class="sd">            extracted triplets</span>
+<a id="__codelineno-0-81" name="__codelineno-0-81"></a><span class="sd">        &quot;&quot;&quot;</span>
+<a id="__codelineno-0-82" name="__codelineno-0-82"></a>        <span class="k">pass</span>
+<a id="__codelineno-0-83" name="__codelineno-0-83"></a>
+<a id="__codelineno-0-84" name="__codelineno-0-84"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">extract_triplets_from_doc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">doc</span><span class="p">:</span> <span class="n">Doc</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Triplet</span><span class="p">]:</span>
+<a id="__codelineno-0-85" name="__codelineno-0-85"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Extract triplets from a Doc</span>
+<a id="__codelineno-0-86" name="__codelineno-0-86"></a><span class="sd">        Args:</span>
+<a id="__codelineno-0-87" name="__codelineno-0-87"></a><span class="sd">            doc: A SpaCy Doc object</span>
+<a id="__codelineno-0-88" name="__codelineno-0-88"></a>
+<a id="__codelineno-0-89" name="__codelineno-0-89"></a><span class="sd">        Returns:</span>
+<a id="__codelineno-0-90" name="__codelineno-0-90"></a><span class="sd">            extracted triplets</span>
+<a id="__codelineno-0-91" name="__codelineno-0-91"></a><span class="sd">        &quot;&quot;&quot;</span>
+<a id="__codelineno-0-92" name="__codelineno-0-92"></a>        <span class="n">triplets</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-0-93" name="__codelineno-0-93"></a>        <span class="k">for</span> <span class="n">sent</span> <span class="ow">in</span> <span class="n">doc</span><span class="o">.</span><span class="n">sents</span><span class="p">:</span>
+<a id="__codelineno-0-94" name="__codelineno-0-94"></a>            <span class="n">sent_triplets</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_triplets_from_sent</span><span class="p">(</span><span class="n">sent</span><span class="p">)</span>
+<a id="__codelineno-0-95" name="__codelineno-0-95"></a>            <span class="k">if</span> <span class="n">sent_triplets</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-96" name="__codelineno-0-96"></a>                <span class="n">triplets</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">sent_triplets</span><span class="p">)</span>
+<a id="__codelineno-0-97" name="__codelineno-0-97"></a>        <span class="k">return</span> <span class="n">triplets</span>
+<a id="__codelineno-0-98" name="__codelineno-0-98"></a>
+<a id="__codelineno-0-99" name="__codelineno-0-99"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">extract</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Triplet</span><span class="p">]:</span>
+<a id="__codelineno-0-100" name="__codelineno-0-100"></a>        <span class="n">text</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlp</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+<a id="__codelineno-0-101" name="__codelineno-0-101"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_triplets_from_doc</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+<a id="__codelineno-0-102" name="__codelineno-0-102"></a>
+<a id="__codelineno-0-103" name="__codelineno-0-103"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">batch_extract</span><span class="p">(</span>
+<a id="__codelineno-0-104" name="__codelineno-0-104"></a>        <span class="bp">self</span><span class="p">,</span> <span class="n">texts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">n_cpu</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-105" name="__codelineno-0-105"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Triplet</span><span class="p">],</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+<a id="__codelineno-0-106" name="__codelineno-0-106"></a>        <span class="k">if</span> <span class="n">batch_size</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-107" name="__codelineno-0-107"></a>            <span class="n">batch_size</span> <span class="o">=</span> <span class="n">_calculate_batch_size</span><span class="p">(</span><span class="n">texts</span><span class="p">,</span> <span class="n">n_cpu</span><span class="p">)</span>
+<a id="__codelineno-0-108" name="__codelineno-0-108"></a>        <span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Using multiple CPU cores.Progress bars may stand still at first.&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-109" name="__codelineno-0-109"></a>        <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlp</span><span class="o">.</span><span class="n">pipe</span><span class="p">(</span><span class="n">texts</span><span class="p">,</span> <span class="n">n_process</span><span class="o">=</span><span class="n">n_cpu</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">):</span>
+<a id="__codelineno-0-110" name="__codelineno-0-110"></a>            <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_triplets_from_doc</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -1539,10 +1625,7 @@ a spaCy <code>Span</code> object with <code>SpanAnnotation.from_span()</code>.</
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>narrativegraphs/nlp/extraction/spacy/common.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-55">55</a></span>
-<span class="normal"><a href="#__codelineno-0-56">56</a></span>
-<span class="normal"><a href="#__codelineno-0-57">57</a></span>
-<span class="normal"><a href="#__codelineno-0-58">58</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-58">58</a></span>
 <span class="normal"><a href="#__codelineno-0-59">59</a></span>
 <span class="normal"><a href="#__codelineno-0-60">60</a></span>
 <span class="normal"><a href="#__codelineno-0-61">61</a></span>
@@ -1552,20 +1635,23 @@ a spaCy <code>Span</code> object with <code>SpanAnnotation.from_span()</code>.</
 <span class="normal"><a href="#__codelineno-0-65">65</a></span>
 <span class="normal"><a href="#__codelineno-0-66">66</a></span>
 <span class="normal"><a href="#__codelineno-0-67">67</a></span>
-<span class="normal"><a href="#__codelineno-0-68">68</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-55" name="__codelineno-0-55"></a><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
-<a id="__codelineno-0-56" name="__codelineno-0-56"></a>    <span class="bp">self</span><span class="p">,</span> <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">split_sentence_on_double_line_break</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
-<a id="__codelineno-0-57" name="__codelineno-0-57"></a><span class="p">):</span>
-<a id="__codelineno-0-58" name="__codelineno-0-58"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-0-59" name="__codelineno-0-59"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-60" name="__codelineno-0-60"></a><span class="sd">        model_name: name of the spaCy model to use</span>
-<a id="__codelineno-0-61" name="__codelineno-0-61"></a><span class="sd">        split_sentence_on_double_line_break: adds extra sentence boundaries on</span>
-<a id="__codelineno-0-62" name="__codelineno-0-62"></a><span class="sd">            double line breaks (&quot;\n\n&quot;)</span>
-<a id="__codelineno-0-63" name="__codelineno-0-63"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-64" name="__codelineno-0-64"></a>    <span class="k">if</span> <span class="n">model_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-65" name="__codelineno-0-65"></a>        <span class="n">model_name</span> <span class="o">=</span> <span class="s2">&quot;en_core_web_sm&quot;</span>
-<a id="__codelineno-0-66" name="__codelineno-0-66"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">nlp</span> <span class="o">=</span> <span class="n">spacy</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">model_name</span><span class="p">)</span>
-<a id="__codelineno-0-67" name="__codelineno-0-67"></a>    <span class="k">if</span> <span class="n">split_sentence_on_double_line_break</span><span class="p">:</span>
-<a id="__codelineno-0-68" name="__codelineno-0-68"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">nlp</span><span class="o">.</span><span class="n">add_pipe</span><span class="p">(</span><span class="s2">&quot;custom_sentencizer&quot;</span><span class="p">,</span> <span class="n">before</span><span class="o">=</span><span class="s2">&quot;parser&quot;</span><span class="p">)</span>
+<span class="normal"><a href="#__codelineno-0-68">68</a></span>
+<span class="normal"><a href="#__codelineno-0-69">69</a></span>
+<span class="normal"><a href="#__codelineno-0-70">70</a></span>
+<span class="normal"><a href="#__codelineno-0-71">71</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-58" name="__codelineno-0-58"></a><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+<a id="__codelineno-0-59" name="__codelineno-0-59"></a>    <span class="bp">self</span><span class="p">,</span> <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">split_sentence_on_double_line_break</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+<a id="__codelineno-0-60" name="__codelineno-0-60"></a><span class="p">):</span>
+<a id="__codelineno-0-61" name="__codelineno-0-61"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-0-62" name="__codelineno-0-62"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-63" name="__codelineno-0-63"></a><span class="sd">        model_name: name of the spaCy model to use</span>
+<a id="__codelineno-0-64" name="__codelineno-0-64"></a><span class="sd">        split_sentence_on_double_line_break: adds extra sentence boundaries on</span>
+<a id="__codelineno-0-65" name="__codelineno-0-65"></a><span class="sd">            double line breaks (&quot;\n\n&quot;)</span>
+<a id="__codelineno-0-66" name="__codelineno-0-66"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-67" name="__codelineno-0-67"></a>    <span class="k">if</span> <span class="n">model_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-68" name="__codelineno-0-68"></a>        <span class="n">model_name</span> <span class="o">=</span> <span class="s2">&quot;en_core_web_sm&quot;</span>
+<a id="__codelineno-0-69" name="__codelineno-0-69"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">nlp</span> <span class="o">=</span> <span class="n">spacy</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">model_name</span><span class="p">)</span>
+<a id="__codelineno-0-70" name="__codelineno-0-70"></a>    <span class="k">if</span> <span class="n">split_sentence_on_double_line_break</span><span class="p">:</span>
+<a id="__codelineno-0-71" name="__codelineno-0-71"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">nlp</span><span class="o">.</span><span class="n">add_pipe</span><span class="p">(</span><span class="s2">&quot;custom_sentencizer&quot;</span><span class="p">,</span> <span class="n">before</span><span class="o">=</span><span class="s2">&quot;parser&quot;</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -1617,25 +1703,25 @@ Args:
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>narrativegraphs/nlp/extraction/spacy/common.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-70">70</a></span>
-<span class="normal"><a href="#__codelineno-0-71">71</a></span>
-<span class="normal"><a href="#__codelineno-0-72">72</a></span>
-<span class="normal"><a href="#__codelineno-0-73">73</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-73">73</a></span>
 <span class="normal"><a href="#__codelineno-0-74">74</a></span>
 <span class="normal"><a href="#__codelineno-0-75">75</a></span>
 <span class="normal"><a href="#__codelineno-0-76">76</a></span>
 <span class="normal"><a href="#__codelineno-0-77">77</a></span>
 <span class="normal"><a href="#__codelineno-0-78">78</a></span>
-<span class="normal"><a href="#__codelineno-0-79">79</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-70" name="__codelineno-0-70"></a><span class="nd">@abstractmethod</span>
-<a id="__codelineno-0-71" name="__codelineno-0-71"></a><span class="k">def</span><span class="w"> </span><span class="nf">extract_triplets_from_sent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sent</span><span class="p">:</span> <span class="n">Span</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Triplet</span><span class="p">]:</span>
-<a id="__codelineno-0-72" name="__codelineno-0-72"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract triplets from a SpaCy sentence.</span>
-<a id="__codelineno-0-73" name="__codelineno-0-73"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-74" name="__codelineno-0-74"></a><span class="sd">        sent: A SpaCy Span object representing the whole sentence</span>
-<a id="__codelineno-0-75" name="__codelineno-0-75"></a>
-<a id="__codelineno-0-76" name="__codelineno-0-76"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-77" name="__codelineno-0-77"></a><span class="sd">        extracted triplets</span>
-<a id="__codelineno-0-78" name="__codelineno-0-78"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-79" name="__codelineno-0-79"></a>    <span class="k">pass</span>
+<span class="normal"><a href="#__codelineno-0-79">79</a></span>
+<span class="normal"><a href="#__codelineno-0-80">80</a></span>
+<span class="normal"><a href="#__codelineno-0-81">81</a></span>
+<span class="normal"><a href="#__codelineno-0-82">82</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-73" name="__codelineno-0-73"></a><span class="nd">@abstractmethod</span>
+<a id="__codelineno-0-74" name="__codelineno-0-74"></a><span class="k">def</span><span class="w"> </span><span class="nf">extract_triplets_from_sent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sent</span><span class="p">:</span> <span class="n">Span</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Triplet</span><span class="p">]:</span>
+<a id="__codelineno-0-75" name="__codelineno-0-75"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract triplets from a SpaCy sentence.</span>
+<a id="__codelineno-0-76" name="__codelineno-0-76"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-77" name="__codelineno-0-77"></a><span class="sd">        sent: A SpaCy Span object representing the whole sentence</span>
+<a id="__codelineno-0-78" name="__codelineno-0-78"></a>
+<a id="__codelineno-0-79" name="__codelineno-0-79"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-80" name="__codelineno-0-80"></a><span class="sd">        extracted triplets</span>
+<a id="__codelineno-0-81" name="__codelineno-0-81"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-82" name="__codelineno-0-82"></a>    <span class="k">pass</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -1683,10 +1769,7 @@ Args:
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>narrativegraphs/nlp/extraction/spacy/common.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-81">81</a></span>
-<span class="normal"><a href="#__codelineno-0-82">82</a></span>
-<span class="normal"><a href="#__codelineno-0-83">83</a></span>
-<span class="normal"><a href="#__codelineno-0-84">84</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-84">84</a></span>
 <span class="normal"><a href="#__codelineno-0-85">85</a></span>
 <span class="normal"><a href="#__codelineno-0-86">86</a></span>
 <span class="normal"><a href="#__codelineno-0-87">87</a></span>
@@ -1696,20 +1779,23 @@ Args:
 <span class="normal"><a href="#__codelineno-0-91">91</a></span>
 <span class="normal"><a href="#__codelineno-0-92">92</a></span>
 <span class="normal"><a href="#__codelineno-0-93">93</a></span>
-<span class="normal"><a href="#__codelineno-0-94">94</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-81" name="__codelineno-0-81"></a><span class="k">def</span><span class="w"> </span><span class="nf">extract_triplets_from_doc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">doc</span><span class="p">:</span> <span class="n">Doc</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Triplet</span><span class="p">]:</span>
-<a id="__codelineno-0-82" name="__codelineno-0-82"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract triplets from a Doc</span>
-<a id="__codelineno-0-83" name="__codelineno-0-83"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-84" name="__codelineno-0-84"></a><span class="sd">        doc: A SpaCy Doc object</span>
-<a id="__codelineno-0-85" name="__codelineno-0-85"></a>
-<a id="__codelineno-0-86" name="__codelineno-0-86"></a><span class="sd">    Returns:</span>
-<a id="__codelineno-0-87" name="__codelineno-0-87"></a><span class="sd">        extracted triplets</span>
-<a id="__codelineno-0-88" name="__codelineno-0-88"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-89" name="__codelineno-0-89"></a>    <span class="n">triplets</span> <span class="o">=</span> <span class="p">[]</span>
-<a id="__codelineno-0-90" name="__codelineno-0-90"></a>    <span class="k">for</span> <span class="n">sent</span> <span class="ow">in</span> <span class="n">doc</span><span class="o">.</span><span class="n">sents</span><span class="p">:</span>
-<a id="__codelineno-0-91" name="__codelineno-0-91"></a>        <span class="n">sent_triplets</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_triplets_from_sent</span><span class="p">(</span><span class="n">sent</span><span class="p">)</span>
-<a id="__codelineno-0-92" name="__codelineno-0-92"></a>        <span class="k">if</span> <span class="n">sent_triplets</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-93" name="__codelineno-0-93"></a>            <span class="n">triplets</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">sent_triplets</span><span class="p">)</span>
-<a id="__codelineno-0-94" name="__codelineno-0-94"></a>    <span class="k">return</span> <span class="n">triplets</span>
+<span class="normal"><a href="#__codelineno-0-94">94</a></span>
+<span class="normal"><a href="#__codelineno-0-95">95</a></span>
+<span class="normal"><a href="#__codelineno-0-96">96</a></span>
+<span class="normal"><a href="#__codelineno-0-97">97</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-84" name="__codelineno-0-84"></a><span class="k">def</span><span class="w"> </span><span class="nf">extract_triplets_from_doc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">doc</span><span class="p">:</span> <span class="n">Doc</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Triplet</span><span class="p">]:</span>
+<a id="__codelineno-0-85" name="__codelineno-0-85"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract triplets from a Doc</span>
+<a id="__codelineno-0-86" name="__codelineno-0-86"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-87" name="__codelineno-0-87"></a><span class="sd">        doc: A SpaCy Doc object</span>
+<a id="__codelineno-0-88" name="__codelineno-0-88"></a>
+<a id="__codelineno-0-89" name="__codelineno-0-89"></a><span class="sd">    Returns:</span>
+<a id="__codelineno-0-90" name="__codelineno-0-90"></a><span class="sd">        extracted triplets</span>
+<a id="__codelineno-0-91" name="__codelineno-0-91"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-92" name="__codelineno-0-92"></a>    <span class="n">triplets</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-0-93" name="__codelineno-0-93"></a>    <span class="k">for</span> <span class="n">sent</span> <span class="ow">in</span> <span class="n">doc</span><span class="o">.</span><span class="n">sents</span><span class="p">:</span>
+<a id="__codelineno-0-94" name="__codelineno-0-94"></a>        <span class="n">sent_triplets</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_triplets_from_sent</span><span class="p">(</span><span class="n">sent</span><span class="p">)</span>
+<a id="__codelineno-0-95" name="__codelineno-0-95"></a>        <span class="k">if</span> <span class="n">sent_triplets</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-96" name="__codelineno-0-96"></a>            <span class="n">triplets</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">sent_triplets</span><span class="p">)</span>
+<a id="__codelineno-0-97" name="__codelineno-0-97"></a>    <span class="k">return</span> <span class="n">triplets</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>

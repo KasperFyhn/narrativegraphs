@@ -2,34 +2,46 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://kasperfyhn.github.io/narrativegraphs/</loc>
-         <lastmod>2026-01-28</lastmod>
+         <lastmod>2026-01-29</lastmod>
     </url>
     <url>
          <loc>https://kasperfyhn.github.io/narrativegraphs/contributing/</loc>
-         <lastmod>2026-01-28</lastmod>
+         <lastmod>2026-01-29</lastmod>
     </url>
     <url>
          <loc>https://kasperfyhn.github.io/narrativegraphs/api/</loc>
-         <lastmod>2026-01-28</lastmod>
+         <lastmod>2026-01-29</lastmod>
     </url>
     <url>
          <loc>https://kasperfyhn.github.io/narrativegraphs/api/graph/</loc>
-         <lastmod>2026-01-28</lastmod>
+         <lastmod>2026-01-29</lastmod>
     </url>
     <url>
          <loc>https://kasperfyhn.github.io/narrativegraphs/api/triplet_extraction/</loc>
-         <lastmod>2026-01-28</lastmod>
+         <lastmod>2026-01-29</lastmod>
     </url>
     <url>
-         <loc>https://kasperfyhn.github.io/narrativegraphs/getting-started/installation/</loc>
-         <lastmod>2026-01-28</lastmod>
+         <loc>https://kasperfyhn.github.io/narrativegraphs/getting-started/00_installation/</loc>
+         <lastmod>2026-01-29</lastmod>
     </url>
     <url>
-         <loc>https://kasperfyhn.github.io/narrativegraphs/getting-started/quickstart/</loc>
-         <lastmod>2026-01-28</lastmod>
+         <loc>https://kasperfyhn.github.io/narrativegraphs/getting-started/01_create-and-inspect/</loc>
+         <lastmod>2026-01-29</lastmod>
     </url>
     <url>
-         <loc>https://kasperfyhn.github.io/narrativegraphs/notebooks/01_creating_and_inspecting_a_graph/</loc>
-         <lastmod>2026-01-28</lastmod>
+         <loc>https://kasperfyhn.github.io/narrativegraphs/getting-started/02_save-and-load/</loc>
+         <lastmod>2026-01-29</lastmod>
+    </url>
+    <url>
+         <loc>https://kasperfyhn.github.io/narrativegraphs/getting-started/03_adding-metadata/</loc>
+         <lastmod>2026-01-29</lastmod>
+    </url>
+    <url>
+         <loc>https://kasperfyhn.github.io/narrativegraphs/notebooks/01_demo/</loc>
+         <lastmod>2026-01-29</lastmod>
+    </url>
+    <url>
+         <loc>https://kasperfyhn.github.io/narrativegraphs/notebooks/02_categories/</loc>
+         <lastmod>2026-01-29</lastmod>
     </url>
 </urlset>
