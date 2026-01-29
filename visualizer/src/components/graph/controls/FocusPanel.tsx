@@ -3,7 +3,7 @@ import { useGraphQuery } from '../../../hooks/useGraphQuery';
 import { useServiceContext } from '../../../contexts/ServiceContext';
 import { Identifiable } from '../../../types/graph';
 import { EntityLabel } from '../../common/entity/EntityLabel';
-import { SubmittedTextInput } from '../../common/input/SubmittedTextInput';
+import { SubmittedTextInput } from '../../common/userinput/SubmittedTextInput';
 import { SubPanel } from '../../common/Panel';
 import { ClipLoader } from 'react-spinners';
 import { FocusEntitiesControl } from './subcomponents/EntityListControl';

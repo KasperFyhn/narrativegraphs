@@ -4,9 +4,9 @@ import {
   isSmoothEnabled,
   useGraphOptionsContext,
 } from '../../../contexts/GraphOptionsContext';
-import { NamedInput } from '../../common/input/NamedInput';
+import { NamedInput } from '../../common/userinput/NamedInput';
 import { ConnectionType, useGraphQuery } from '../../../hooks/useGraphQuery';
-import { RadioGroup } from '../../common/input/RadioGroup';
+import { RadioGroup } from '../../common/userinput/RadioGroup';
 
 export const GraphOptionsPanel: React.FC = () => {
   const { options, setOptions } = useGraphOptionsContext();

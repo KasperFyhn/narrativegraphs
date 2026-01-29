@@ -9,8 +9,8 @@ import {
   CommunityDetectionMethod,
   WeightMeasure,
 } from '../../../types/graphQuery';
-import { NamedInput } from '../../common/input/NamedInput';
-import { RadioGroup } from '../../common/input/RadioGroup';
+import { NamedInput } from '../../common/userinput/NamedInput';
+import { RadioGroup } from '../../common/userinput/RadioGroup';
 
 export const CommunitiesPanel: React.FC = () => {
   const { graphService } = useServiceContext();
