@@ -456,7 +456,7 @@ class PopulationService(DbService):
             session.execute(pmi_update)
 
             self._update_categories_for_type(
-                CooccurrenceCategory, TripletOrm, TripletOrm.cooccurrence_id
+                CooccurrenceCategory, TupletOrm, TupletOrm.cooccurrence_id
             )
             session.commit()
 
