@@ -176,3 +176,5 @@ input
 output/
 *.sqlite
 *.db
+
+ignored/

@@ -34,3 +34,16 @@ export const initialGraphQuery: GraphFilter = {
   limitEdges: 200,
   // ... other defaults
 };
+
+export type WeightMeasure = 'pmi' | 'frequency';
+export type CommunityDetectionMethod =
+  | 'louvain'
+  | 'k_clique'
+  | 'connected_components';
+
+export interface CommunitiesRequest {
+  weightMeasure: WeightMeasure;
+  minWeight: number;
+  communityDetectionMethod: CommunityDetectionMethod;
+  communityDetectionMethodArgs: { [key: string]: string | number };
+}

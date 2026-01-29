@@ -1,9 +1,8 @@
-from typing import Optional
-
 from fastapi import APIRouter, Depends
 
-from narrativegraphs.dto.filter import DataBounds, GraphFilter, GraphQuery
+from narrativegraphs.dto.filter import DataBounds
 from narrativegraphs.dto.graph import Community
+from narrativegraphs.server.requests import CommunitiesRequest, GraphQuery
 from narrativegraphs.server.routes.common import get_query_service
 from narrativegraphs.service import QueryService
 
@@ -28,10 +27,17 @@ async def get_graph(
 
 @router.post("/communities")
 async def get_communities(
-    graph_filter: Optional[GraphFilter] = None,
+    request: CommunitiesRequest,
     service: QueryService = Depends(get_query_service),
 ) -> list[Community]:
-    return service.graph.find_communities(graph_filter)
+    print(request)
+    return service.graph.find_communities(
+        request.graph_filter,
+        request.weight_measure,
+        request.min_weight,
+        request.community_detection_method,
+        request.community_detection_method_args,
+    )
 
 
 @router.get("/bounds")
