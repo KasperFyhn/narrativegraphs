@@ -71,7 +71,7 @@ Repository = "https://github.com/KasperFyhn/narrativegraphs"
 "Bug Tracker" = "https://github.com/your-username/narrativegraphs/issues"
 
 [tool.setuptools_scm]
-write_to = "src/narrativegraphs/_version.py"
+write_to = "narrativegraphs/_version.py"
 
 [tool.setuptools.packages.find]
 where = ["."]
