@@ -9,23 +9,17 @@ jobs:
     uses: ./.github/workflows/ci.yml
 
   publish:
+    needs: ci  # Wait for all CI jobs (lint, test, build) to pass
     runs-on: ubuntu-latest
     permissions:
       contents: read
+
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Important: setuptools-scm needs full git history
+          fetch-depth: 0
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
-
-      - name: Install build tools
-        run: pip install build twine
-
-      - name: Build package
-        run: python -m build
+      - uses: ./.github/actions/build-package
 
       - name: Publish to PyPI
         env:
