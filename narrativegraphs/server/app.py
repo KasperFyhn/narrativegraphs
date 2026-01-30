@@ -61,11 +61,13 @@ app.include_router(
 )
 app.include_router(relations_router, prefix="/relations", tags=["Relations"])
 
-# Ensure the correct path to build directory
-build_directory = Path(os.path.dirname(__file__)) / "static"
-if not os.path.isdir(build_directory):
-    raise ValueError(f"Build directory '{build_directory}' does not exist.")
-app.mount("", StaticFiles(directory=build_directory, html=True), name="static")
+
+build_directory = Path(__file__).parent / "static"
+if os.path.isdir(build_directory):
+    app.mount("", StaticFiles(directory=build_directory, html=True), name="static")
+    logging.info("Mounted static files from %s", build_directory)
+else:
+    logging.warning("Static directory not found at %s, skipping mount", build_directory)
 
 if __name__ == "__main__":
     import uvicorn
