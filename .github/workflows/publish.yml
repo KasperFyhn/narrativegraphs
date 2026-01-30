@@ -21,6 +21,20 @@ jobs:
 
       - uses: ./.github/actions/build-package
 
+      - name: Debug git state
+        run: |
+          echo "Git status:"
+          git status
+          echo ""
+          echo "Git diff:"
+          git diff
+          echo ""
+          echo "Latest tag:"
+          git describe --tags
+          echo ""
+          echo "All tags:"
+          git tag -l
+
       - name: Publish to PyPI
         env:
           TWINE_USERNAME: __token__
