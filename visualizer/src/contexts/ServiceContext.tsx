@@ -24,12 +24,15 @@ const ServiceContext = createContext<Services | undefined>(undefined);
 export const ServiceContextProvider: React.FC<PropsWithChildren> = ({
   children,
 }) => {
+  const API_URL =
+    (window as any).NARRATIVEGRAPHS_CONFIG?.apiUrl || 'http://localhost:8001';
+
   const value: Services = {
-    graphService: new GraphServiceImpl('http://localhost:8001'),
-    docService: new DocServiceImpl('http://localhost:8001'),
-    entityService: new EntityServiceImpl('http://localhost:8001'),
-    cooccurrenceService: new CooccurrenceServiceImpl('http://localhost:8001'),
-    relationService: new RelationServiceImpl('http://localhost:8001'),
+    graphService: new GraphServiceImpl(API_URL),
+    docService: new DocServiceImpl(API_URL),
+    entityService: new EntityServiceImpl(API_URL),
+    cooccurrenceService: new CooccurrenceServiceImpl(API_URL),
+    relationService: new RelationServiceImpl(API_URL),
   };
 
   return (

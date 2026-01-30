@@ -3,7 +3,7 @@ import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -16,6 +16,9 @@ from narrativegraphs.server.routes.entities import router as entities_router
 from narrativegraphs.server.routes.graph import router as graph_router
 from narrativegraphs.server.routes.relations import router as relations_router
 from narrativegraphs.service import QueryService
+
+# Ensure the correct path to your build directory
+build_directory = Path(os.path.dirname(__file__)) / "static"
 
 
 @asynccontextmanager
@@ -33,8 +36,6 @@ async def lifespan(app_arg: FastAPI):
     app_arg.state.create_session = get_session_factory(app_arg.state.db_engine)
     app_arg.state.query_service = QueryService(engine=app_arg.state.db_engine)
 
-    # Ensure the correct path to your build directory
-    build_directory = Path(os.path.dirname(__file__)) / "static"
     if not os.path.isdir(build_directory):
         raise ValueError(f"Build directory '{build_directory}' does not exist.")
     app_arg.mount(
@@ -59,6 +60,18 @@ app.add_middleware(
 @app.get("/", include_in_schema=False)
 async def root():
     return RedirectResponse(url="/vis")
+
+
+@app.get("/vis/config.js")
+async def serve_config(request: Request):
+    base_url = str(request.base_url).rstrip("/")
+    config_js = f"""
+    window.NARRATIVEGRAPHS_CONFIG = {{
+        apiUrl: '{base_url}'
+    }};
+    """
+    print(base_url)
+    return Response(content=config_js, media_type="application/javascript")
 
 
 @app.exception_handler(EntryNotFoundError)
