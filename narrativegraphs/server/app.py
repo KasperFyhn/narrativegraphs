@@ -17,6 +17,8 @@ from narrativegraphs.server.routes.graph import router as graph_router
 from narrativegraphs.server.routes.relations import router as relations_router
 from narrativegraphs.service import QueryService
 
+build_directory = Path(__file__).parent / "static"
+
 
 @asynccontextmanager
 async def lifespan(app_arg: FastAPI):
@@ -32,6 +34,12 @@ async def lifespan(app_arg: FastAPI):
         )
     app_arg.state.create_session = get_session_factory(app_arg.state.db_engine)
     app_arg.state.query_service = QueryService(engine=app_arg.state.db_engine)
+
+    if not os.path.isdir(build_directory):
+        raise ValueError(f"Build directory '{build_directory}' does not exist.")
+    app_arg.mount(
+        "/vis", StaticFiles(directory=build_directory, html=True), name="static"
+    )
 
     yield
 
@@ -61,13 +69,6 @@ app.include_router(
 )
 app.include_router(relations_router, prefix="/relations", tags=["Relations"])
 
-
-build_directory = Path(__file__).parent / "static"
-if os.path.isdir(build_directory):
-    app.mount("", StaticFiles(directory=build_directory, html=True), name="static")
-    logging.info("Mounted static files from %s", build_directory)
-else:
-    logging.warning("Static directory not found at %s, skipping mount", build_directory)
 
 if __name__ == "__main__":
     import uvicorn
