@@ -37,8 +37,6 @@ const getApiUrl = (): string => {
   return baseUrl;
 };
 
-export const API_URL = getApiUrl();
-
 interface Services {
   graphService: GraphService;
   docService: DocService;
