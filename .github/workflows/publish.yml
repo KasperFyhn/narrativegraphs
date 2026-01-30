@@ -3,7 +3,6 @@ name: Publish to PyPI
 on:
   release:
     types: [published]
-  workflow_dispatch:  # for manual testing
 
 jobs:
   ci:
@@ -21,20 +20,6 @@ jobs:
           fetch-depth: 0
 
       - uses: ./.github/actions/build-package
-
-      - name: Debug git state
-        run: |
-          echo "Git status:"
-          git status
-          echo ""
-          echo "Git diff:"
-          git diff
-          echo ""
-          echo "Latest tag:"
-          git describe --tags
-          echo ""
-          echo "All tags:"
-          git tag -l
 
       - name: Publish to PyPI
         env:
