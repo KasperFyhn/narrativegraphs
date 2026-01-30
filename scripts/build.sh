@@ -6,7 +6,7 @@ trap 'echo""; echo "ERROR! CHECK ABOVE FOR DETAILS"; exit 1' ERR
 
 echo "Building React frontend..."
 cd visualizer
-npm install
+npm ci
 CI=true npm run build
 
 echo "Copying static files to package..."
