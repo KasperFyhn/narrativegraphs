@@ -337,6 +337,61 @@ class PopulationService(DbService):
             )
             session.commit()
 
+    def _update_relation_significance(self):
+        with self.get_session_context() as session:
+            # Subquery to get entity pair frequencies (sum across all predicates)
+            entity_pair_freq = (
+                select(
+                    RelationOrm.subject_id,
+                    RelationOrm.object_id,
+                    func.sum(RelationOrm.frequency).label("pair_frequency"),
+                )
+                .group_by(RelationOrm.subject_id, RelationOrm.object_id)
+                .subquery()
+            )
+
+            # Calculate total corpus frequency N (sum of all predicate frequencies)
+            total_corpus_freq = session.scalar(select(func.sum(PredicateOrm.frequency)))
+
+            # Create subquery for significance calculation
+            significance_subquery = (
+                select(
+                    RelationOrm.id,
+                    (
+                        # significance = P(predicate | entity1, entity2) / P(predicate)
+                        # P(predicate | entity1, entity2) =
+                        #       freq(relation) / freq(entity_pair)
+                        # P(predicate) = freq(predicate) / N
+                        # log(significance) =
+                        #       log(freq(relation)) - log(freq(entity_pair))
+                        #       - log(freq(predicate)) + log(N)
+                        func.log(RelationOrm.frequency)
+                        - func.log(entity_pair_freq.c.pair_frequency)
+                        - func.log(PredicateOrm.frequency)
+                        + func.log(total_corpus_freq)
+                    ).label("significance"),
+                )
+                .join(
+                    PredicateOrm,
+                    RelationOrm.predicate_id == PredicateOrm.id,
+                )
+                .join(
+                    entity_pair_freq,
+                    (RelationOrm.subject_id == entity_pair_freq.c.subject_id)
+                    & (RelationOrm.object_id == entity_pair_freq.c.object_id),
+                )
+                .subquery()
+            )
+
+            # Update RelationOrm with calculated significance
+            significance_update = (
+                update(RelationOrm)
+                .values(significance=significance_subquery.c.significance)
+                .where(RelationOrm.id == significance_subquery.c.id)
+            )
+
+            session.execute(significance_update)
+
     def update_relation_info(self, n_docs: int = None):
         with self.get_session_context() as session:
             if n_docs is None:
@@ -348,6 +403,9 @@ class PopulationService(DbService):
             self._update_categories_for_type(
                 RelationCategory, TripletOrm, TripletOrm.relation_id
             )
+
+            self._update_relation_significance()
+
             session.commit()
 
     def update_cooccurrence_info(self, n_docs: int = None):
@@ -398,7 +456,7 @@ class PopulationService(DbService):
             session.execute(pmi_update)
 
             self._update_categories_for_type(
-                CooccurrenceCategory, TripletOrm, TripletOrm.cooccurrence_id
+                CooccurrenceCategory, TupletOrm, TupletOrm.cooccurrence_id
             )
             session.commit()
 

@@ -36,7 +36,15 @@ export const RelationInfo: React.FC<RelationInfoProps> = ({ id }) => {
 
   return (
     <>
-      <StatsDisplay stats={details.stats} />
+      <StatsDisplay
+        stats={details.stats}
+        extra={[
+          {
+            name: 'Significance',
+            value: details.stats.significance.toPrecision(3),
+          },
+        ]}
+      />
       <CategoriesDisplay categories={details.categories} />
       <AltLabelsDisplay altLabels={details.altLabels} />
       <DocsSection

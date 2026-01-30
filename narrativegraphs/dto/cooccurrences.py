@@ -20,6 +20,7 @@ class CooccurrenceStats(TextOccurrenceStats):
 class CooccurrenceDetails(TextOccurrence):
     entity_one_id: int
     entity_two_id: int
+    stats: CooccurrenceStats
 
     @classmethod
     def from_orm(cls, cooccurrence_orm: CooccurrenceOrm) -> "CooccurrenceDetails":

@@ -24,8 +24,6 @@ _logger.setLevel(logging.INFO)
 
 
 class NarrativeGraph(QueryService):
-    """The"""
-
     def __init__(
         self,
         triplet_extractor: TripletExtractor = None,
