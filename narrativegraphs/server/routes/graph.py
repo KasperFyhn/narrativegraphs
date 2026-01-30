@@ -9,7 +9,7 @@ from narrativegraphs.service import QueryService
 router = APIRouter()
 
 
-@router.post("/")
+@router.post("")
 async def get_graph(
     query: GraphQuery,
     service: QueryService = Depends(get_query_service),

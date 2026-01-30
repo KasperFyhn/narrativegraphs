@@ -9,6 +9,15 @@ from narrativegraphs.service import QueryService
 router = APIRouter()
 
 
+@router.post("", response_model=list[Document])
+async def get_docs(
+    doc_ids: list[int],
+    limit: Optional[int] = None,
+    service: QueryService = Depends(get_query_service),
+):
+    return service.documents.get_multiple(doc_ids, limit=limit)
+
+
 @router.get("/{doc_id}", response_model=Document)
 async def get_doc(
     doc_id: int,
@@ -19,12 +28,3 @@ async def get_doc(
     if doc is None:
         raise HTTPException(status_code=404, detail="Could not find document!")
     return doc
-
-
-@router.post("/", response_model=list[Document])
-async def get_docs(
-    doc_ids: list[int],
-    limit: Optional[int] = None,
-    service: QueryService = Depends(get_query_service),
-):
-    return service.documents.get_multiple(doc_ids, limit=limit)

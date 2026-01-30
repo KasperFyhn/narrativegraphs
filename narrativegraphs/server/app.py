@@ -5,7 +5,7 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from narrativegraphs.db.engine import get_engine, get_session_factory
@@ -16,6 +16,8 @@ from narrativegraphs.server.routes.entities import router as entities_router
 from narrativegraphs.server.routes.graph import router as graph_router
 from narrativegraphs.server.routes.relations import router as relations_router
 from narrativegraphs.service import QueryService
+
+build_directory = Path(__file__).parent / "static"
 
 
 @asynccontextmanager
@@ -33,8 +35,6 @@ async def lifespan(app_arg: FastAPI):
     app_arg.state.create_session = get_session_factory(app_arg.state.db_engine)
     app_arg.state.query_service = QueryService(engine=app_arg.state.db_engine)
 
-    # Ensure the correct path to your build directory
-    build_directory = Path(os.path.dirname(__file__)) / "static"
     if not os.path.isdir(build_directory):
         raise ValueError(f"Build directory '{build_directory}' does not exist.")
     app_arg.mount(
@@ -56,11 +56,6 @@ app.add_middleware(
 )
 
 
-@app.get("/", include_in_schema=False)
-async def root():
-    return RedirectResponse(url="/vis")
-
-
 @app.exception_handler(EntryNotFoundError)
 async def entry_not_found(request, exc):
     return JSONResponse(status_code=404, content={"detail": str(exc)})
@@ -74,9 +69,10 @@ app.include_router(
 )
 app.include_router(relations_router, prefix="/relations", tags=["Relations"])
 
+
 if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(
-        "narrativegraphs.server.app:app", host="0.0.0.0", port=8001, reload=True
+        "narrativegraphs.server.app:app", host="localhost", port=8001, reload=True
     )
