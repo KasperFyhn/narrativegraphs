@@ -23,31 +23,6 @@ export const RelationHeader: React.FC<RelationHeaderProps> = ({
   );
 };
 
-interface RelationItemProps {
-  id: string | number;
-  label: string;
-  subjectLabel: string;
-  objectLabel: string;
-}
-
-const RelationItem: React.FC<RelationItemProps> = ({
-  id,
-  label,
-  subjectLabel,
-  objectLabel,
-}) => {
-  return (
-    <div>
-      <RelationHeader
-        subjectLabel={subjectLabel}
-        predicateLabel={label}
-        objectLabel={objectLabel}
-      />
-      <RelationInfo id={id} />
-    </div>
-  );
-};
-
 interface CooccurrenceItemProps {
   id: string | number;
   subjectLabel: string;
@@ -90,12 +65,17 @@ const RelationGroupList: React.FC<RelationGroupListProps> = ({ relations }) => {
     <>
       {relations.map((relation, index) => (
         <div key={relation.id}>
-          <RelationItem
-            id={relation.id}
-            label={relation.label}
-            subjectLabel={relation.subjectLabel}
-            objectLabel={relation.objectLabel}
-          />
+          <div>
+            <RelationHeader
+              subjectLabel={relation.subjectLabel}
+              predicateLabel={relation.label}
+              objectLabel={relation.objectLabel}
+            />
+            <RelationInfo
+              id={relation.id}
+              autoLoadDocs={relations.length === 1}
+            />
+          </div>
           {index + 1 < relations.length && (
             <>
               <br />

@@ -37,9 +37,7 @@ async def lifespan(app_arg: FastAPI):
 
     if not os.path.isdir(build_directory):
         raise ValueError(f"Build directory '{build_directory}' does not exist.")
-    app_arg.mount(
-        "/vis", StaticFiles(directory=build_directory, html=True), name="static"
-    )
+    app_arg.mount("", StaticFiles(directory=build_directory, html=True), name="static")
 
     yield
 

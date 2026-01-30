@@ -40,8 +40,7 @@ class GraphService(SubService):
 
             edges = []
             for group in grouped_edges.values():
-                # Sort by term frequency descending
-                group.sort(key=lambda x: x.frequency, reverse=True)
+                group.sort(key=lambda orm: orm.significance, reverse=True)
                 representative = group[0]
 
                 # Create label from top 3 relations

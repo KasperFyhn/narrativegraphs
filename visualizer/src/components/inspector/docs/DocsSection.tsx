@@ -9,6 +9,7 @@ type LoadingState = 'idle' | 'loading' | 'loaded';
 interface DocsSectionProps {
   loadDocs: () => Promise<Doc[]>;
   highlightContext?: HighlightContext;
+  autoload?: boolean;
 }
 
 const PAGE_SIZE = 50;
@@ -16,8 +17,9 @@ const PAGE_SIZE = 50;
 export const DocsSection: React.FC<DocsSectionProps> = ({
   loadDocs,
   highlightContext,
+  autoload = true,
 }) => {
-  const [loadingState, setLoadingState] = useState<LoadingState>('loading');
+  const [loadingState, setLoadingState] = useState<LoadingState>('idle');
   const [docs, setDocs] = useState<Doc[]>([]);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
@@ -44,7 +46,7 @@ export const DocsSection: React.FC<DocsSectionProps> = ({
   };
 
   useEffect(() => {
-    handleLoad();
+    if (autoload) handleLoad();
     // Should just run in the beginning
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

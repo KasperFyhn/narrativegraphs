@@ -9,9 +9,13 @@ import { RelationDetails } from '../../../types/graph';
 
 interface RelationInfoProps {
   id: string | number;
+  autoLoadDocs: boolean;
 }
 
-export const RelationInfo: React.FC<RelationInfoProps> = ({ id }) => {
+export const RelationInfo: React.FC<RelationInfoProps> = ({
+  id,
+  autoLoadDocs,
+}) => {
   const { relationService } = useServiceContext();
   const [details, setDetails] = useState<RelationDetails | null>(null);
   const [loading, setLoading] = useState(true);
@@ -55,6 +59,7 @@ export const RelationInfo: React.FC<RelationInfoProps> = ({ id }) => {
           predicateId: details.predicateId,
           objectId: details.objectId,
         }}
+        autoload={autoLoadDocs}
       />
     </>
   );
