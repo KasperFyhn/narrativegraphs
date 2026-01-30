@@ -52,13 +52,13 @@ markdown_extensions:
 nav:
   - Home: index.md
   - Getting Started:
-      - Installation: getting-started/00_installation.md
-      - Create and Inspect: getting-started/01_create-and-inspect.md
-      - Save and Load: getting-started/02_save-and-load.md
-      - Adding Metadata: getting-started/03_adding-metadata.md
+      - Installation: getting-started/installation.md
+      - Create and Inspect: getting-started/create-and-inspect.md
+      - Save and Load: getting-started/save-and-load.md
+      - Adding Metadata: getting-started/adding-metadata.md
   - Tutorials:
-      - Demo: notebooks/01_demo.ipynb
-      - Categories: notebooks/02_categories.ipynb
+      - Demo: notebooks/demo.ipynb
+      - Categories: notebooks/categories.ipynb
   - API Reference:
       - Overview: api/index.md
       - Graph: api/graph.md

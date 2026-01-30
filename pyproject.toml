@@ -37,7 +37,7 @@ dependencies = [
     "spacy>=3.8.6",
     "scikit-learn>=1.6.1",
     "tqdm>=4.67.1",
-    "nltk>=3.8.1",
+    "nltk>=3.8.2",
     "uvicorn>=0.34.2",
     "fastapi>=0.115.12",
     "ipython>=8.38.0",
@@ -46,7 +46,8 @@ dependencies = [
     "fastapi_camelcase>=2.0.0",
     "psutil>=7.0.0",
     "numpy>=2.2.6",
-    "networkx>=3.4.2"
+    "networkx>=3.4.2",
+    "kagglehub>=0.4.1"
 ]
 
 [project.optional-dependencies]

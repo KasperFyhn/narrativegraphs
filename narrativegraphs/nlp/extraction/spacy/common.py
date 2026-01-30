@@ -44,6 +44,31 @@ def _calculate_batch_size(texts: list[str], n_cpu: int = -1) -> int:
     return max(10, min(scaled_size, 2000))
 
 
+def _ensure_spacy_model(name: str):
+    """Ensure spaCy model is available, downloading if necessary."""
+    try:
+        return spacy.load(name)
+    except OSError:
+        _logger.info(
+            f"First-time setup: downloading spaCy model '{name}'. "
+            f"This is a one-time download (~50-500MB depending on model) "
+            f"and may take a few minutes..."
+        )
+
+        try:
+            spacy.cli.download(name)
+            return spacy.load(name)
+        except Exception as e:
+            _logger.error(f"Failed to download model '{name}': {e}")
+            raise RuntimeError(
+                f"Could not automatically download spaCy model '{name}'.\n"
+                f"Please install it manually with:\n"
+                f"  python -m spacy download {name}\n"
+                f"If you continue to have issues, see: "
+                f"https://spacy.io/usage/models"
+            ) from e
+
+
 class SpacyTripletExtractor(TripletExtractor):
     """Base class for implementing triplet extraction based on spaCy docs.
 
@@ -66,7 +91,7 @@ class SpacyTripletExtractor(TripletExtractor):
         """
         if model_name is None:
             model_name = "en_core_web_sm"
-        self.nlp = spacy.load(model_name)
+        self.nlp = _ensure_spacy_model(model_name)
         if split_sentence_on_double_line_break:
             self.nlp.add_pipe("custom_sentencizer", before="parser")
 
