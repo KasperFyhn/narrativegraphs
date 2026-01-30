@@ -64,7 +64,7 @@ async def root():
 
 @app.get("/vis/config.js")
 async def serve_config(request: Request):
-    base_url = str(request.base_url).rstrip("/")
+    base_url = str(request.url).split("/vis/config.js")[0]
     config_js = f"""
     window.NARRATIVEGRAPHS_CONFIG = {{
         apiUrl: '{base_url}'
