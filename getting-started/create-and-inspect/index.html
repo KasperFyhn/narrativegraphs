@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://kasperfyhn.github.io/narrativegraphs/getting-started/02_save-and-load/">
+        <link rel="canonical" href="https://kasperfyhn.github.io/narrativegraphs/getting-started/create-and-inspect/">
       
       
-        <link rel="prev" href="../01_create-and-inspect/">
+        <link rel="prev" href="../installation/">
       
       
-        <link rel="next" href="../03_adding-metadata/">
+        <link rel="next" href="../save-and-load/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Save and Load - narrativegraphs</title>
+        <title>Create and Inspect - narrativegraphs</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#saving-and-loading" class="md-skip">
+        <a href="#create-and-inspect" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Save and Load
+              Create and Inspect
             
           </span>
         </div>
@@ -248,7 +248,7 @@
     
     
       <li class="md-tabs__item md-tabs__item--active">
-        <a href="../00_installation/" class="md-tabs__link">
+        <a href="../installation/" class="md-tabs__link">
           
   
   
@@ -268,7 +268,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../notebooks/01_demo/" class="md-tabs__link">
+        <a href="../../notebooks/demo/" class="md-tabs__link">
           
   
   
@@ -455,7 +455,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../00_installation/" class="md-nav__link">
+      <a href="../installation/" class="md-nav__link">
         
   
   
@@ -463,34 +463,6 @@
     
   
     Installation
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../01_create-and-inspect/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Create and Inspect
   
 
     
@@ -527,7 +499,7 @@
   <span class="md-ellipsis">
     
   
-    Save and Load
+    Create and Inspect
   
 
     
@@ -549,7 +521,35 @@
   
   
     <li class="md-nav__item">
-      <a href="../03_adding-metadata/" class="md-nav__link">
+      <a href="../save-and-load/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Save and Load
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adding-metadata/" class="md-nav__link">
         
   
   
@@ -638,7 +638,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../notebooks/01_demo/" class="md-nav__link">
+      <a href="../../notebooks/demo/" class="md-nav__link">
         
   
   
@@ -666,7 +666,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../notebooks/02_categories/" class="md-nav__link">
+      <a href="../../notebooks/categories/" class="md-nav__link">
         
   
   
@@ -904,31 +904,22 @@
   
 
 
-<h1 id="saving-and-loading">Saving and loading</h1>
-<p>A model can be saved and loaded for later use, so you do not have to re-process documents every time.</p>
-<p>To save:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">model</span><span class="o">.</span><span class="n">save_to_file</span><span class="p">(</span><span class="s2">&quot;my_model.db&quot;</span><span class="p">)</span>
+<h1 id="create-and-inspect">Create and inspect</h1>
+<p>The basic workflow of creating and inspecting a narrative graph is:</p>
+<ol>
+<li>Import <code>narrativegraphs</code>.</li>
+<li>Prepare your documents as a list of strings.</li>
+<li>Initialize a model and fit it on your docs.</li>
+<li>Serve the visualizer, follow the link, and inspect your docs visually.</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">narrativegraphs</span><span class="w"> </span><span class="kn">import</span> <span class="n">NarrativeGraph</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">docs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="o">...</span><span class="p">]</span>  <span class="c1"># your list of documents</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">model</span> <span class="o">=</span> <span class="n">NarrativeGraph</span><span class="p">()</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">docs</span><span class="p">)</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="n">model</span><span class="o">.</span><span class="n">serve_visualizer</span><span class="p">()</span>
 </code></pre></div>
-<p>To load it again</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">NarrativeGraph</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;my_model.db&quot;</span><span class="p">)</span>
-</code></pre></div>
-<p>A handy codeblock is:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">narrativegraphs</span><span class="w"> </span><span class="kn">import</span> <span class="n">NarrativeGraph</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">model_name</span> <span class="o">=</span> <span class="s2">&quot;my_model.db&quot;</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="n">docs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="o">...</span><span class="p">]</span>  <span class="c1"># your list of documents</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">model_name</span><span class="p">):</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Loading model!&quot;</span><span class="p">)</span>
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>    <span class="n">model</span> <span class="o">=</span> <span class="n">NarrativeGraph</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">model_name</span><span class="p">)</span>
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Creating and saving model!&quot;</span><span class="p">)</span>
-<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>    <span class="n">model</span> <span class="o">=</span> <span class="n">NarrativeGraph</span><span class="p">()</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">docs</span><span class="p">)</span>
-<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>    <span class="n">model</span><span class="o">.</span><span class="n">save_to_file</span><span class="p">(</span><span class="n">model_name</span><span class="p">)</span>
-<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>
-<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="n">model</span><span class="o">.</span><span class="n">serve_visualizer</span><span class="p">()</span>
-</code></pre></div></p>
+<p>Open the link in your terminal to explore the graph in your browser:</p>
+<p><img alt="visualizer-screenshot.png" src="https://raw.githubusercontent.com/KasperFyhn/narrativegraphs/refs/heads/main/assets/visualizer-screenshot.png" /></p>
 
 
 
