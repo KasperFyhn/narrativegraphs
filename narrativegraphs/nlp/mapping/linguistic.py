@@ -1,3 +1,4 @@
+import logging
 from collections import defaultdict
 from typing import Callable, Counter, Literal
 
@@ -5,6 +6,16 @@ import nltk
 from nltk import PorterStemmer, pos_tag, word_tokenize
 
 from narrativegraphs.nlp.mapping.common import Mapper
+
+_logger = logging.getLogger("narrativegraphs.nlp.mapping.linguistic")
+
+
+def _ensure_nltk_model(name: str):
+    try:
+        nltk.data.find(name)
+    except LookupError:
+        _logger.info(f"NLTK model '{name}' not found, downloading...")
+        nltk.download(name, quiet=True)
 
 
 class StemmingMapper(Mapper):
@@ -17,6 +28,8 @@ class StemmingMapper(Mapper):
         self._ignore_determiners = ignore_determiners
         self._ranking = ranking
 
+        _ensure_nltk_model("punkt_tab")
+        _ensure_nltk_model("averaged_perceptron_tagger")
         self._pos_tag = nltk.pos_tag
         self._stemmer = PorterStemmer()
 
