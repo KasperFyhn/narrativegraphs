@@ -2,7 +2,7 @@ from narrativegraphs.dto.filter import GraphFilter
 
 from .graphs import CooccurrenceGraph, NarrativeGraph
 
-__all__ = ["GraphFilter"]
+__all__ = ["GraphFilter", "CooccurrenceGraph", "NarrativeGraph"]
 
 try:
     from ._version import version as __version__
