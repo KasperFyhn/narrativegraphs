@@ -125,9 +125,8 @@ class TestBaseGraphPersistence(unittest.TestCase):
         with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
             cg = CooccurrenceGraph(sqlite_db_path=tmp.name)
 
-            with tempfile.NamedTemporaryFile(suffix=".db") as target:
-                with self.assertRaises(ValueError):
-                    cg.save_to_file(target.name)
+            with self.assertRaises(ValueError):
+                cg.save_to_file("other_file.db")
 
     def test_save_and_load_preserves_data(self):
         """Saving and loading preserves all data."""
