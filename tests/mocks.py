@@ -1,6 +1,29 @@
-from narrativegraphs.nlp.extraction import TripletExtractor
-from narrativegraphs.nlp.extraction.common import SpanAnnotation, Triplet
+from narrativegraphs.nlp.entities.common import EntityExtractor
 from narrativegraphs.nlp.mapping import Mapper
+from narrativegraphs.nlp.triplets import TripletExtractor
+from narrativegraphs.nlp.triplets.common import SpanAnnotation, Triplet
+
+
+class MockEntityExtractor(EntityExtractor):
+    """Mock entity extractor that treats capitalized words as entities."""
+
+    def extract(self, text: str) -> list[SpanAnnotation]:
+        entities = []
+        pos = 0
+        for word in text.split():
+            start = text.find(word, pos)
+            end = start + len(word)
+            clean_word = word.strip(".,!?;:")
+            if clean_word and clean_word[0].isupper():
+                entities.append(
+                    SpanAnnotation(
+                        text=clean_word,
+                        start_char=start,
+                        end_char=start + len(clean_word),
+                    )
+                )
+            pos = end
+        return entities
 
 
 class MockTripletExtractor(TripletExtractor):

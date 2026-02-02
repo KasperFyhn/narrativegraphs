@@ -1,7 +1,7 @@
 import unittest
 
-from narrativegraphs.nlp.extraction.common import SpanAnnotation
-from narrativegraphs.nlp.extraction.spacy.entities import SpacyEntityExtractor
+from narrativegraphs.nlp.entities.spacy import SpacyEntityExtractor
+from narrativegraphs.nlp.triplets.common import SpanAnnotation
 
 
 class TestSpacyEntityExtractor(unittest.TestCase):
@@ -17,7 +17,8 @@ class TestSpacyEntityExtractor(unittest.TestCase):
             actual_field = getattr(actual, field_name)
             if expected_field != actual_field:
                 errors.append(
-                    f"{field_name} mismatch. Expected: {expected_field}, Got: {actual_field}"
+                    f"{field_name} mismatch. Expected: {expected_field}, "
+                    f"Got: {actual_field}"
                 )
         self.assertTrue(len(errors) == 0, "\n".join(errors))
 
@@ -178,7 +179,11 @@ class TestSpacyEntityExtractor(unittest.TestCase):
 
     def test_batch_extract_preserves_order(self):
         """Test that batch extraction preserves document order."""
-        texts = ["Document about Paris.", "Document about London.", "Document about Tokyo."]
+        texts = [
+            "Document about Paris.",
+            "Document about London.",
+            "Document about Tokyo.",
+        ]
 
         results = list(self.extractor.batch_extract(texts, n_cpu=1))
 

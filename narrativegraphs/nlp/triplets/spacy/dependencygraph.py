@@ -2,8 +2,8 @@ from typing import List, Optional, Tuple
 
 from spacy.tokens import Span, Token
 
-from narrativegraphs.nlp.extraction.common import SpanAnnotation, Triplet
-from narrativegraphs.nlp.extraction.spacy.common import SpacyTripletExtractor
+from narrativegraphs.nlp.triplets.common import SpanAnnotation, Triplet
+from narrativegraphs.nlp.triplets.spacy.common import SpacyTripletExtractor
 
 
 class DependencyGraphExtractor(SpacyTripletExtractor):

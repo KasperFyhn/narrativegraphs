@@ -1,15 +1,8 @@
 from narrativegraphs.cooccurrencegraph import CooccurrenceGraph
 from narrativegraphs.dto.filter import GraphFilter
 from narrativegraphs.narrativegraph import NarrativeGraph
-from narrativegraphs.nlp.extraction import EntityExtractor, SpacyEntityExtractor
 
-__all__ = [
-    "NarrativeGraph",
-    "CooccurrenceGraph",
-    "GraphFilter",
-    "EntityExtractor",
-    "SpacyEntityExtractor",
-]
+__all__ = ["NarrativeGraph", "CooccurrenceGraph", "GraphFilter"]
 
 try:
     from ._version import version as __version__

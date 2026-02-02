@@ -3,9 +3,9 @@ from typing import Generator, Iterable
 
 from spacy.tokens import Doc, Span
 
-from narrativegraphs.nlp.extraction.common import SpanAnnotation
-from narrativegraphs.nlp.extraction.entities import EntityExtractor
-from narrativegraphs.nlp.extraction.spacy.common import (
+from narrativegraphs.nlp.entities.common import EntityExtractor
+from narrativegraphs.nlp.triplets.common import SpanAnnotation
+from narrativegraphs.nlp.triplets.spacy.common import (
     _calculate_batch_size,
     _ensure_spacy_model,
 )

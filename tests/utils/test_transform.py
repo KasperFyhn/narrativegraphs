@@ -63,7 +63,7 @@ class TestNormalizeCategories(unittest.TestCase):
 
     def test_non_string_values(self):
         with self.assertRaises(ValueError):
-            normalize_categories({"category1": 42})  # noqa, deliberate
+            normalize_categories({"category1": 42})  # noqa
 
     def test_mixed_types_in_list(self):
         with self.assertRaises(ValueError):

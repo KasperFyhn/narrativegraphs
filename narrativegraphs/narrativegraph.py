@@ -1,4 +1,3 @@
-import os
 from datetime import date, datetime
 from typing import Literal
 
@@ -6,10 +5,10 @@ import networkx as nx
 import pandas as pd
 
 from narrativegraphs.basegraph import BaseGraph
-from narrativegraphs.nlp.extraction import TripletExtractor
-from narrativegraphs.nlp.extraction.cooccurrences import CooccurrenceExtractor
 from narrativegraphs.nlp.mapping import Mapper
 from narrativegraphs.nlp.pipeline import Pipeline
+from narrativegraphs.nlp.triplets import TripletExtractor
+from narrativegraphs.nlp.tuplets.common import CooccurrenceExtractor
 
 
 class NarrativeGraph(BaseGraph):
@@ -124,9 +123,4 @@ class NarrativeGraph(BaseGraph):
         Returns:
             A NarrativeGraph object
         """
-        if not file_path.endswith(".db"):
-            file_path += ".db"
-
-        if not os.path.exists(file_path):
-            raise FileNotFoundError(f"Database not found: {file_path}")
-        return cls(sqlite_db_path=file_path, on_existing_db="reuse")
+        return super().load(file_path)

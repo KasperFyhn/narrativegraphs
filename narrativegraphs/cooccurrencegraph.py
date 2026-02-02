@@ -1,12 +1,11 @@
-import os
 from datetime import date, datetime
 from typing import Literal
 
 from narrativegraphs.basegraph import BaseGraph
-from narrativegraphs.nlp.cooccurrence_pipeline import CooccurrencePipeline
-from narrativegraphs.nlp.extraction import EntityExtractor
-from narrativegraphs.nlp.extraction.cooccurrences import CooccurrenceExtractor
+from narrativegraphs.nlp.entities.common import EntityExtractor
 from narrativegraphs.nlp.mapping import Mapper
+from narrativegraphs.nlp.pipeline import CooccurrencePipeline
+from narrativegraphs.nlp.tuplets.common import CooccurrenceExtractor
 
 
 class CooccurrenceGraph(BaseGraph):
@@ -95,9 +94,4 @@ class CooccurrenceGraph(BaseGraph):
         Returns:
             A CooccurrenceGraph object.
         """
-        if not file_path.endswith(".db"):
-            file_path += ".db"
-
-        if not os.path.exists(file_path):
-            raise FileNotFoundError(f"Database not found: {file_path}")
-        return cls(sqlite_db_path=file_path, on_existing_db="reuse")
+        return super().load(file_path)

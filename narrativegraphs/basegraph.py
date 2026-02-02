@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING, Literal
 
 import networkx as nx
 import pandas as pd
-import spacy
 from sqlalchemy import text
 
 from narrativegraphs.db.engine import get_engine
@@ -60,7 +59,6 @@ class BaseGraph(QueryService):
     @property
     def entities_(self) -> pd.DataFrame:
         """Entities as a pandas DataFrame."""
-        spacy.blank("en")
         return self.entities.as_df()
 
     @property
@@ -136,3 +134,20 @@ class BaseGraph(QueryService):
                 session.execute(text(f"VACUUM main INTO '{file_path}'"))
         else:
             raise ValueError("Database is already file-based.")
+
+    @classmethod
+    def load(cls, file_path: str):
+        """Load from a SQLite database file.
+
+        Args:
+            file_path: Path to a SQLite database to load from.
+
+        Returns:
+            A loaded object backed by the database.
+        """
+        if not file_path.endswith(".db"):
+            file_path += ".db"
+
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"Database not found: {file_path}")
+        return cls(sqlite_db_path=file_path, on_existing_db="reuse")

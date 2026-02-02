@@ -6,7 +6,7 @@ import psutil
 import spacy
 from spacy.tokens import Doc, Span
 
-from narrativegraphs.nlp.extraction.common import Triplet, TripletExtractor
+from narrativegraphs.nlp.triplets.common import Triplet, TripletExtractor
 from narrativegraphs.nlp.utils.spacysegmentation import custom_sentencizer  # noqa
 
 _logger = logging.getLogger("narrativegraphs.nlp.extraction")

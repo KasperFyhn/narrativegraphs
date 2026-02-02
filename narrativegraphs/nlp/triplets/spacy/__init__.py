@@ -1,5 +1,6 @@
+from narrativegraphs.nlp.entities.spacy import SpacyEntityExtractor
+
 from .dependencygraph import DependencyGraphExtractor
-from .entities import SpacyEntityExtractor
 from .naive import NaiveSpacyTripletExtractor
 
 __all__ = [

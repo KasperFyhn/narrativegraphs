@@ -1,7 +1,7 @@
 from spacy.tokens import Span
 
-from narrativegraphs.nlp.extraction.common import Triplet
-from narrativegraphs.nlp.extraction.spacy.common import SpacyTripletExtractor
+from narrativegraphs.nlp.triplets.common import Triplet
+from narrativegraphs.nlp.triplets.spacy.common import SpacyTripletExtractor
 
 
 class DummySpacyTripletExtractor(SpacyTripletExtractor):
