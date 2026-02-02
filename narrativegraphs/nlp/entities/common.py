@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Generator, Iterable
 
-from narrativegraphs.nlp.triplets.common import SpanAnnotation
+from narrativegraphs.nlp.common.annotation import SpanAnnotation
 
 
 class EntityExtractor(ABC):

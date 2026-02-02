@@ -9,7 +9,6 @@ from narrativegraphs.nlp.common.spacy import (
     ensure_spacy_model,
 )
 from narrativegraphs.nlp.triplets.common import Triplet, TripletExtractor
-from narrativegraphs.nlp.utils.spacysegmentation import custom_sentencizer  # noqa
 
 _logger = logging.getLogger("narrativegraphs.nlp.extraction")
 

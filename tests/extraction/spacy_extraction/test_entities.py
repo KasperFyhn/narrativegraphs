@@ -1,7 +1,7 @@
 import unittest
 
+from narrativegraphs.nlp.common.annotation import SpanAnnotation
 from narrativegraphs.nlp.entities.spacy import SpacyEntityExtractor
-from narrativegraphs.nlp.triplets.common import SpanAnnotation
 
 
 class TestSpacyEntityExtractor(unittest.TestCase):

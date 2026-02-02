@@ -3,6 +3,7 @@
 Shared functionality (persistence, base properties) is tested in test_basegraph.py.
 """
 
+import tempfile
 import unittest
 
 import networkx as nx
@@ -27,6 +28,13 @@ class TestNarrativeGraphSpecific(unittest.TestCase):
         )
         result = ng.fit(["Alice met Bob."])
         self.assertIs(result, ng)
+
+    def test_load_returns_narrativegraph(self):
+        with tempfile.NamedTemporaryFile(suffix=".db") as f:
+            ng = NarrativeGraph()
+            ng.save_to_file(f.name, overwrite=True)
+            loaded = NarrativeGraph.load(f.name)
+            self.assertIsInstance(loaded, NarrativeGraph)
 
 
 class TestNarrativeGraphProperties(unittest.TestCase):

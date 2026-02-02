@@ -5,6 +5,7 @@ from typing import Iterable
 
 import psutil
 import spacy
+from spacy import Language
 from spacy.tokens import Span
 
 _logger = logging.getLogger("narrativegraphs.nlp")
@@ -86,3 +87,12 @@ def spans_overlap(span1: Span, span2: Span) -> bool:
     return not (
         span1.end_char <= span2.start_char or span2.end_char <= span1.start_char
     )
+
+
+@Language.component("custom_sentencizer")
+def custom_sentencizer(doc):
+    for i, token in enumerate(doc[:-1]):
+        if token.text == "\n\n":
+            doc[i + 1].is_sent_start = True
+
+    return doc

@@ -4,6 +4,7 @@ Tests persistence, properties, and behaviors shared by CooccurrenceGraph
 and NarrativeGraph. Uses CooccurrenceGraph as the concrete implementation.
 """
 
+import os
 import tempfile
 import unittest
 
@@ -29,47 +30,59 @@ class TestBaseGraphInit(unittest.TestCase):
     def test_on_existing_db_stop_raises_when_data_exists(self):
         """on_existing_db='stop' raises error if database has data."""
         with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
+            tmp_path = tmp.name
+        try:
             cg1 = CooccurrenceGraph(
-                sqlite_db_path=tmp.name,
+                sqlite_db_path=tmp_path,
                 entity_extractor=MockEntityExtractor(),
                 entity_mapper=MockMapper(),
             )
             cg1.fit(["Test document."])
 
             with self.assertRaises(FileExistsError):
-                CooccurrenceGraph(sqlite_db_path=tmp.name, on_existing_db="stop")
+                CooccurrenceGraph(sqlite_db_path=tmp_path, on_existing_db="stop")
+        finally:
+            os.unlink(tmp_path)
 
     def test_on_existing_db_overwrite_clears_data(self):
         """on_existing_db='overwrite' removes existing database."""
         with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
+            tmp_path = tmp.name
+        try:
             cg1 = CooccurrenceGraph(
-                sqlite_db_path=tmp.name,
+                sqlite_db_path=tmp_path,
                 entity_extractor=MockEntityExtractor(),
                 entity_mapper=MockMapper(),
             )
             cg1.fit(["Test document."])
 
             cg2 = CooccurrenceGraph(
-                sqlite_db_path=tmp.name,
+                sqlite_db_path=tmp_path,
                 on_existing_db="overwrite",
                 entity_extractor=MockEntityExtractor(),
                 entity_mapper=MockMapper(),
             )
             self.assertEqual(len(cg2.documents_), 0)
+        finally:
+            os.unlink(tmp_path)
 
     def test_on_existing_db_reuse_keeps_data(self):
         """on_existing_db='reuse' preserves existing database data."""
         with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
+            tmp_path = tmp.name
+        try:
             cg1 = CooccurrenceGraph(
-                sqlite_db_path=tmp.name,
+                sqlite_db_path=tmp_path,
                 entity_extractor=MockEntityExtractor(),
                 entity_mapper=MockMapper(),
             )
             cg1.fit(["Test document."])
             original_count = len(cg1.documents_)
 
-            cg2 = CooccurrenceGraph(sqlite_db_path=tmp.name, on_existing_db="reuse")
+            cg2 = CooccurrenceGraph(sqlite_db_path=tmp_path, on_existing_db="reuse")
             self.assertEqual(len(cg2.documents_), original_count)
+        finally:
+            os.unlink(tmp_path)
 
 
 class TestBaseGraphProperties(unittest.TestCase):
@@ -123,10 +136,14 @@ class TestBaseGraphPersistence(unittest.TestCase):
     def test_save_to_file_from_file_db_raises(self):
         """save_to_file raises if database is already file-based."""
         with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
-            cg = CooccurrenceGraph(sqlite_db_path=tmp.name)
+            tmp_path = tmp.name
+        try:
+            cg = CooccurrenceGraph(sqlite_db_path=tmp_path)
 
             with self.assertRaises(ValueError):
                 cg.save_to_file("other_file.db")
+        finally:
+            os.unlink(tmp_path)
 
     def test_save_and_load_preserves_data(self):
         """Saving and loading preserves all data."""

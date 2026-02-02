@@ -3,6 +3,7 @@ from typing import Generator
 
 from spacy.tokens import Doc, Span
 
+from narrativegraphs.nlp.common.annotation import SpanAnnotation
 from narrativegraphs.nlp.common.spacy import (
     calculate_batch_size,
     ensure_spacy_model,
@@ -11,7 +12,6 @@ from narrativegraphs.nlp.common.spacy import (
     spans_overlap,
 )
 from narrativegraphs.nlp.entities.common import EntityExtractor
-from narrativegraphs.nlp.triplets.common import SpanAnnotation
 
 _logger = logging.getLogger("narrativegraphs.nlp.extraction")
 
@@ -49,10 +49,6 @@ class SpacyEntityExtractor(EntityExtractor):
         if split_sentence_on_double_line_break:
             # Only add if not already present
             if "custom_sentencizer" not in self.nlp.pipe_names:
-                from narrativegraphs.nlp.utils.spacysegmentation import (  # noqa
-                    custom_sentencizer,
-                )
-
                 self.nlp.add_pipe("custom_sentencizer", before="parser")
 
         if not named_entities and not noun_chunks:

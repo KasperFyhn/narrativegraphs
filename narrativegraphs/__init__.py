@@ -1,8 +1,8 @@
-from narrativegraphs.cooccurrencegraph import CooccurrenceGraph
 from narrativegraphs.dto.filter import GraphFilter
-from narrativegraphs.narrativegraph import NarrativeGraph
 
-__all__ = ["NarrativeGraph", "CooccurrenceGraph", "GraphFilter"]
+from .graphs import CooccurrenceGraph, NarrativeGraph
+
+__all__ = ["GraphFilter"]
 
 try:
     from ._version import version as __version__

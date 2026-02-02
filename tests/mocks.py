@@ -1,7 +1,8 @@
+from narrativegraphs.nlp.common.annotation import SpanAnnotation
 from narrativegraphs.nlp.entities.common import EntityExtractor
 from narrativegraphs.nlp.mapping import Mapper
 from narrativegraphs.nlp.triplets import TripletExtractor
-from narrativegraphs.nlp.triplets.common import SpanAnnotation, Triplet
+from narrativegraphs.nlp.triplets.common import Triplet
 
 
 class MockEntityExtractor(EntityExtractor):

@@ -2,8 +2,9 @@ from typing import Optional
 
 from spacy.tokens import Span, Token
 
+from narrativegraphs.nlp.common.annotation import SpanAnnotation
 from narrativegraphs.nlp.common.spacy import fits_in_range
-from narrativegraphs.nlp.triplets.common import SpanAnnotation, Triplet
+from narrativegraphs.nlp.triplets.common import Triplet
 from narrativegraphs.nlp.triplets.spacy.common import SpacyTripletExtractor
 
 

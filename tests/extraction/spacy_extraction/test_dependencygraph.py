@@ -1,4 +1,5 @@
-from narrativegraphs.nlp.triplets.common import SpanAnnotation, Triplet
+from narrativegraphs.nlp.common.annotation import SpanAnnotation
+from narrativegraphs.nlp.triplets.common import Triplet
 from narrativegraphs.nlp.triplets.spacy.dependencygraph import (
     DependencyGraphExtractor,
 )
