@@ -181,6 +181,31 @@ class PopulationService(DbService):
                 tuplet.entity_two_id = entity_two_id
                 tuplet.cooccurrence_id = cooccurrence_id
 
+    def map_tuplets_only(
+        self,
+        entity_mappings: dict[str, str],
+    ):
+        """Map tuplets to entities and cooccurrences without triplets.
+
+        Used by CooccurrenceGraph which doesn't have triplets/predicates.
+        """
+        with self.get_session_context() as sc:
+            tuplets = self.get_tuplets()
+
+            cache = CooccurrenceCache(sc, entity_mappings, tuplets)
+
+            for tuplet in tuplets:
+                entity_one_id = cache.get_entity_id(tuplet.entity_one_span_text)
+                entity_two_id = cache.get_entity_id(tuplet.entity_two_span_text)
+                cooccurrence_id = cache.get_cooccurrence_id(
+                    entity_one_id,
+                    entity_two_id,
+                )
+
+                tuplet.entity_one_id = entity_one_id
+                tuplet.entity_two_id = entity_two_id
+                tuplet.cooccurrence_id = cooccurrence_id
+
     def _update_stats_for_type(
         self,
         orm_class: Type[Base],
@@ -321,6 +346,28 @@ class PopulationService(DbService):
                 EntityCategory,
                 TripletOrm,
                 [TripletOrm.subject_id, TripletOrm.object_id],
+            )
+            session.commit()
+
+    def update_entity_info_from_tuplets(self, n_docs: int = None):
+        """Update entity stats from TupletOrm instead of TripletOrm.
+
+        Used by CooccurrenceGraph which doesn't have triplets.
+        """
+        with self.get_session_context() as session:
+            if n_docs is None:
+                n_docs = session.query(DocumentOrm).count()
+
+            self._update_stats_for_type(
+                EntityOrm,
+                TupletOrm,
+                [TupletOrm.entity_one_id, TupletOrm.entity_two_id],
+                n_docs,
+            )
+            self._update_categories_for_type(
+                EntityCategory,
+                TupletOrm,
+                [TupletOrm.entity_one_id, TupletOrm.entity_two_id],
             )
             session.commit()
 
@@ -622,6 +669,81 @@ class Cache:
         entity_id_1: int,
         entity_id_2: int,
     ):
+        if entity_id_1 > entity_id_2:
+            entity_id_2, entity_id_1 = entity_id_1, entity_id_2
+        key = entity_id_1, entity_id_2
+        cooccurrence = self._cooccurrences.get(key, None)
+        return cooccurrence.id
+
+
+class CooccurrenceCache:
+    """Simplified cache for cooccurrence-only workflows (no predicates/relations)."""
+
+    def __init__(
+        self,
+        session: Session,
+        entity_mappings: dict[str, str],
+        tuplets: list[TupletOrm],
+    ):
+        self._session = session
+        self._entity_mappings = entity_mappings
+
+        self._entities = self._initialize_entities()
+        self._cooccurrences = self._initialize_cooccurrences(tuplets)
+
+    def _initialize_entities(self) -> dict[str, EntityOrm]:
+        entities = {str(e.label): e for e in self._session.query(EntityOrm).all()}
+
+        new_entities = []
+        for mapped_entity in self._entity_mappings.values():
+            if mapped_entity not in entities:
+                new_entity = EntityOrm(label=mapped_entity)
+                entities[mapped_entity] = new_entity
+                new_entities.append(new_entity)
+
+        if new_entities:
+            self._session.add_all(new_entities)
+            self._session.flush()  # Get IDs without committing
+
+        return entities
+
+    def _initialize_cooccurrences(
+        self, tuplets: list[TupletOrm]
+    ) -> dict[tuple[int, int], CooccurrenceOrm]:
+        cooccurrences = {
+            (int(coc.entity_one_id), int(coc.entity_two_id)): coc
+            for coc in self._session.query(CooccurrenceOrm).all()
+        }
+
+        new_cooccurrences = []
+        for tuplet in tuplets:
+            entity_id_1 = self.get_entity_id(tuplet.entity_one_span_text)
+            entity_id_2 = self.get_entity_id(tuplet.entity_two_span_text)
+            if entity_id_1 > entity_id_2:
+                entity_id_2, entity_id_1 = entity_id_1, entity_id_2
+            key = entity_id_1, entity_id_2
+            if key not in cooccurrences:
+                cooccurrence = CooccurrenceOrm(
+                    entity_one_id=entity_id_1,
+                    entity_two_id=entity_id_2,
+                )
+                cooccurrences[key] = cooccurrence
+                new_cooccurrences.append(cooccurrence)
+
+        if new_cooccurrences:
+            self._session.add_all(new_cooccurrences)
+            self._session.flush()
+
+        return cooccurrences
+
+    def get_entity_id(self, label: str) -> int:
+        """Fetch an entity by label."""
+        mapped_entity = self._entity_mappings[label]
+        entity = self._entities.get(mapped_entity, None)
+        return entity.id
+
+    def get_cooccurrence_id(self, entity_id_1: int, entity_id_2: int) -> int:
+        """Fetch a cooccurrence by entity pair."""
         if entity_id_1 > entity_id_2:
             entity_id_2, entity_id_1 = entity_id_1, entity_id_2
         key = entity_id_1, entity_id_2

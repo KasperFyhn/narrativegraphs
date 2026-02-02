@@ -10,9 +10,12 @@ from narrativegraphs.server.app import app
 
 
 class BackgroundServer:
-    def __init__(self, db_engine: Engine, port: int = 8001):
+    def __init__(
+        self, db_engine: Engine, port: int = 8001, cooccurrence_only: bool = False
+    ):
         self._db_engine = db_engine
         self._port = port
+        self._cooccurrence_only = cooccurrence_only
 
         self._server = None
         self._server_task = None
@@ -24,6 +27,7 @@ class BackgroundServer:
 
         try:
             app.state.db_engine = self._db_engine  # noqa
+            app.state.cooccurrence_only = self._cooccurrence_only  # noqa
             await server.serve()
         except asyncio.CancelledError:
             logging.info("Server cancelled")
