@@ -1,14 +1,17 @@
 import logging
-from typing import Generator, Iterable
+from typing import Generator
 
 from spacy.tokens import Doc, Span
 
+from narrativegraphs.nlp.common.spacy import (
+    calculate_batch_size,
+    ensure_spacy_model,
+    filter_by_range,
+    fits_in_range,
+    spans_overlap,
+)
 from narrativegraphs.nlp.entities.common import EntityExtractor
 from narrativegraphs.nlp.triplets.common import SpanAnnotation
-from narrativegraphs.nlp.triplets.spacy.common import (
-    _calculate_batch_size,
-    _ensure_spacy_model,
-)
 
 _logger = logging.getLogger("narrativegraphs.nlp.extraction")
 
@@ -42,7 +45,7 @@ class SpacyEntityExtractor(EntityExtractor):
         """
         if model_name is None:
             model_name = "en_core_web_sm"
-        self.nlp = _ensure_spacy_model(model_name)
+        self.nlp = ensure_spacy_model(model_name)
         if split_sentence_on_double_line_break:
             # Only add if not already present
             if "custom_sentencizer" not in self.nlp.pipe_names:
@@ -60,47 +63,18 @@ class SpacyEntityExtractor(EntityExtractor):
         self.noun_chunks = noun_chunks
         self.remove_pronouns = remove_pronouns
 
-    @staticmethod
-    def _fits_in_range_tuple(span: Span, range_: tuple[int, int | None]) -> bool:
-        """Check if span length fits within the specified range."""
-        lower_bound, upper_bound = range_
-        return len(span) >= lower_bound and (
-            upper_bound is None or len(span) < upper_bound
-        )
-
     def _is_allowed_entity(self, span: Span) -> bool:
         """Check if span is allowed based on NER/noun_chunks settings."""
         if all(t.ent_type_ for t in span):  # NER land
             if isinstance(self.ner, tuple):
-                return self._fits_in_range_tuple(span, self.ner)
+                return fits_in_range(span, self.ner)
             else:
                 return bool(self.ner)
         else:  # NP land
             if isinstance(self.noun_chunks, tuple):
-                return self._fits_in_range_tuple(span, self.noun_chunks)
+                return fits_in_range(span, self.noun_chunks)
             else:
                 return bool(self.noun_chunks)
-
-    @staticmethod
-    def _filter_by_range(
-        spans: Iterable[Span], range_: tuple[int, int | None]
-    ) -> list[Span]:
-        """Filter spans by token length range."""
-        result = []
-        lower_bound, upper_bound = range_
-        for span in spans:
-            if len(span) >= lower_bound and (
-                upper_bound is None or len(span) < upper_bound
-            ):
-                result.append(span)
-        return result
-
-    @staticmethod
-    def _spans_overlap(span1: Span, span2: Span) -> bool:
-        """Check if spans overlap at character level."""
-        return not (
-            span1.end_char <= span2.start_char or span2.end_char <= span1.start_char
-        )
 
     def _is_pronoun_only(self, span: Span) -> bool:
         """Check if span consists only of pronouns."""
@@ -121,7 +95,7 @@ class SpacyEntityExtractor(EntityExtractor):
         if self.ner:
             ents = doc.ents
             if isinstance(self.ner, tuple):
-                ents = self._filter_by_range(ents, self.ner)
+                ents = filter_by_range(ents, self.ner)
             # Filter out numeric entity types
             ents = [
                 e for e in ents if list(e)[0].ent_type_ not in {"CARDINAL", "ORDINAL"}
@@ -131,7 +105,7 @@ class SpacyEntityExtractor(EntityExtractor):
         if self.noun_chunks:
             chunks = list(doc.noun_chunks)
             if isinstance(self.noun_chunks, tuple):
-                chunks = self._filter_by_range(chunks, self.noun_chunks)
+                chunks = filter_by_range(chunks, self.noun_chunks)
             # Filter chunks that pass _is_allowed_entity check
             chunks = [c for c in chunks if self._is_allowed_entity(c)]
             candidates.extend((span, 1) for span in chunks)  # Noun chunk priority: 1
@@ -142,7 +116,7 @@ class SpacyEntityExtractor(EntityExtractor):
         # Greedily select non-overlapping spans
         entities = []
         for target, _ in candidates:
-            if not any(self._spans_overlap(target, other) for other in entities):
+            if not any(spans_overlap(target, other) for other in entities):
                 entities.append(target)
 
         # Sort by position
@@ -180,7 +154,7 @@ class SpacyEntityExtractor(EntityExtractor):
             generator yielding entities per text in input order
         """
         if batch_size is None:
-            batch_size = _calculate_batch_size(texts, n_cpu)
+            batch_size = calculate_batch_size(texts, n_cpu)
         _logger.info("Using multiple CPU cores. Progress may stand still at first.")
         for doc in self.nlp.pipe(texts, n_process=n_cpu, batch_size=batch_size):
             yield self.extract_entities_from_doc(doc)

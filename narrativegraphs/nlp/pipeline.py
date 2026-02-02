@@ -5,6 +5,7 @@ from datetime import date, datetime
 from sqlalchemy import Engine
 from tqdm import tqdm
 
+from narrativegraphs.nlp.common.transformcategories import normalize_categories
 from narrativegraphs.nlp.entities.common import EntityExtractor
 from narrativegraphs.nlp.entities.spacy import SpacyEntityExtractor
 from narrativegraphs.nlp.mapping import Mapper
@@ -16,7 +17,6 @@ from narrativegraphs.nlp.tuplets.cooccurrences import (
 )
 from narrativegraphs.service import PopulationService
 from narrativegraphs.service.stats import StatsCalculator
-from narrativegraphs.utils.transform import normalize_categories
 
 logging.basicConfig(level=logging.INFO)
 _logger = logging.getLogger("narrativegraphs.pipeline")

@@ -1,6 +1,6 @@
 import unittest
 
-from narrativegraphs.utils.transform import normalize_categories
+from narrativegraphs.nlp.common.transformcategories import normalize_categories
 
 
 class TestNormalizeCategories(unittest.TestCase):
