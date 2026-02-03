@@ -106,15 +106,14 @@ class EntityService(OrmAssociatedService):
     ) -> list[int]:
         with self._get_session_context() as sc:
             query = (
-                sc.query(DocumentOrm.id)
-                .join(TupletOrm)
+                sc.query(TupletOrm.doc_id)
                 .filter(
                     (TupletOrm.entity_one_id.in_(entity_ids))
-                    | (TupletOrm.entity_two_id.in_(entity_ids))
+                    & (TupletOrm.entity_two_id.in_(entity_ids))
                 )
                 .distinct()
             )
             if limit:
                 query = query.limit(limit)
 
-        return [doc.id for doc in query.all()]
+        return [tuplet.doc_id for tuplet in query.all()]

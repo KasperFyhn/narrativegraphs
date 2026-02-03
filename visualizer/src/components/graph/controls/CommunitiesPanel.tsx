@@ -11,7 +11,7 @@ import {
 } from '../../../types/graphQuery';
 import { NamedInput } from '../../common/userinput/NamedInput';
 import { RadioGroup } from '../../common/userinput/RadioGroup';
-import { FocusEntitiesContextsPane } from '../../inspector/info/FocusEntitiesContextsPane';
+import { FocusEntitiesPane } from '../../inspector/info/FocusEntitiesPane';
 import { useSelectionContext } from '../../../contexts/SelectionContext';
 
 export const CommunitiesPanel: React.FC = () => {
@@ -41,7 +41,7 @@ export const CommunitiesPanel: React.FC = () => {
 
   return (
     <div>
-      {showContextsPane && <FocusEntitiesContextsPane />}
+      {showContextsPane && <FocusEntitiesPane />}
       <div className={'flex-container flex-container--vertical'}>
         <NamedInput name={'Weight Measure'}>
           <RadioGroup

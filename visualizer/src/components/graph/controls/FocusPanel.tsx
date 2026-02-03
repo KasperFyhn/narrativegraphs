@@ -8,7 +8,7 @@ import { SubmittedTextInput } from '../../common/userinput/SubmittedTextInput';
 import { SubPanel } from '../../common/Panel';
 import { ClipLoader } from 'react-spinners';
 import { FocusEntitiesControl } from './subcomponents/EntityListControl';
-import { FocusEntitiesContextsPane } from '../../inspector/info/FocusEntitiesContextsPane';
+import { FocusEntitiesPane } from '../../inspector/info/FocusEntitiesPane';
 
 export const FocusPanel: React.FC = () => {
   const { entityService } = useServiceContext();
@@ -34,7 +34,7 @@ export const FocusPanel: React.FC = () => {
   return (
     <div>
       <FocusEntitiesControl />
-      {showContextsPane && <FocusEntitiesContextsPane />}
+      {showContextsPane && <FocusEntitiesPane />}
       <hr />
       <span>
         Search: <SubmittedTextInput onSubmit={setLabelSearch} />
