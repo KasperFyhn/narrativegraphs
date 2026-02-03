@@ -1,9 +1,9 @@
-from typing import Iterable
-
 from spacy.tokens import Span
 
-from narrativegraphs.nlp.extraction.common import SpanAnnotation, Triplet
-from narrativegraphs.nlp.extraction.spacy.common import SpacyTripletExtractor
+from narrativegraphs.nlp.common.annotation import SpanAnnotation
+from narrativegraphs.nlp.common.spacy import filter_by_range, spans_overlap
+from narrativegraphs.nlp.triplets.common import Triplet
+from narrativegraphs.nlp.triplets.spacy.common import SpacyTripletExtractor
 
 
 class NaiveSpacyTripletExtractor(SpacyTripletExtractor):
@@ -27,24 +27,6 @@ class NaiveSpacyTripletExtractor(SpacyTripletExtractor):
         self.noun_chunks = noun_chunks
         self.max_tokens_between = max_tokens_between
 
-    @staticmethod
-    def _filter_by_range(spans: Iterable[Span], range_: tuple[int, int]) -> list[Span]:
-        result = []
-        lower_bound, upper_bound = range_
-        for span in spans:
-            if len(span) >= lower_bound and (
-                upper_bound is None or len(span) < upper_bound
-            ):
-                result.append(span)
-        return result
-
-    @staticmethod
-    def _spans_overlap(span1: Span, span2: Span) -> bool:
-        """Check if spans overlap at character level."""
-        return not (
-            span1.end_char <= span2.start_char or span2.end_char <= span1.start_char
-        )
-
     def extract_triplets_from_sent(self, sent: Span) -> list[Triplet]:
         triplets = []
 
@@ -53,7 +35,7 @@ class NaiveSpacyTripletExtractor(SpacyTripletExtractor):
         if self.ner:
             ents = sent.ents
             if isinstance(self.ner, tuple):
-                ents = self._filter_by_range(ents, self.ner)
+                ents = filter_by_range(ents, self.ner)
             ents = [
                 e for e in ents if list(e)[0].ent_type_ not in {"CARDINAL", "ORDINAL"}
             ]
@@ -62,7 +44,7 @@ class NaiveSpacyTripletExtractor(SpacyTripletExtractor):
         if self.noun_chunks:
             chunks = sent.noun_chunks
             if isinstance(self.noun_chunks, tuple):
-                chunks = self._filter_by_range(chunks, self.noun_chunks)
+                chunks = filter_by_range(chunks, self.noun_chunks)
             candidates.extend((span, 1) for span in chunks)  # Noun chunk priority: 1
 
         # Sort by priority: NER first, then length desc, then position
@@ -71,7 +53,7 @@ class NaiveSpacyTripletExtractor(SpacyTripletExtractor):
         # Greedily select non-overlapping spans
         entities = []
         for target, _ in candidates:
-            if not any(self._spans_overlap(target, other) for other in entities):
+            if not any(spans_overlap(target, other) for other in entities):
                 entities.append(target)
 
         entities.sort(key=lambda x: x.start_char)

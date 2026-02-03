@@ -1,25 +1,63 @@
 import logging
+from abc import ABC
 from datetime import date, datetime
 
 from sqlalchemy import Engine
 from tqdm import tqdm
 
-from narrativegraphs.nlp.extraction import DependencyGraphExtractor, TripletExtractor
-from narrativegraphs.nlp.extraction.cooccurrences import (
-    ChunkCooccurrenceExtractor,
-    CooccurrenceExtractor,
-)
+from narrativegraphs.nlp.common.transformcategories import normalize_categories
+from narrativegraphs.nlp.entities.common import EntityExtractor
+from narrativegraphs.nlp.entities.spacy import SpacyEntityExtractor
 from narrativegraphs.nlp.mapping import Mapper
 from narrativegraphs.nlp.mapping.linguistic import SubgramStemmingMapper
+from narrativegraphs.nlp.triplets import DependencyGraphExtractor, TripletExtractor
+from narrativegraphs.nlp.tuplets.common import CooccurrenceExtractor
+from narrativegraphs.nlp.tuplets.cooccurrences import (
+    ChunkCooccurrenceExtractor,
+)
 from narrativegraphs.service import PopulationService
-from narrativegraphs.utils.transform import normalize_categories
+from narrativegraphs.service.stats import StatsCalculator
 
 logging.basicConfig(level=logging.INFO)
 _logger = logging.getLogger("narrativegraphs.pipeline")
 _logger.setLevel(logging.INFO)
 
 
-class Pipeline:
+class _AbstractPipeline(ABC):
+    def __init__(
+        self,
+        engine: Engine,
+        n_cpu: int = 1,
+    ):
+        self.n_cpu = n_cpu
+        self._populator = PopulationService(engine)
+        self._stats = StatsCalculator(engine)
+
+    def _add_documents_to_db(
+        self,
+        docs: list[str],
+        doc_ids: list[int | str] = None,
+        timestamps: list[datetime | date] = None,
+        categories: (
+            list[str | list[str]]
+            | dict[str, list[str | list[str]]]
+            | list[dict[str, str | list[str]]]
+        ) = None,
+    ):
+        with self._populator.get_session_context():
+            _logger.info(f"Adding {len(docs)} documents to database")
+            if categories is not None:
+                categories = normalize_categories(categories)
+
+            self._populator.add_documents(
+                docs,
+                doc_ids=doc_ids,
+                timestamps=timestamps,
+                categories=categories,
+            )
+
+
+class Pipeline(_AbstractPipeline):
     def __init__(
         self,
         engine: Engine,
@@ -29,6 +67,7 @@ class Pipeline:
         predicate_mapper: Mapper = None,
         n_cpu: int = 1,
     ):
+        super().__init__(engine, n_cpu=n_cpu)
         # Analysis components
         self._triplet_extractor = triplet_extractor or DependencyGraphExtractor()
         self._cooccurrence_extractor = (
@@ -36,12 +75,6 @@ class Pipeline:
         )
         self._entity_mapper = entity_mapper or SubgramStemmingMapper("noun")
         self._predicate_mapper = predicate_mapper or SubgramStemmingMapper("verb")
-
-        self.n_cpu = n_cpu
-
-        self._db_service = PopulationService(engine)
-        self.predicate_mapping = None
-        self.entity_mapping = None
 
     def run(
         self,
@@ -54,21 +87,12 @@ class Pipeline:
             | list[dict[str, str | list[str]]]
         ) = None,
     ):
-        with self._db_service.get_session_context():
-            _logger.info(f"Adding {len(docs)} documents to database")
-            if categories is not None:
-                categories = normalize_categories(categories)
-
-            self._db_service.add_documents(
-                docs,
-                doc_ids=doc_ids,
-                timestamps=timestamps,
-                categories=categories,
-            )
+        with self._populator.get_session_context():
+            self._add_documents_to_db(docs, doc_ids, timestamps, categories)
 
             _logger.info("Extracting triplets")
             # TODO: use generators instead of lists here
-            doc_orms = self._db_service.get_docs()
+            doc_orms = self._populator.get_docs()
             extracted_triplets = self._triplet_extractor.batch_extract(
                 [d.text for d in doc_orms], n_cpu=self.n_cpu
             )
@@ -78,7 +102,7 @@ class Pipeline:
                     docs_and_triplets, desc="Extracting triplets", total=len(docs)
                 )
             for doc, doc_triplets in docs_and_triplets:
-                self._db_service.add_triplets(
+                self._populator.add_triplets(
                     doc,
                     doc_triplets,
                 )
@@ -86,27 +110,130 @@ class Pipeline:
                     {e for triplet in doc_triplets for e in [triplet.subj, triplet.obj]}
                 )
                 doc_tuplets = self._cooccurrence_extractor.extract(doc, entities)
-                self._db_service.add_tuplets(doc, doc_tuplets)
+                self._populator.add_tuplets(doc, doc_tuplets)
 
             _logger.info("Resolving entities and predicates")
-            triplets = self._db_service.get_triplets()
+            triplets = self._populator.get_triplets()
             entities = [
                 entity
                 for triplet in triplets
                 for entity in [triplet.subj_span_text, triplet.obj_span_text]
             ]
-            self.entity_mapping = self._entity_mapper.create_mapping(entities)
+            entity_mapping = self._entity_mapper.create_mapping(entities)
 
             predicates = [triplet.pred_span_text for triplet in triplets]
-            self.predicate_mapping = self._predicate_mapper.create_mapping(predicates)
+            predicate_mapping = self._predicate_mapper.create_mapping(predicates)
 
             _logger.info("Mapping triplets and tuplets")
-            self._db_service.map_triplets_and_tuplets(
-                self.entity_mapping,
-                self.predicate_mapping,
+            self._populator.map_tuplets_and_triplets(
+                entity_mapping,
+                predicate_mapping,
             )
 
             _logger.info("Calculating stats")
-            self._db_service.calculate_stats()
+            self._stats.calculate_stats()
+
+            return self
+
+
+class CooccurrencePipeline(_AbstractPipeline):
+    """Simplified pipeline for co-occurrence extraction without triplet extraction.
+
+    This pipeline extracts entities directly using an EntityExtractor, then
+    builds co-occurrence relationships between them. It skips the triplet
+    extraction and predicate mapping steps used in the full Pipeline.
+    """
+
+    def __init__(
+        self,
+        engine: Engine,
+        entity_extractor: EntityExtractor = None,
+        cooccurrence_extractor: CooccurrenceExtractor = None,
+        entity_mapper: Mapper = None,
+        n_cpu: int = 1,
+    ):
+        """Initialize the co-occurrence pipeline.
+
+        Args:
+            engine: SQLAlchemy engine for database access
+            entity_extractor: Extractor for entities (default: SpacyEntityExtractor)
+            cooccurrence_extractor: Extractor for co-occurrences
+                (default: ChunkCooccurrenceExtractor)
+            entity_mapper: Mapper for entity normalization
+                (default: SubgramStemmingMapper)
+            n_cpu: Number of CPUs for parallel processing
+        """
+        super().__init__(engine, n_cpu)
+        self._entity_extractor = entity_extractor or SpacyEntityExtractor()
+        self._cooccurrence_extractor = (
+            cooccurrence_extractor or ChunkCooccurrenceExtractor()
+        )
+        self._entity_mapper = entity_mapper or SubgramStemmingMapper("noun")
+
+    def run(
+        self,
+        docs: list[str],
+        doc_ids: list[int | str] = None,
+        timestamps: list[datetime | date] = None,
+        categories: (
+            list[str | list[str]]
+            | dict[str, list[str | list[str]]]
+            | list[dict[str, str | list[str]]]
+        ) = None,
+    ):
+        """Run the co-occurrence pipeline on a set of documents.
+
+        Args:
+            docs: List of document texts
+            doc_ids: Optional list of document identifiers
+            timestamps: Optional list of document timestamps
+            categories: Optional document categorization
+
+        Returns:
+            self for method chaining
+        """
+        with self._populator.get_session_context():
+            _logger.info(f"Adding {len(docs)} documents to database")
+            if categories is not None:
+                categories = normalize_categories(categories)
+
+            self._populator.add_documents(
+                docs,
+                doc_ids=doc_ids,
+                timestamps=timestamps,
+                categories=categories,
+            )
+
+            _logger.info("Extracting entities")
+            doc_orms = self._populator.get_docs()
+            extracted_entities = self._entity_extractor.batch_extract(
+                [d.text for d in doc_orms], n_cpu=self.n_cpu
+            )
+            docs_and_entities = zip(doc_orms, extracted_entities)
+            if _logger.isEnabledFor(logging.INFO):
+                docs_and_entities = tqdm(
+                    docs_and_entities, desc="Extracting entities", total=len(docs)
+                )
+            for doc, doc_entities in docs_and_entities:
+                doc_tuplets = self._cooccurrence_extractor.extract(doc, doc_entities)
+                self._populator.add_tuplets(doc, doc_tuplets)
+
+            _logger.info("Resolving entities")
+            tuplets = self._populator.get_tuplets()
+            entities = [
+                entity
+                for tuplet in tuplets
+                for entity in [
+                    tuplet.entity_one_span_text,
+                    tuplet.entity_two_span_text,
+                ]
+            ]
+            entity_mapping = self._entity_mapper.create_mapping(entities)
+
+            _logger.info("Mapping tuplets")
+            self._populator.map_tuplets(entity_mapping)
+
+            _logger.info("Calculating stats")
+            self._stats.calculate_stats(has_triplets=False)
 
             return self

@@ -23,12 +23,14 @@ import {
   GraphQueryAction,
   graphQueryReducer,
 } from '../reducers/graphQueryReducer';
+import { ConnectionType } from '../hooks/useGraphQuery';
 
 export interface GraphQueryContextType {
   query: GraphQuery;
   dispatchQueryAction: React.Dispatch<GraphQueryAction>;
   filter: GraphFilter;
   dispatchFilterAction: React.Dispatch<GraphFilterAction>;
+  connectionTypes: ConnectionType[];
   dataBounds: DataBounds;
   historyControls: HistoryControls;
 }
@@ -45,8 +47,11 @@ interface GraphQueryContextProviderProps {
 export const GraphQueryContextProvider: React.FC<
   GraphQueryContextProviderProps
 > = ({ children, initialFilter = initialGraphQuery }) => {
+  const { graphService } = useServiceContext();
+
   const [query, dispatchQueryAction] = useReducer(graphQueryReducer, {
-    connectionType: 'relation',
+    // hacky, but it's handled in the following code
+    connectionType: undefined as unknown as ConnectionType,
   });
 
   const [filter, dispatchFilterAction, historyControls] = useReducerWithHistory(
@@ -54,14 +59,29 @@ export const GraphQueryContextProvider: React.FC<
     initialFilter,
   );
 
-  const { graphService } = useServiceContext();
-
+  const [connectionTypes, setConnectionTypes] = useState<ConnectionType[]>();
   const [dataBounds, setDataBounds] = useState<DataBounds>();
+
+  // Initialization: fetch types and initial bounds together
   useEffect(() => {
-    graphService.getDataBounds().then((r: DataBounds) => setDataBounds(r));
+    graphService.getConnectionTypes().then(async (types) => {
+      setConnectionTypes(types);
+      dispatchQueryAction({ type: 'SET_CONNECTION_TYPE', payload: types[0] });
+      const bounds = await graphService.getDataBounds(types[0]);
+      setDataBounds(bounds);
+    });
   }, [graphService]);
 
-  if (dataBounds === undefined) {
+  // Refetch bounds when user changes connection type (skips during init)
+  useEffect(() => {
+    if (!connectionTypes || !query.connectionType) return;
+
+    graphService
+      .getDataBounds(query.connectionType)
+      .then((r: DataBounds) => setDataBounds(r));
+  }, [graphService, query.connectionType, connectionTypes]);
+
+  if (connectionTypes === undefined || dataBounds === undefined) {
     return <ClipLoader loading={true} />;
   }
 
@@ -72,6 +92,7 @@ export const GraphQueryContextProvider: React.FC<
         dispatchQueryAction,
         filter,
         dispatchFilterAction,
+        connectionTypes,
         dataBounds,
         historyControls,
       }}

@@ -135,8 +135,6 @@ export function extractHighlights(
   context: HighlightContext,
   connectionType: ConnectionType,
 ): HighlightedSpan[] {
-  console.log(context);
-  console.log(doc.triplets);
   switch (context.type) {
     case 'entity':
       return extractEntityHighlights(doc, context.entityId, connectionType);

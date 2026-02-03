@@ -1,5 +1,6 @@
-from narrativegraphs.nlp.extraction.common import SpanAnnotation, Triplet
-from narrativegraphs.nlp.extraction.spacy.naive import NaiveSpacyTripletExtractor
+from narrativegraphs.nlp.common.annotation import SpanAnnotation
+from narrativegraphs.nlp.triplets.common import Triplet
+from narrativegraphs.nlp.triplets.spacy.naive import NaiveSpacyTripletExtractor
 from tests.extraction.common import ExtractorTest
 
 

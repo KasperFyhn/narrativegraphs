@@ -1,17 +1,11 @@
 import re
-from abc import ABC
 from typing import Callable
 
 import spacy
 
 from narrativegraphs.db.documents import DocumentOrm
-from narrativegraphs.nlp.extraction.common import SpanAnnotation, Tuplet
-from narrativegraphs.nlp.utils.spacysegmentation import custom_sentencizer  # noqa
-
-
-class CooccurrenceExtractor(ABC):
-    def extract(self, doc: DocumentOrm, triplets: list[SpanAnnotation]) -> list[Tuplet]:
-        pass
+from narrativegraphs.nlp.common.annotation import SpanAnnotation
+from narrativegraphs.nlp.tuplets.common import CooccurrenceExtractor, Tuplet
 
 
 class ChunkCooccurrenceExtractor(CooccurrenceExtractor):

@@ -32,10 +32,10 @@ interface GraphFilterActions {
 }
 
 export interface GraphQueryAccessors
-  extends GraphQueryActions,
-    GraphFilterActions {
+  extends GraphQueryActions, GraphFilterActions {
   query: GraphQuery;
   dataBounds: DataBounds;
+  connectionTypes: ConnectionType[];
   filter: GraphFilter;
   historyControls: HistoryControls;
 }
@@ -48,6 +48,7 @@ export function useGraphQuery(): GraphQueryAccessors {
     dispatchQueryAction,
     filter,
     dataBounds,
+    connectionTypes,
     dispatchFilterAction,
     historyControls,
   } = context;
@@ -143,6 +144,7 @@ export function useGraphQuery(): GraphQueryAccessors {
   return {
     query,
     dataBounds,
+    connectionTypes,
     filter,
     historyControls,
     ...queryActions,

@@ -1,39 +1,15 @@
 from abc import ABC, abstractmethod
-from typing import Generator, Iterable, Optional
+from typing import Generator, Iterable
 
-from pydantic import BaseModel, ConfigDict
-from spacy.tokens import Span, Token
+from pydantic import BaseModel
 
-
-class SpanAnnotation(BaseModel):
-    model_config = ConfigDict(frozen=True)
-
-    text: str
-    start_char: int
-    end_char: int
-    normalized_text: Optional[str] = None
-
-    @classmethod
-    def from_span(cls, span: Span | Token) -> "SpanAnnotation":
-        start = span.start_char if isinstance(span, Span) else span.idx
-        end = span.end_char if isinstance(span, Span) else span.idx + len(span.text)
-        return cls(
-            text=span.text,
-            normalized_text=span.lemma_,
-            start_char=start,
-            end_char=end,
-        )
+from narrativegraphs.nlp.common.annotation import SpanAnnotation
 
 
 class Triplet(BaseModel):
     subj: SpanAnnotation
     pred: SpanAnnotation
     obj: SpanAnnotation
-
-
-class Tuplet(BaseModel):
-    entity_one: SpanAnnotation
-    entity_two: SpanAnnotation
 
 
 class TripletExtractor(ABC):

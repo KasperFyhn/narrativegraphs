@@ -5,9 +5,12 @@ import {
   GraphFilter,
   GraphQuery,
 } from '../types/graphQuery';
+import { ConnectionType } from '../hooks/useGraphQuery';
 
 export interface GraphService {
-  getDataBounds(): Promise<DataBounds>;
+  getConnectionTypes(): Promise<ConnectionType[]>;
+
+  getDataBounds(connectionType: ConnectionType): Promise<DataBounds>;
 
   getGraph(query: GraphQuery, filter: GraphFilter): Promise<GraphData>;
 
@@ -24,8 +27,14 @@ export class GraphServiceImpl implements GraphService {
     this.baseUrl = baseUrl;
   }
 
-  async getDataBounds(): Promise<DataBounds> {
-    const response = await fetch(`${this.baseUrl}/graph/bounds`);
+  async getConnectionTypes(): Promise<ConnectionType[]> {
+    return await fetch(`${this.baseUrl}/graph/types`).then((res) => res.json());
+  }
+
+  async getDataBounds(connectionType: ConnectionType): Promise<DataBounds> {
+    const response = await fetch(
+      `${this.baseUrl}/graph/bounds/` + connectionType,
+    );
 
     if (!response.ok) {
       throw new Error(`Failed to fetch data bounds: ${response.statusText}`);

@@ -5,8 +5,6 @@ from typing import Iterable
 import nltk
 import spacy
 
-from narrativegraphs.nlp.utils.spacysegmentation import custom_sentencizer  # noqa
-
 
 def _bigrams(tokens: list[str]):
     return nltk.ngrams(tokens[:-1], 2)

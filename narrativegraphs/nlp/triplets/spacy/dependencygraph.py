@@ -1,9 +1,11 @@
-from typing import List, Optional, Tuple
+from typing import Optional
 
 from spacy.tokens import Span, Token
 
-from narrativegraphs.nlp.extraction.common import SpanAnnotation, Triplet
-from narrativegraphs.nlp.extraction.spacy.common import SpacyTripletExtractor
+from narrativegraphs.nlp.common.annotation import SpanAnnotation
+from narrativegraphs.nlp.common.spacy import fits_in_range
+from narrativegraphs.nlp.triplets.common import Triplet
+from narrativegraphs.nlp.triplets.spacy.common import SpacyTripletExtractor
 
 
 class DependencyGraphExtractor(SpacyTripletExtractor):
@@ -56,7 +58,7 @@ class DependencyGraphExtractor(SpacyTripletExtractor):
 
         # 3. Find the Object/Prepositional Object and build predicate
         # Store potential objects as tuples of (type, Span/Token) to prioritize later
-        potential_objects: List[Tuple[str, Span]] = []
+        potential_objects: list[tuple[str, Span]] = []
 
         for child in verb_token.children:
             if self.direct_objects and child.dep_ == "dobj":  # Direct Object
@@ -136,22 +138,15 @@ class DependencyGraphExtractor(SpacyTripletExtractor):
                 verbs.append(verb_token)
         return verbs
 
-    @staticmethod
-    def _fits_in_range_tuple(span: Span, range_: tuple[int, int | None]):
-        lower_bound, upper_bound = range_
-        return len(span) >= lower_bound and (
-            upper_bound is None or len(span) < upper_bound
-        )
-
     def _is_allowed_entity(self, span: Span) -> bool:
         if all(t.ent_type_ for t in span):  # NER land
             if isinstance(self.ner, tuple):
-                return self._fits_in_range_tuple(span, self.ner)
+                return fits_in_range(span, self.ner)
             else:
                 return self.ner
         else:  # NP land
             if isinstance(self.noun_chunks, tuple):
-                return self._fits_in_range_tuple(span, self.noun_chunks)
+                return fits_in_range(span, self.noun_chunks)
             else:
                 return self.noun_chunks
 

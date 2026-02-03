@@ -2,6 +2,7 @@ from collections import defaultdict
 
 from sqlalchemy import Engine, func
 
+from narrativegraphs.db.cooccurrences import CooccurrenceOrm
 from narrativegraphs.db.documents import DocumentCategory, DocumentOrm
 from narrativegraphs.db.entities import EntityOrm
 from narrativegraphs.db.relations import RelationOrm
@@ -10,7 +11,7 @@ from narrativegraphs.service.common import DbService
 from narrativegraphs.service.cooccurrences import CooccurrenceService
 from narrativegraphs.service.documents import DocService
 from narrativegraphs.service.entities import EntityService
-from narrativegraphs.service.graph import GraphService
+from narrativegraphs.service.graph import ConnectionType, GraphService
 from narrativegraphs.service.predicates import PredicateService
 from narrativegraphs.service.relations import RelationService
 from narrativegraphs.service.triplets import TripletService
@@ -34,8 +35,12 @@ class QueryService(DbService):
                 categories[doc_category.name].add(doc_category.value)
             return {name: list(values) for name, values in categories.items()}
 
-    def get_bounds(self):
+    def get_bounds(self, connection_type: ConnectionType):
         with self.get_session_context() as db:
+            connection_orm_type = (
+                RelationOrm if connection_type == "relation" else CooccurrenceOrm
+            )
+
             categories = self._compile_categories()
             if not categories:
                 categories = None
@@ -47,10 +52,10 @@ class QueryService(DbService):
                     func.max(EntityOrm.frequency)
                 ).scalar(),
                 minimum_possible_edge_frequency=db.query(
-                    func.min(RelationOrm.frequency)
+                    func.min(connection_orm_type.frequency)
                 ).scalar(),
                 maximum_possible_edge_frequency=db.query(
-                    func.max(RelationOrm.frequency)
+                    func.max(connection_orm_type.frequency)
                 ).scalar(),
                 categories=categories,
                 earliest_date=db.query(func.min(DocumentOrm.timestamp)).scalar()

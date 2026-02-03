@@ -5,7 +5,7 @@ from sqlalchemy import case, func, select
 
 from narrativegraphs.db.documents import DocumentOrm
 from narrativegraphs.db.entities import EntityCategory, EntityOrm
-from narrativegraphs.db.triplets import TripletOrm
+from narrativegraphs.db.tuplets import TupletOrm
 from narrativegraphs.dto.entities import (
     EntityDetails,
     EntityLabel,
@@ -53,10 +53,10 @@ class EntityService(OrmAssociatedService):
         with self._get_session_context() as sc:
             query = (
                 sc.query(DocumentOrm.id)
-                .join(TripletOrm)
+                .join(TupletOrm)
                 .filter(
-                    (TripletOrm.subject_id == entity_id)
-                    | (TripletOrm.object_id == entity_id)
+                    (TupletOrm.entity_one_id == entity_id)
+                    | (TupletOrm.entity_two_id == entity_id)
                 )
                 .distinct()
             )
