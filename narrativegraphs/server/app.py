@@ -34,6 +34,9 @@ async def lifespan(app_arg: FastAPI):
         )
     app_arg.state.create_session = get_session_factory(app_arg.state.db_engine)
     app_arg.state.query_service = QueryService(engine=app_arg.state.db_engine)
+    app_arg.state.cooccurrence_only = (
+        len(app_arg.state.query_service.relations.as_df()) == 0
+    )
 
     if not os.path.isdir(build_directory):
         raise ValueError(f"Build directory '{build_directory}' does not exist.")

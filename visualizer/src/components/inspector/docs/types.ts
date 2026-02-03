@@ -12,7 +12,8 @@ export type HighlightContext =
       type: 'cooccurrence';
       entityOneId: string | number;
       entityTwoId: string | number;
-    };
+    }
+  | { type: 'entities'; entityIds: (string | number)[] };
 
 export interface HighlightedSpan extends Span {
   role: 'subject' | 'predicate' | 'object';

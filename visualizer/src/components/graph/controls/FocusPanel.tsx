@@ -1,19 +1,26 @@
 import React, { useEffect, useState } from 'react';
 import { useGraphQuery } from '../../../hooks/useGraphQuery';
 import { useServiceContext } from '../../../contexts/ServiceContext';
+import { useSelectionContext } from '../../../contexts/SelectionContext';
 import { Identifiable } from '../../../types/graph';
 import { EntityLabel } from '../../common/entity/EntityLabel';
 import { SubmittedTextInput } from '../../common/userinput/SubmittedTextInput';
 import { SubPanel } from '../../common/Panel';
 import { ClipLoader } from 'react-spinners';
 import { FocusEntitiesControl } from './subcomponents/EntityListControl';
+import { FocusEntitiesContextsPane } from '../../inspector/info/FocusEntitiesContextsPane';
 
 export const FocusPanel: React.FC = () => {
   const { entityService } = useServiceContext();
-  const { addFocusEntityId } = useGraphQuery();
+  const { query, addFocusEntityId } = useGraphQuery();
+  const { hasSelection } = useSelectionContext();
 
   const [labelSearch, setLabelSearch] = useState<string>('');
   const [results, setResults] = useState<Identifiable[] | null>([]);
+
+  const hasFocusEntities =
+    query.focusEntities && query.focusEntities.length > 0;
+  const showContextsPane = hasFocusEntities && !hasSelection;
 
   useEffect(() => {
     if (labelSearch && labelSearch.length > 0) {
@@ -27,6 +34,7 @@ export const FocusPanel: React.FC = () => {
   return (
     <div>
       <FocusEntitiesControl />
+      {showContextsPane && <FocusEntitiesContextsPane />}
       <hr />
       <span>
         Search: <SubmittedTextInput onSubmit={setLabelSearch} />

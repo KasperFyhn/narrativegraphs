@@ -9,6 +9,8 @@ export interface EntityService {
   getLabels(ids: string[] | number[]): Promise<Identifiable[]>;
 
   getDocs(id: string | number, limit?: number): Promise<Doc[]>;
+
+  getDocsByEntityIds(ids: (string | number)[], limit?: number): Promise<Doc[]>;
 }
 
 export class EntityServiceImpl implements EntityService {
@@ -64,6 +66,23 @@ export class EntityServiceImpl implements EntityService {
 
     if (!response.ok) {
       throw new Error(`Failed to fetch doc: ${response.statusText}`);
+    }
+
+    return await response.json();
+  }
+
+  async getDocsByEntityIds(
+    ids: (string | number)[],
+    limit?: number,
+  ): Promise<Doc[]> {
+    const response = await fetch(`${this.baseUrl}/entities/docs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ entityIds: ids, limit }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch docs: ${response.statusText}`);
     }
 
     return await response.json();

@@ -6,6 +6,7 @@ import { EdgeInfo } from '../inspector/info/EdgeInfo';
 import { useServiceContext } from '../../contexts/ServiceContext';
 import { useGraphQuery } from '../../hooks/useGraphQuery';
 import { useGraphOptionsContext } from '../../contexts/GraphOptionsContext';
+import { useSelectionContext } from '../../contexts/SelectionContext';
 import { SideBar } from './SideBar';
 
 export const GraphViewer: React.FC = () => {
@@ -15,9 +16,14 @@ export const GraphViewer: React.FC = () => {
     useGraphQuery();
 
   const { options } = useGraphOptionsContext();
+  const { setHasSelection } = useSelectionContext();
 
   const [selectedNode, setSelectedNode] = useState<Node>();
   const [selectedEdge, setSelectedEdge] = useState<Edge>();
+
+  useEffect(() => {
+    setHasSelection(selectedNode !== undefined || selectedEdge !== undefined);
+  }, [selectedNode, selectedEdge, setHasSelection]);
 
   const [graphData, setGraphData] = useState<GraphData>({
     edges: [],

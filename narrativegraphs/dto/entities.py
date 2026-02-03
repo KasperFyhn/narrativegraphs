@@ -20,6 +20,11 @@ class EntityLabelsRequest(CamelModel):
     ids: list[int]
 
 
+class EntityDocsRequest(CamelModel):
+    entity_ids: list[int]
+    limit: int | None = None
+
+
 class EntityDetails(LabeledTextOccurrence):
     @classmethod
     def from_orm(cls, entity_orm: EntityOrm) -> "EntityDetails":
