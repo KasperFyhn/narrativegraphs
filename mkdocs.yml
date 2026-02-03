@@ -63,4 +63,6 @@ nav:
       - Overview: api/index.md
       - Graph: api/graph.md
       - Triplet Extraction: api/triplet_extraction.md
+  - Developer Guide:
+      - ORM Structure: developer/orm-structure.md
   - Contributing: contributing.md
