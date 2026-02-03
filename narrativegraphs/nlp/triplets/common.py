@@ -1,15 +1,16 @@
 from abc import ABC, abstractmethod
-from typing import Generator, Iterable
+from typing import Generator, Iterable, Optional
 
 from pydantic import BaseModel
 
-from narrativegraphs.nlp.common.annotation import SpanAnnotation
+from narrativegraphs.nlp.common.annotation import AnnotationContext, SpanAnnotation
 
 
 class Triplet(BaseModel):
     subj: SpanAnnotation
     pred: SpanAnnotation
     obj: SpanAnnotation
+    context: Optional[AnnotationContext] = None
 
 
 class TripletExtractor(ABC):

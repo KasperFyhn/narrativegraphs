@@ -30,6 +30,8 @@ class DocumentOrm(Base, CategorizableMixin):
 class AnnotationMixin(CategorizableMixin):
     doc_id = Column(Integer, ForeignKey("documents.id"), nullable=False, index=True)
     timestamp = Column(Date, nullable=True)
+    context = Column(Text, nullable=True)
+    context_offset = Column(Integer, nullable=True)
 
     document: DocumentOrm = None  # Should be overridden
 

@@ -2,7 +2,7 @@ from typing import Optional
 
 from spacy.tokens import Span, Token
 
-from narrativegraphs.nlp.common.annotation import SpanAnnotation
+from narrativegraphs.nlp.common.annotation import AnnotationContext, SpanAnnotation
 from narrativegraphs.nlp.common.spacy import fits_in_range
 from narrativegraphs.nlp.triplets.common import Triplet
 from narrativegraphs.nlp.triplets.spacy.common import SpacyTripletExtractor
@@ -172,6 +172,13 @@ class DependencyGraphExtractor(SpacyTripletExtractor):
         if subject_part and predicate_part and obj_part:
             if is_passive:
                 subject_part, obj_part = obj_part, subject_part
-            return [Triplet(subj=subject_part, pred=predicate_part, obj=obj_part)]
+            return [
+                Triplet(
+                    subj=subject_part,
+                    pred=predicate_part,
+                    obj=obj_part,
+                    context=AnnotationContext.from_span(sent),
+                )
+            ]
         else:
             return []

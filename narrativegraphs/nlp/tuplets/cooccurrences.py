@@ -4,7 +4,7 @@ from typing import Callable
 import spacy
 
 from narrativegraphs.db.documents import DocumentOrm
-from narrativegraphs.nlp.common.annotation import SpanAnnotation
+from narrativegraphs.nlp.common.annotation import AnnotationContext, SpanAnnotation
 from narrativegraphs.nlp.tuplets.common import CooccurrenceExtractor, Tuplet
 
 
@@ -109,10 +109,22 @@ class ChunkCooccurrenceExtractor(CooccurrenceExtractor):
                 e for chunk in chunk_entities[i + 1 : window_end] for e in chunk
             ]
 
+            window_start_char = chunk_bounds[i][0]
+            window_end_char = chunk_bounds[window_end - 1][1]
+
             current_chunk = chunk_entities[i]
             for j, entity in enumerate(current_chunk):
                 for other in current_chunk[j + 1 :] + window_entities:
-                    all_pairs.append(Tuplet(entity_one=entity, entity_two=other))
+                    all_pairs.append(
+                        Tuplet(
+                            entity_one=entity,
+                            entity_two=other,
+                            context=AnnotationContext(
+                                text=doc.text[window_start_char:window_end_char],
+                                doc_offset=window_start_char,
+                            ),
+                        )
+                    )
 
         return all_pairs
 

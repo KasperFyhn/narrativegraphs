@@ -36,3 +36,15 @@ class TextOccurrence(BaseDetails):
 class LabeledTextOccurrence(TextOccurrence):
     label: str
     alt_labels: Optional[list[str]] = None
+
+
+class TextContext(CamelModel):
+    doc_id: int
+    text: str
+    doc_offset: int = 0
+
+
+class SpanEntity(CamelModel):
+    id: int
+    start: int
+    end: int

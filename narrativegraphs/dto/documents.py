@@ -3,7 +3,8 @@ from typing import Optional
 
 from narrativegraphs.db.documents import DocumentOrm
 from narrativegraphs.dto.common import BaseDetails
-from narrativegraphs.dto.triplets import Triplet, Tuplet
+from narrativegraphs.dto.triplets import Triplet
+from narrativegraphs.dto.tuplets import Tuplet
 
 
 class Document(BaseDetails):

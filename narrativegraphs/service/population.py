@@ -108,6 +108,10 @@ class PopulationService(DbService):
                     obj_span_start=triplet.obj.start_char,
                     obj_span_end=triplet.obj.end_char,
                     obj_span_text=triplet.obj.text,
+                    context=triplet.context.text if triplet.context else None,
+                    context_offset=triplet.context.doc_offset
+                    if triplet.context
+                    else None,
                 )
                 for triplet in triplets
             ]
@@ -129,6 +133,10 @@ class PopulationService(DbService):
                     entity_two_span_start=tuplet.entity_two.start_char,
                     entity_two_span_end=tuplet.entity_two.end_char,
                     entity_two_span_text=tuplet.entity_two.text,
+                    context=tuplet.context.text if tuplet.context else None,
+                    context_offset=tuplet.context.doc_offset
+                    if tuplet.context
+                    else None,
                 )
                 for tuplet in tuplets
             ]
