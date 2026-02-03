@@ -1,8 +1,14 @@
 from abc import ABC
 
+from pydantic import BaseModel
+
 from narrativegraphs.db.documents import DocumentOrm
 from narrativegraphs.nlp.common.annotation import SpanAnnotation
-from narrativegraphs.nlp.triplets.common import Tuplet
+
+
+class Tuplet(BaseModel):
+    entity_one: SpanAnnotation
+    entity_two: SpanAnnotation
 
 
 class CooccurrenceExtractor(ABC):

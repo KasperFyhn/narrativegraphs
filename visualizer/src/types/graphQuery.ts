@@ -14,7 +14,6 @@ export interface GraphQuery {
 }
 
 export interface GraphFilter {
-  connectionType: 'relation' | 'cooccurrence';
   focusEntities?: string[];
   limitNodes: number;
   limitEdges: number;
@@ -29,7 +28,6 @@ export interface GraphFilter {
 }
 
 export const initialGraphQuery: GraphFilter = {
-  connectionType: 'relation',
   limitNodes: 100,
   limitEdges: 200,
   // ... other defaults

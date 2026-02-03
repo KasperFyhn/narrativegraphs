@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 
 from narrativegraphs.dto.filter import DataBounds
 from narrativegraphs.dto.graph import Community
 from narrativegraphs.server.requests import CommunitiesRequest, GraphQuery
 from narrativegraphs.server.routes.common import get_query_service
 from narrativegraphs.service import QueryService
+from narrativegraphs.service.graph import ConnectionType
 
 router = APIRouter()
 
@@ -25,6 +26,21 @@ async def get_graph(
         return service.graph.get_graph(query.connection_type, query.filter)
 
 
+@router.get("/types")
+async def get_types(request: Request) -> list[ConnectionType]:
+    if request.app.state.cooccurrence_only:
+        return ["cooccurrence"]
+    else:
+        return ["relation", "cooccurrence"]
+
+
+@router.get("/bounds/{connection_type}")
+async def get_bounds(
+    connection_type: ConnectionType, service: QueryService = Depends(get_query_service)
+) -> DataBounds:
+    return service.get_bounds(connection_type)
+
+
 @router.post("/communities")
 async def get_communities(
     request: CommunitiesRequest,
@@ -38,8 +54,3 @@ async def get_communities(
         request.community_detection_method,
         request.community_detection_method_args,
     )
-
-
-@router.get("/bounds")
-async def get_bounds(service: QueryService = Depends(get_query_service)) -> DataBounds:
-    return service.get_bounds()

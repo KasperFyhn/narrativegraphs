@@ -5,7 +5,8 @@ from narrativegraphs.db.triplets import (
     TripletOrm,
 )
 from narrativegraphs.db.tuplets import TupletOrm
-from narrativegraphs.nlp.triplets.common import Triplet, Tuplet
+from narrativegraphs.nlp.triplets.common import Triplet
+from narrativegraphs.nlp.tuplets.common import Tuplet
 from narrativegraphs.service.cache import (
     CooccurrenceCache,
     EntityCache,

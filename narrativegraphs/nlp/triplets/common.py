@@ -12,11 +12,6 @@ class Triplet(BaseModel):
     obj: SpanAnnotation
 
 
-class Tuplet(BaseModel):
-    entity_one: SpanAnnotation
-    entity_two: SpanAnnotation
-
-
 class TripletExtractor(ABC):
     """
     Abstract base class for triplet extraction algorithms.

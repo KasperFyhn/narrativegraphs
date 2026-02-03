@@ -10,14 +10,14 @@ import { RadioGroup } from '../../common/userinput/RadioGroup';
 
 export const GraphOptionsPanel: React.FC = () => {
   const { options, setOptions } = useGraphOptionsContext();
-  const { query, setConnectionType } = useGraphQuery();
+  const { query, setConnectionType, connectionTypes } = useGraphQuery();
   return (
     <div className={'flex-container flex-container--vertical'}>
       <h3>Graph creation</h3>
       <NamedInput name={'Connection Type'}>
         <RadioGroup
           name={'connectionType'}
-          options={['relation', 'cooccurrence']}
+          options={connectionTypes}
           value={query.connectionType}
           onChange={(choice) => setConnectionType(choice as ConnectionType)}
         />
