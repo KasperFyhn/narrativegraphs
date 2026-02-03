@@ -6,11 +6,13 @@ function toHighlightedSpan(
   span: Span,
   role: 'subject' | 'predicate' | 'object',
   isPrimary: boolean,
+  isEntityHighlight?: boolean,
 ): HighlightedSpan {
   return {
     ...span,
     role,
     isPrimary,
+    isEntityHighlight,
   };
 }
 
@@ -129,6 +131,7 @@ function extractCooccurrenceHighlights(
 
 /**
  * For multi-entity context: highlight all occurrences of any focus entity as primary.
+ * Focus entities get isEntityHighlight=true for unique coloring.
  */
 function extractEntitiesHighlights(
   doc: Doc,
@@ -145,13 +148,13 @@ function extractEntitiesHighlights(
 
       if (subjectIsFocus || objectIsFocus) {
         highlights.push(
-          toHighlightedSpan(triplet.subject, 'subject', subjectIsFocus),
+          toHighlightedSpan(triplet.subject, 'subject', subjectIsFocus, subjectIsFocus),
         );
         highlights.push(
           toHighlightedSpan(triplet.predicate, 'predicate', false),
         );
         highlights.push(
-          toHighlightedSpan(triplet.object, 'object', objectIsFocus),
+          toHighlightedSpan(triplet.object, 'object', objectIsFocus, objectIsFocus),
         );
       }
     }
@@ -163,10 +166,10 @@ function extractEntitiesHighlights(
 
       if (entityOneIsFocus || entityTwoIsFocus) {
         highlights.push(
-          toHighlightedSpan(tuplet.entityOne, 'subject', entityOneIsFocus),
+          toHighlightedSpan(tuplet.entityOne, 'subject', entityOneIsFocus, entityOneIsFocus),
         );
         highlights.push(
-          toHighlightedSpan(tuplet.entityTwo, 'object', entityTwoIsFocus),
+          toHighlightedSpan(tuplet.entityTwo, 'object', entityTwoIsFocus, entityTwoIsFocus),
         );
       }
     }

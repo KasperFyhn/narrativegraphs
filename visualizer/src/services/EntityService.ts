@@ -6,7 +6,7 @@ export interface EntityService {
 
   search(searchString: string): Promise<Identifiable[]>;
 
-  getLabels(ids: string[] | number[]): Promise<Identifiable[]>;
+  getLabels(ids: (string | number)[]): Promise<Identifiable[]>;
 
   getDocs(id: string | number, limit?: number): Promise<Doc[]>;
 

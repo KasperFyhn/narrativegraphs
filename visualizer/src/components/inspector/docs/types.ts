@@ -18,6 +18,7 @@ export type HighlightContext =
 export interface HighlightedSpan extends Span {
   role: 'subject' | 'predicate' | 'object';
   isPrimary: boolean; // true if this span is the main focus
+  isEntityHighlight?: boolean; // true for focus entities in multi-entity mode
 }
 
 export interface SpanSegment {

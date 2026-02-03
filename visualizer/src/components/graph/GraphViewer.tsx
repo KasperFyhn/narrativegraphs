@@ -16,7 +16,7 @@ export const GraphViewer: React.FC = () => {
     useGraphQuery();
 
   const { options } = useGraphOptionsContext();
-  const { setHasSelection } = useSelectionContext();
+  const { setHasSelection, getEntityColor } = useSelectionContext();
 
   const [selectedNode, setSelectedNode] = useState<Node>();
   const [selectedEdge, setSelectedEdge] = useState<Edge>();
@@ -34,15 +34,6 @@ export const GraphViewer: React.FC = () => {
   }, [graphService, filter, query]);
 
   const coloredGraphData = useMemo(() => {
-    const colorNode = (n: Node): string => {
-      if (query.focusEntities?.includes(n.id.toString())) {
-        return 'lightgreen';
-      } else if (filter.blacklistedEntityIds?.includes(n.id.toString())) {
-        return 'red';
-      } else {
-        return 'cyan';
-      }
-    };
     return {
       edges: graphData.edges.map((e) => ({
         ...e,
@@ -51,16 +42,10 @@ export const GraphViewer: React.FC = () => {
       })),
       nodes: graphData.nodes.map((n) => ({
         ...n,
-        color: colorNode(n),
+        color: getEntityColor(n.id.toString()),
       })),
     };
-  }, [
-    graphData.edges,
-    graphData.nodes,
-    query.focusEntities,
-    query.connectionType,
-    filter.blacklistedEntityIds,
-  ]);
+  }, [getEntityColor, graphData.edges, graphData.nodes, query.connectionType]);
 
   const graphDataMaps = useMemo(() => {
     return {
