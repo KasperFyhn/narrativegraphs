@@ -30,11 +30,13 @@ class TupletOrm(Base, AnnotationMixin):
     entity_one = relationship(
         "EntityOrm",
         foreign_keys="TupletOrm.entity_one_id",
+        back_populates="_entity_one_tuplets",
     )
 
     entity_two = relationship(
         "EntityOrm",
         foreign_keys="TupletOrm.entity_two_id",
+        back_populates="_entity_two_tuplets",
     )
 
     cooccurrence = relationship(

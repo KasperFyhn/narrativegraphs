@@ -62,6 +62,18 @@ class CooccurrenceService(OrmAssociatedService):
             CooccurrenceDetails.from_orm, ids=ids, limit=limit
         )
 
+    def get_by_entity_ids(self, entity_ids: list[int]) -> list[CooccurrenceDetails]:
+        with self._get_session_context() as session:
+            coocs = (
+                session.query(CooccurrenceOrm)
+                .filter(
+                    CooccurrenceOrm.entity_one_id.in_(entity_ids)
+                    & CooccurrenceOrm.entity_two.in_(entity_ids)
+                )
+                .all()
+            )
+            return [CooccurrenceDetails.from_orm(cooc) for cooc in coocs]
+
     def doc_ids_by_cooccurrence(
         self, cooccurrence_id: int, limit: Optional[int] = None
     ) -> list[int]:

@@ -56,3 +56,13 @@ class AnnotationBackedTextStatsMixin:
             cls.first_occurrence,
             cls.last_occurrence,
         ]
+
+    @property
+    def _annotations(self):
+        """Return the annotations (triplets/tuplets) backing this ORM."""
+        raise NotImplementedError("Subclass must implement _annotations")
+
+    @property
+    def doc_ids(self) -> set[int]:
+        """Return the set of document IDs where this item occurs."""
+        return {ann.doc_id for ann in self._annotations}

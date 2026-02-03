@@ -84,3 +84,7 @@ class RelationOrm(
     categories: Mapped[list[RelationCategory]] = relationship(
         "RelationCategory", foreign_keys=[RelationCategory.target_id]
     )
+
+    @property
+    def _annotations(self):
+        return self.triplets

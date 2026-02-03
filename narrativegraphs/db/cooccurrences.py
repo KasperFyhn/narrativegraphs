@@ -59,3 +59,7 @@ class CooccurrenceOrm(Base, AnnotationBackedTextStatsMixin, CategorizableMixin):
         "CooccurrenceCategory",
         foreign_keys="CooccurrenceCategory.target_id",
     )
+
+    @property
+    def _annotations(self):
+        return self.tuplets
