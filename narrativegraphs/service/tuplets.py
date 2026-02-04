@@ -1,0 +1,73 @@
+from typing import Optional
+
+import pandas as pd
+from sqlalchemy import select
+from sqlalchemy.orm import aliased
+
+from narrativegraphs.db.entities import EntityOrm
+from narrativegraphs.db.tuplets import TupletOrm
+from narrativegraphs.dto.tuplets import Tuplet
+from narrativegraphs.service.common import OrmAssociatedService
+
+
+class TupletService(OrmAssociatedService):
+    _orm = TupletOrm
+
+    def as_df(self) -> pd.DataFrame:
+        with self._get_session_context() as session:
+            engine = session.get_bind()
+
+            # Create aliases for the two entity joins
+            entity_one = aliased(EntityOrm)
+            entity_two = aliased(EntityOrm)
+
+            df = pd.read_sql(
+                select(
+                    TupletOrm.id.label("id"),
+                    entity_one.id.label("entity_one_id"),
+                    entity_one.label.label("entity_one_label"),
+                    TupletOrm.entity_one_span_text.label("entity_one_span_text"),
+                    TupletOrm.entity_one_span_start.label("entity_one_span_start"),
+                    TupletOrm.entity_one_span_end.label("entity_one_span_end"),
+                    entity_two.id.label("entity_two_id"),
+                    entity_two.label.label("entity_two_label"),
+                    TupletOrm.entity_two_span_text.label("entity_two_span_text"),
+                    TupletOrm.entity_two_span_start.label("entity_two_span_start"),
+                    TupletOrm.entity_two_span_end.label("entity_two_span_end"),
+                )
+                .join(
+                    entity_one,
+                    TupletOrm.entity_one_id == entity_one.id,
+                )
+                .join(
+                    entity_two,
+                    TupletOrm.entity_two_id == entity_two.id,
+                ),
+                engine,
+            )
+
+        cleaned = df.dropna(axis=1, how="all")
+
+        return cleaned
+
+    def get_single(self, id_: int) -> dict:
+        return self._get_by_id_and_transform(id_, lambda x: x.__dict__)
+
+    def get_multiple(
+        self, ids: list[int] = None, limit: Optional[int] = None
+    ) -> list[dict]:
+        return self._get_multiple_by_ids_and_transform(
+            lambda x: x.__dict__, ids=ids, limit=limit
+        )
+
+    def get_by_entity_ids(self, entity_ids: list[int]) -> list[Tuplet]:
+        with self._get_session_context() as session:
+            tuplets = (
+                session.query(TupletOrm)
+                .filter(
+                    TupletOrm.entity_one_id.in_(entity_ids)
+                    & TupletOrm.entity_two.in_(entity_ids)
+                )
+                .all()
+            )
+            return [Tuplet.from_orm(tuplet) for tuplet in tuplets]
