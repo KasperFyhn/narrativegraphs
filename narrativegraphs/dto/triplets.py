@@ -35,8 +35,10 @@ class Triplet(CamelModel):
             ),
             context=TextContext(
                 doc_id=triplet_orm.doc_id,
-                text=triplet_orm.context,
-                doc_offset=triplet_orm.context_offset,
+                text=triplet_orm.context
+                if triplet_orm.context
+                else triplet_orm.document.text,
+                doc_offset=triplet_orm.context_offset if triplet_orm.context else 0,
             ),
         )
 

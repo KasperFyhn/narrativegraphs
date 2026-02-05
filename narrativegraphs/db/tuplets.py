@@ -1,7 +1,8 @@
 from sqlalchemy import Column, ForeignKey, Integer, String
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Mapped
 
 from narrativegraphs.db.documents import AnnotationMixin
+from narrativegraphs.db.documents import DocumentOrm
 from narrativegraphs.db.engine import Base
 
 
@@ -43,7 +44,7 @@ class TupletOrm(Base, AnnotationMixin):
         "CooccurrenceOrm",
         foreign_keys="TupletOrm.cooccurrence_id",
     )
-    document = relationship(
+    document: Mapped["DocumentOrm"] = relationship(
         "DocumentOrm",
         foreign_keys="TupletOrm.doc_id",
         back_populates="tuplets",

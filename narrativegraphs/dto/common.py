@@ -48,23 +48,24 @@ class TextContext(CamelModel):
     text: str
     doc_offset: int = 0
 
-    def overlaps(self, other: _TextContext) -> bool:
+    def overlaps_or_adjacent(self, other: _TextContext) -> bool:
         if self.doc_id != other.doc_id:
             return False
         first = min(self, other, key=lambda tc: tc.doc_offset)
         second = self if first is other else other
         first_end_char = first.doc_offset + len(first.text)
-        return first_end_char > second.doc_offset
+        return first_end_char >= second.doc_offset
 
     def combine(self, other: _TextContext) -> _TextContext:
-        if not self.overlaps(other):
+        if not self.overlaps_or_adjacent(other):
             raise ValueError("Cannot combine non-overlapping TextContexts")
         first = min(self, other, key=lambda tc: tc.doc_offset)
-        if first is self:
-            self.text = self.text[: other.doc_offset] + other.text
-        else:
-            self.doc_offset = other.doc_offset
-            self.text = other.text[: first.doc_offset] + first.text
+        second = self if first is other else other
+        relative_offset = second.doc_offset - first.doc_offset
+        self.doc_offset = first.doc_offset
+        if len(second.text) >= len(first.text[relative_offset:]):
+            # second extends out over the first text
+            self.text = first.text[:relative_offset] + second.text
         return self
 
     @staticmethod
@@ -73,7 +74,7 @@ class TextContext(CamelModel):
         combined = text_contexts[:1]
         for current in text_contexts[1:]:
             last = combined[-1]
-            if last.overlaps(current):
+            if last.overlaps_or_adjacent(current):
                 last.combine(current)
             else:
                 combined.append(current)

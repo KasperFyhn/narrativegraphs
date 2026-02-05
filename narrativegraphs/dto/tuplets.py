@@ -28,8 +28,10 @@ class Tuplet(CamelModel):
             ),
             context=TextContext(
                 doc_id=tuplet_orm.doc_id,
-                text=tuplet_orm.context,
-                doc_offset=tuplet_orm.context_offset,
+                text=tuplet_orm.context
+                if tuplet_orm.context
+                else tuplet_orm.document.text,
+                doc_offset=tuplet_orm.context_offset if tuplet_orm.context else 0,
             ),
         )
 
