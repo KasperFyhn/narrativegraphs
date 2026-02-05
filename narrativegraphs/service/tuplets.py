@@ -6,7 +6,8 @@ from sqlalchemy.orm import aliased
 
 from narrativegraphs.db.entities import EntityOrm
 from narrativegraphs.db.tuplets import TupletOrm
-from narrativegraphs.dto.tuplets import Tuplet
+from narrativegraphs.dto.common import TextContext
+from narrativegraphs.dto.tuplets import Tuplet, TupletGroup
 from narrativegraphs.service.common import OrmAssociatedService
 
 
@@ -66,8 +67,13 @@ class TupletService(OrmAssociatedService):
                 session.query(TupletOrm)
                 .filter(
                     TupletOrm.entity_one_id.in_(entity_ids)
-                    & TupletOrm.entity_two.in_(entity_ids)
+                    & TupletOrm.entity_two_id.in_(entity_ids)
                 )
                 .all()
             )
             return [Tuplet.from_orm(tuplet) for tuplet in tuplets]
+
+    def get_contexts_by_entity_ids(self, entity_ids: list[int]) -> list[TupletGroup]:
+        tuplets = self.get_by_entity_ids(entity_ids)
+        tuplet_groups = [TupletGroup.from_tuplet(tuplet) for tuplet in tuplets]
+        return TextContext.combine_many(tuplet_groups)

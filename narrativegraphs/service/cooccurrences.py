@@ -68,7 +68,7 @@ class CooccurrenceService(OrmAssociatedService):
                 session.query(CooccurrenceOrm)
                 .filter(
                     CooccurrenceOrm.entity_one_id.in_(entity_ids)
-                    & CooccurrenceOrm.entity_two.in_(entity_ids)
+                    & CooccurrenceOrm.entity_two_id.in_(entity_ids)
                 )
                 .all()
             )
