@@ -3,7 +3,7 @@
 
 ## TripletExtractor
 
-::: narrativegraphs.nlp.extraction.common.TripletExtractor
+::: narrativegraphs.nlp.triplets.common.TripletExtractor
 
-::: narrativegraphs.nlp.extraction.spacy.common.SpacyTripletExtractor
+::: narrativegraphs.nlp.triplets.spacy.common.SpacyTripletExtractor
 
