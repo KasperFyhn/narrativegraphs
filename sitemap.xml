@@ -2,50 +2,46 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://kasperfyhn.github.io/narrativegraphs/</loc>
-         <lastmod>2026-02-03</lastmod>
+         <lastmod>2026-02-12</lastmod>
     </url>
     <url>
          <loc>https://kasperfyhn.github.io/narrativegraphs/contributing/</loc>
-         <lastmod>2026-02-03</lastmod>
+         <lastmod>2026-02-12</lastmod>
     </url>
     <url>
          <loc>https://kasperfyhn.github.io/narrativegraphs/api/</loc>
-         <lastmod>2026-02-03</lastmod>
+         <lastmod>2026-02-12</lastmod>
     </url>
     <url>
          <loc>https://kasperfyhn.github.io/narrativegraphs/api/graph/</loc>
-         <lastmod>2026-02-03</lastmod>
+         <lastmod>2026-02-12</lastmod>
     </url>
     <url>
          <loc>https://kasperfyhn.github.io/narrativegraphs/api/triplet_extraction/</loc>
-         <lastmod>2026-02-03</lastmod>
-    </url>
-    <url>
-         <loc>https://kasperfyhn.github.io/narrativegraphs/developer/orm-structure/</loc>
-         <lastmod>2026-02-03</lastmod>
+         <lastmod>2026-02-12</lastmod>
     </url>
     <url>
          <loc>https://kasperfyhn.github.io/narrativegraphs/getting-started/adding-metadata/</loc>
-         <lastmod>2026-02-03</lastmod>
+         <lastmod>2026-02-12</lastmod>
     </url>
     <url>
          <loc>https://kasperfyhn.github.io/narrativegraphs/getting-started/create-and-inspect/</loc>
-         <lastmod>2026-02-03</lastmod>
+         <lastmod>2026-02-12</lastmod>
     </url>
     <url>
          <loc>https://kasperfyhn.github.io/narrativegraphs/getting-started/installation/</loc>
-         <lastmod>2026-02-03</lastmod>
+         <lastmod>2026-02-12</lastmod>
     </url>
     <url>
          <loc>https://kasperfyhn.github.io/narrativegraphs/getting-started/save-and-load/</loc>
-         <lastmod>2026-02-03</lastmod>
+         <lastmod>2026-02-12</lastmod>
     </url>
     <url>
          <loc>https://kasperfyhn.github.io/narrativegraphs/notebooks/categories/</loc>
-         <lastmod>2026-02-03</lastmod>
+         <lastmod>2026-02-12</lastmod>
     </url>
     <url>
          <loc>https://kasperfyhn.github.io/narrativegraphs/notebooks/demo/</loc>
-         <lastmod>2026-02-03</lastmod>
+         <lastmod>2026-02-12</lastmod>
     </url>
 </urlset>
