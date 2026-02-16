@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Optional, Self, TypeVar
+from typing import Optional, TypeVar
 
 from fastapi_camelcase import CamelModel
 
@@ -91,10 +91,7 @@ class IdentifiableSpan(CamelModel):
     @classmethod
     def from_entity_occurrence_orm(cls, orm: EntityOccurrenceOrm) -> "IdentifiableSpan":
         return cls(
-            id=orm.entity_id,
-            text=orm.span_text,
-            start=orm.span_start,
-            end=orm.span_end
+            id=orm.entity_id, text=orm.span_text, start=orm.span_start, end=orm.span_end
         )
 
     @classmethod
