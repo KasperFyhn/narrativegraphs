@@ -73,7 +73,13 @@ class TupletService(OrmAssociatedService):
             )
             return [Tuplet.from_orm(tuplet) for tuplet in tuplets]
 
-    def get_contexts_by_entity_ids(self, entity_ids: list[int]) -> list[TupletGroup]:
+    def get_contexts_by_entity_ids(
+        self, entity_ids: list[int], remove_self_loops: bool = True
+    ) -> list[TupletGroup]:
         tuplets = self.get_by_entity_ids(entity_ids)
-        tuplet_groups = [TupletGroup.from_tuplet(tuplet) for tuplet in tuplets]
+        tuplet_groups = [
+            TupletGroup.from_tuplet(tuplet)
+            for tuplet in tuplets
+            if tuplet.entity_one.id != tuplet.entity_two.id or not remove_self_loops
+        ]
         return TextContext.combine_many(tuplet_groups)

@@ -46,7 +46,6 @@ async def get_communities(
     request: CommunitiesRequest,
     service: QueryService = Depends(get_query_service),
 ) -> list[Community]:
-    print(request)
     return service.graph.find_communities(
         request.graph_filter,
         request.weight_measure,

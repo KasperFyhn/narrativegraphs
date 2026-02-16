@@ -1,8 +1,7 @@
 from sqlalchemy import Column, ForeignKey, Integer, String
-from sqlalchemy.orm import relationship, Mapped
+from sqlalchemy.orm import Mapped, relationship
 
-from narrativegraphs.db.documents import AnnotationMixin
-from narrativegraphs.db.documents import DocumentOrm
+from narrativegraphs.db.documents import AnnotationMixin, DocumentOrm
 from narrativegraphs.db.engine import Base
 
 
