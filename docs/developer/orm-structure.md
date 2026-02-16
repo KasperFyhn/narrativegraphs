@@ -6,10 +6,10 @@ This guide provides an overview of the ORM structure in `narrativegraphs/db/`.
 
 The data model supports two graph paradigms:
 
-| Graph Type | Primary Annotations | Has Relations/Predicates |
-|------------|---------------------|--------------------------|
-| **NarrativeGraph** | Triplets (subject-predicate-object) | Yes |
-| **CooccurrenceGraph** | Tuplets (entity-entity pairs) | No |
+| Graph Type            | Primary Annotations                 | Has Relations/Predicates |
+| --------------------- | ----------------------------------- | ------------------------ |
+| **NarrativeGraph**    | Triplets (subject-predicate-object) | Yes                      |
+| **CooccurrenceGraph** | Tuplets (entity-entity pairs)       | No                       |
 
 ## Annotation Types
 
@@ -31,6 +31,15 @@ Represents an entity-entity cooccurrence extraction.
 - Stores span positions and text for both entities
 - Mixes in `AnnotationMixin`
 
+### EntityOccurrenceOrm (`entityoccurrences.py`)
+
+Represents a single entity mention/occurrence in text.
+
+- Has: `doc_id`, `entity_id`, `span_start`, `span_end`, `span_text`
+- Relationships: `entity` (→ EntityOrm), `document` (→ DocumentOrm)
+- Mixes in `AnnotationMixin`
+- Used by EntityOrm to derive `alt_labels` (alternative surface forms)
+
 ## Higher-Level ORMs
 
 These ORMs represent canonical/deduplicated concepts backed by annotations. All mix in `AnnotationBackedTextStatsMixin` which provides:
@@ -44,12 +53,13 @@ These ORMs represent canonical/deduplicated concepts backed by annotations. All 
 Canonical entity (e.g., "Microsoft", "Satya Nadella").
 
 - Relationships:
-    - `subject_triplets` / `object_triplets` → `triplets` property
-    - `_entity_one_tuplets` / `_entity_two_tuplets` → `tuplets` property
-    - `subject_relations` / `object_relations` → `relations` property
-    - `_entity_one_cooccurrences` / `_entity_two_cooccurrences` → `cooccurrences` property
+  - `occurrences` → EntityOccurrenceOrm (all mentions of this entity)
+  - `subject_triplets` / `object_triplets` → `triplets` property
+  - `_entity_one_tuplets` / `_entity_two_tuplets` → `tuplets` property
+  - `subject_relations` / `object_relations` → `relations` property
+  - `_entity_one_cooccurrences` / `_entity_two_cooccurrences` → `cooccurrences` property
 - `_annotations` returns `triplets + tuplets` (union for both graph types)
-- Has `alt_labels` hybrid property (surface forms from span texts)
+- Has `alt_labels` hybrid property (derived from `occurrences` span texts)
 
 ### PredicateOrm (`predicates.py`)
 
@@ -80,31 +90,33 @@ Canonical cooccurrence: (entity_one, entity_two) where `entity_one_id <= entity_
 
 Source document with `text`, `str_id`, `timestamp`.
 
-- Relationships: `triplets`, `tuplets`
+- Relationships: `triplets`, `tuplets`, `entity_occurrences`
 - Has categories via `CategorizableMixin`
 
 ## Mixins (`common.py`, `documents.py`)
 
-| Mixin | Purpose |
-|-------|---------|
-| **CategorizableMixin** | Provides category support |
-| **CategoryMixin** | Base for category tables (e.g., `EntityCategory`) |
-| **HasAltLabels** | For ORMs with alternative surface forms |
-| **AnnotationMixin** | For triplets/tuplets (provides `doc_id`, `document` relationship) |
-| **AnnotationBackedTextStatsMixin** | For higher-level ORMs (stats + `doc_ids`) |
+| Mixin                              | Purpose                                                           |
+| ---------------------------------- | ----------------------------------------------------------------- |
+| **CategorizableMixin**             | Provides category support                                         |
+| **CategoryMixin**                  | Base for category tables (e.g., `EntityCategory`)                 |
+| **HasAltLabels**                   | For ORMs with alternative surface forms                           |
+| **AnnotationMixin**                | For triplets/tuplets (provides `doc_id`, `document` relationship) |
+| **AnnotationBackedTextStatsMixin** | For higher-level ORMs (stats + `doc_ids`)                         |
 
 ## Relationship Diagram
 
 ```
 DocumentOrm
     │
-    ├── triplets ──► TripletOrm ◄── subject/object ── EntityOrm
-    │                    │                              │
-    │                    ├── predicate ── PredicateOrm  │
-    │                    │                    │         │
-    │                    └── relation ─── RelationOrm ◄─┘
-    │                                        │
-    └── tuplets ───► TupletOrm ◄─────────────┼── entity_one/two ── EntityOrm
-                         │                   │
-                         └── cooccurrence ── CooccurrenceOrm
+    ├── triplets ──────────► TripletOrm ◄── subject/object ── EntityOrm
+    │                            │                              │
+    │                            ├── predicate ── PredicateOrm  │
+    │                            │                    │         │
+    │                            └── relation ─── RelationOrm ◄─┘
+    │                                                │
+    ├── tuplets ────────────► TupletOrm ◄────────────┼── entity_one/two ── EntityOrm
+    │                            │                   │
+    │                            └── cooccurrence ── CooccurrenceOrm
+    │
+    └── entity_occurrences ─► EntityOccurrenceOrm ◄── entity ── EntityOrm
 ```
