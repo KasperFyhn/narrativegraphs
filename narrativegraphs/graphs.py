@@ -49,7 +49,7 @@ class BaseGraph(QueryService):
                 os.remove(sqlite_db_path)
             elif on_existing_db == "stop":
                 temp_service = QueryService(get_engine(sqlite_db_path))
-                if len(temp_service.documents.get_docs(limit=1)) > 0:
+                if len(temp_service.documents.get_multiple(limit=1)) > 0:
                     raise FileExistsError(
                         f"Database contains data. Use {self.__class__.__name__}.load() "
                         "or set on_existing_db to 'overwrite' or 'reuse'."

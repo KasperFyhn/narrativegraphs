@@ -1,3 +1,4 @@
+from functools import partial
 from typing import Optional
 
 import pandas as pd
@@ -35,55 +36,97 @@ class DocService(OrmAssociatedService):
         return cleaned
 
     def get_single(self, id_: int) -> Document:
-        return self._get_by_id_and_transform(id_, Document.from_orm)
+        """Get a single document without relations."""
+        with self._get_session_context() as sc:
+            query = sc.query(self._orm).options(selectinload(DocumentOrm.categories))
+            entry = query.get(id_)
+            if entry is None:
+                from narrativegraphs.errors import EntryNotFoundError
+
+                raise EntryNotFoundError(
+                    f"No entry with id '{id_}' in table {self._orm.__tablename__}"
+                )
+            return Document.from_orm(entry)
+
+    @staticmethod
+    def _build_options(
+        include_triplets: bool = False,
+        include_tuplets: bool = False,
+        include_mentions: bool = False,
+    ) -> list:
+        """Build SQLAlchemy eager loading options based on what's needed."""
+        options = [selectinload(DocumentOrm.categories)]
+
+        if include_triplets:
+            options.extend(
+                [
+                    selectinload(DocumentOrm.triplets).selectinload(
+                        TripletOrm.subject_occurrence
+                    ),
+                    selectinload(DocumentOrm.triplets).selectinload(
+                        TripletOrm.object_occurrence
+                    ),
+                ]
+            )
+
+        if include_tuplets:
+            options.extend(
+                [
+                    selectinload(DocumentOrm.tuplets).selectinload(
+                        TupletOrm.entity_one_occurrence
+                    ),
+                    selectinload(DocumentOrm.tuplets).selectinload(
+                        TupletOrm.entity_two_occurrence
+                    ),
+                ]
+            )
+
+        if include_mentions:
+            options.append(selectinload(DocumentOrm.entity_occurrences))
+
+        return options
 
     def get_multiple(
-        self, ids: list[int] = None, limit: Optional[int] = None
-    ) -> list[Document]:
-        options = [
-            selectinload(DocumentOrm.triplets).selectinload(
-                TripletOrm.subject_occurrence
-            ),
-            selectinload(DocumentOrm.triplets).selectinload(
-                TripletOrm.object_occurrence
-            ),
-            selectinload(DocumentOrm.triplets),
-            selectinload(DocumentOrm.tuplets).selectinload(
-                TupletOrm.entity_one_occurrence
-            ),
-            selectinload(DocumentOrm.tuplets).selectinload(
-                TupletOrm.entity_two_occurrence
-            ),
-            selectinload(DocumentOrm.tuplets),
-            selectinload(DocumentOrm.entity_occurrences),
-            selectinload(DocumentOrm.categories),
-        ]
-        return self._get_multiple_by_ids_and_transform(
-            Document.from_orm, ids=ids, limit=limit, options=options
-        )
-
-    def get_docs(
         self,
+        ids: list[int] = None,
         limit: Optional[int] = None,
+        include_triplets: bool = False,
+        include_tuplets: bool = False,
+        include_mentions: bool = False,
     ) -> list[Document]:
-        options = [
-            selectinload(DocumentOrm.triplets).selectinload(
-                TripletOrm.subject_occurrence
-            ),
-            selectinload(DocumentOrm.triplets).selectinload(
-                TripletOrm.object_occurrence
-            ),
-            selectinload(DocumentOrm.tuplets).selectinload(
-                TupletOrm.entity_one_occurrence
-            ),
-            selectinload(DocumentOrm.tuplets).selectinload(
-                TupletOrm.entity_two_occurrence
-            ),
-            selectinload(DocumentOrm.entity_occurrences),
-            selectinload(DocumentOrm.categories),
-        ]
+        """Get multiple documents with optional relation loading."""
+        options = self._build_options(
+            include_triplets, include_tuplets, include_mentions
+        )
+        transform = partial(
+            Document.from_orm,
+            include_triplets=include_triplets,
+            include_tuplets=include_tuplets,
+            include_mentions=include_mentions,
+        )
         with self._get_session_context() as sc:
-            query = sc.query(DocumentOrm).options(*options)
+            query = sc.query(self._orm).options(*options)
+            if ids is not None:
+                query = query.filter(self._orm.id.in_(ids))
             if limit:
                 query = query.limit(limit)
-            return [Document.from_orm(d) for d in query.all()]
+            entries = query.all()
+            return [transform(entry) for entry in entries]
+
+    def get_multiple_with_triplets(
+        self, ids: list[int] = None, limit: Optional[int] = None
+    ) -> list[Document]:
+        """Get documents with triplets only."""
+        return self.get_multiple(ids=ids, limit=limit, include_triplets=True)
+
+    def get_multiple_with_tuplets(
+        self, ids: list[int] = None, limit: Optional[int] = None
+    ) -> list[Document]:
+        """Get documents with tuplets only."""
+        return self.get_multiple(ids=ids, limit=limit, include_tuplets=True)
+
+    def get_multiple_with_mentions(
+        self, ids: list[int] = None, limit: Optional[int] = None
+    ) -> list[Document]:
+        """Get documents with entity mentions only."""
+        return self.get_multiple(ids=ids, limit=limit, include_mentions=True)

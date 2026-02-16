@@ -20,7 +20,8 @@ export interface Doc {
   strId: string;
   text: string;
   timestamp?: Date;
-  triplets: Triplet[];
-  tuplets: Tuplet[];
+  triplets?: Triplet[];
+  tuplets?: Tuplet[];
+  entityMentions?: Span[];
   categories: { [key: string]: string[] };
 }

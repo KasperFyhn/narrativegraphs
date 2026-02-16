@@ -23,6 +23,7 @@ class EntityLabelsRequest(CamelModel):
 class EntityDocsRequest(CamelModel):
     entity_ids: list[int]
     limit: int | None = None
+    connection_type: str = "relation"  # "relation" or "cooccurrence"
 
 
 class EntityDetails(LabeledTextOccurrence):
