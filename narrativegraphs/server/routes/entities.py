@@ -2,7 +2,12 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from narrativegraphs.dto.entities import EntityDetails, EntityDocsRequest, EntityLabel, EntityLabelsRequest
+from narrativegraphs.dto.entities import (
+    EntityDetails,
+    EntityDocsRequest,
+    EntityLabel,
+    EntityLabelsRequest,
+)
 from narrativegraphs.server.routes.common import get_query_service
 from narrativegraphs.service import QueryService
 

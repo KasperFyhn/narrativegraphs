@@ -6,7 +6,7 @@ from spacy.tokens import Span, Token
 
 class AnnotationContext(BaseModel):
     model_config = ConfigDict(frozen=True)
-    
+
     text: str
     doc_offset: int
 
