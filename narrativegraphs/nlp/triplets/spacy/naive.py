@@ -1,6 +1,6 @@
 from spacy.tokens import Span
 
-from narrativegraphs.nlp.common.annotation import SpanAnnotation
+from narrativegraphs.nlp.common.annotation import AnnotationContext, SpanAnnotation
 from narrativegraphs.nlp.common.spacy import filter_by_range, spans_overlap
 from narrativegraphs.nlp.triplets.common import Triplet
 from narrativegraphs.nlp.triplets.spacy.common import SpacyTripletExtractor
@@ -75,6 +75,7 @@ class NaiveSpacyTripletExtractor(SpacyTripletExtractor):
                     subj=SpanAnnotation.from_span(subj),
                     pred=SpanAnnotation.from_span(pred),
                     obj=SpanAnnotation.from_span(obj),
+                    context=AnnotationContext.from_span(sent),
                 )
             )
 

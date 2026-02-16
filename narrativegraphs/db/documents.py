@@ -30,6 +30,8 @@ class DocumentOrm(Base, CategorizableMixin):
 class AnnotationMixin(CategorizableMixin):
     doc_id = Column(Integer, ForeignKey("documents.id"), nullable=False, index=True)
     timestamp = Column(Date, nullable=True)
+    context = Column(Text, nullable=True)
+    context_offset = Column(Integer, nullable=True)
 
     document: DocumentOrm = None  # Should be overridden
 
@@ -56,3 +58,13 @@ class AnnotationBackedTextStatsMixin:
             cls.first_occurrence,
             cls.last_occurrence,
         ]
+
+    @property
+    def _annotations(self):
+        """Return the annotations (triplets/tuplets) backing this ORM."""
+        raise NotImplementedError("Subclass must implement _annotations")
+
+    @property
+    def doc_ids(self) -> set[int]:
+        """Return the set of document IDs where this item occurs."""
+        return {ann.doc_id for ann in self._annotations}

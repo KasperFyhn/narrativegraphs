@@ -4,6 +4,20 @@ from pydantic import BaseModel, ConfigDict
 from spacy.tokens import Span, Token
 
 
+class AnnotationContext(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    text: str
+    doc_offset: int
+
+    @classmethod
+    def from_span(cls, span: Span) -> "AnnotationContext":
+        return cls(
+            text=span.text,
+            doc_offset=span.start_char,
+        )
+
+
 class SpanAnnotation(BaseModel):
     model_config = ConfigDict(frozen=True)
 

@@ -6,11 +6,13 @@ function toHighlightedSpan(
   span: Span,
   role: 'subject' | 'predicate' | 'object',
   isPrimary: boolean,
+  isEntityHighlight?: boolean,
 ): HighlightedSpan {
   return {
     ...span,
     role,
     isPrimary,
+    isEntityHighlight,
   };
 }
 
@@ -128,6 +130,55 @@ function extractCooccurrenceHighlights(
 }
 
 /**
+ * For multi-entity context: highlight all occurrences of any focus entity as primary.
+ * Focus entities get isEntityHighlight=true for unique coloring.
+ */
+function extractEntitiesHighlights(
+  doc: Doc,
+  entityIds: (string | number)[],
+  connectionType: ConnectionType,
+): HighlightedSpan[] {
+  const highlights: HighlightedSpan[] = [];
+  const entityIdSet = new Set(entityIds.map((id) => id.toString()));
+
+  if (connectionType === 'relation') {
+    for (const triplet of doc.triplets) {
+      const subjectIsFocus = entityIdSet.has(triplet.subject.id.toString());
+      const objectIsFocus = entityIdSet.has(triplet.object.id.toString());
+
+      if (subjectIsFocus || objectIsFocus) {
+        highlights.push(
+          toHighlightedSpan(triplet.subject, 'subject', subjectIsFocus, subjectIsFocus),
+        );
+        highlights.push(
+          toHighlightedSpan(triplet.predicate, 'predicate', false),
+        );
+        highlights.push(
+          toHighlightedSpan(triplet.object, 'object', objectIsFocus, objectIsFocus),
+        );
+      }
+    }
+  } else {
+    // cooccurrence mode
+    for (const tuplet of doc.tuplets) {
+      const entityOneIsFocus = entityIdSet.has(tuplet.entityOne.id.toString());
+      const entityTwoIsFocus = entityIdSet.has(tuplet.entityTwo.id.toString());
+
+      if (entityOneIsFocus || entityTwoIsFocus) {
+        highlights.push(
+          toHighlightedSpan(tuplet.entityOne, 'subject', entityOneIsFocus, entityOneIsFocus),
+        );
+        highlights.push(
+          toHighlightedSpan(tuplet.entityTwo, 'object', entityTwoIsFocus, entityTwoIsFocus),
+        );
+      }
+    }
+  }
+
+  return highlights;
+}
+
+/**
  * Extracts highlighted spans from a document based on the highlight context.
  */
 export function extractHighlights(
@@ -151,5 +202,7 @@ export function extractHighlights(
         context.entityOneId,
         context.entityTwoId,
       );
+    case 'entities':
+      return extractEntitiesHighlights(doc, context.entityIds, connectionType);
   }
 }

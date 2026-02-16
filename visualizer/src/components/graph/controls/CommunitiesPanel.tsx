@@ -11,15 +11,22 @@ import {
 } from '../../../types/graphQuery';
 import { NamedInput } from '../../common/userinput/NamedInput';
 import { RadioGroup } from '../../common/userinput/RadioGroup';
+import { FocusEntitiesPane } from '../../inspector/info/FocusEntitiesPane';
+import { useSelectionContext } from '../../../contexts/SelectionContext';
 
 export const CommunitiesPanel: React.FC = () => {
   const { graphService } = useServiceContext();
   const { query, setConnectionType, filter, setFocusEntities } =
     useGraphQuery();
+  const { hasSelection } = useSelectionContext();
 
   const [communities, setCommunities] = useState<Community[] | null>([]);
 
   const [showIsolated, setShowIsolated] = useState(true);
+
+  const hasFocusEntities =
+    query.focusEntities && query.focusEntities.length > 0;
+  const showContextsPane = hasFocusEntities && !hasSelection;
 
   const [commRequest, setCommRequest] = useState<CommunitiesRequest>({
     weightMeasure: 'pmi',
@@ -34,6 +41,7 @@ export const CommunitiesPanel: React.FC = () => {
 
   return (
     <div>
+      {showContextsPane && <FocusEntitiesPane />}
       <div className={'flex-container flex-container--vertical'}>
         <NamedInput name={'Weight Measure'}>
           <RadioGroup

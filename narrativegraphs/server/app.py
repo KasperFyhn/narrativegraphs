@@ -3,7 +3,7 @@ import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -34,6 +34,9 @@ async def lifespan(app_arg: FastAPI):
         )
     app_arg.state.create_session = get_session_factory(app_arg.state.db_engine)
     app_arg.state.query_service = QueryService(engine=app_arg.state.db_engine)
+    app_arg.state.cooccurrence_only = (
+        len(app_arg.state.query_service.relations.as_df()) == 0
+    )
 
     if not os.path.isdir(build_directory):
         raise ValueError(f"Build directory '{build_directory}' does not exist.")
@@ -66,20 +69,6 @@ app.include_router(
     cooccurrences_router, prefix="/cooccurrences", tags=["Cooccurrences"]
 )
 app.include_router(relations_router, prefix="/relations", tags=["Relations"])
-
-
-@app.get("/config")
-async def get_config(request: Request):
-    """Get configuration for the frontend.
-
-    Returns information about what features are available, such as
-    whether this is a cooccurrence-only graph or a full narrative graph.
-    """
-    cooccurrence_only = getattr(request.app.state, "cooccurrence_only", False)
-    return {
-        "cooccurrence_only": cooccurrence_only,
-        "default_connection_type": "cooccurrence" if cooccurrence_only else "relation",
-    }
 
 
 if __name__ == "__main__":

@@ -67,6 +67,18 @@ class RelationService(OrmAssociatedService):
             RelationDetails.from_orm, ids=ids, limit=limit
         )
 
+    def get_by_entity_ids(self, entity_ids: list[int]) -> list[RelationDetails]:
+        with self._get_session_context() as session:
+            relations = (
+                session.query(RelationOrm)
+                .filter(
+                    RelationOrm.subject_id.in_(entity_ids)
+                    & RelationOrm.object_id.in_(entity_ids)
+                )
+                .all()
+            )
+            return [RelationDetails.from_orm(relation) for relation in relations]
+
     def doc_ids_by_relation(
         self, relation_id: int, limit: Optional[int] = None
     ) -> list[int]:

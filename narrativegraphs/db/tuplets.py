@@ -1,7 +1,7 @@
 from sqlalchemy import Column, ForeignKey, Integer, String
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Mapped, relationship
 
-from narrativegraphs.db.documents import AnnotationMixin
+from narrativegraphs.db.documents import AnnotationMixin, DocumentOrm
 from narrativegraphs.db.engine import Base
 
 
@@ -30,18 +30,20 @@ class TupletOrm(Base, AnnotationMixin):
     entity_one = relationship(
         "EntityOrm",
         foreign_keys="TupletOrm.entity_one_id",
+        back_populates="_entity_one_tuplets",
     )
 
     entity_two = relationship(
         "EntityOrm",
         foreign_keys="TupletOrm.entity_two_id",
+        back_populates="_entity_two_tuplets",
     )
 
     cooccurrence = relationship(
         "CooccurrenceOrm",
         foreign_keys="TupletOrm.cooccurrence_id",
     )
-    document = relationship(
+    document: Mapped["DocumentOrm"] = relationship(
         "DocumentOrm",
         foreign_keys="TupletOrm.doc_id",
         back_populates="tuplets",

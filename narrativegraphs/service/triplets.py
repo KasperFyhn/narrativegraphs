@@ -7,6 +7,8 @@ from sqlalchemy.orm import aliased
 from narrativegraphs.db.entities import EntityOrm
 from narrativegraphs.db.predicates import PredicateOrm
 from narrativegraphs.db.triplets import TripletOrm
+from narrativegraphs.dto.common import TextContext
+from narrativegraphs.dto.triplets import Triplet, TripletGroup
 from narrativegraphs.service.common import OrmAssociatedService
 
 
@@ -63,3 +65,20 @@ class TripletService(OrmAssociatedService):
         return self._get_multiple_by_ids_and_transform(
             lambda x: x.__dict__, ids=ids, limit=limit
         )
+
+    def get_by_entity_ids(self, entity_ids: list[int]) -> list[Triplet]:
+        with self._get_session_context() as session:
+            triplets = (
+                session.query(TripletOrm)
+                .filter(
+                    TripletOrm.subject_id.in_(entity_ids)
+                    & TripletOrm.object_id.in_(entity_ids)
+                )
+                .all()
+            )
+            return [Triplet.from_orm(triplet) for triplet in triplets]
+
+    def get_contexts_by_entity_ids(self, entity_ids: list[int]) -> list[TripletGroup]:
+        triplets = self.get_by_entity_ids(entity_ids)
+        triplets_groups = [TripletGroup.from_triplet(triplet) for triplet in triplets]
+        return TextContext.combine_many(triplets_groups)

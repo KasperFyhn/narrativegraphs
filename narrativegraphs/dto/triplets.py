@@ -1,37 +1,44 @@
+from typing import Optional
+
 from fastapi_camelcase import CamelModel
 
 from narrativegraphs.db.triplets import TripletOrm
-from narrativegraphs.db.tuplets import TupletOrm
-
-
-class SpanEntity(CamelModel):
-    id: int
-    start: int
-    end: int
+from narrativegraphs.dto.common import IdentifiableSpan, TextContext
 
 
 class Triplet(CamelModel):
-    subject: SpanEntity
-    predicate: SpanEntity
-    object: SpanEntity
+    subject: IdentifiableSpan
+    predicate: IdentifiableSpan
+    object: IdentifiableSpan
+    context: Optional[TextContext] = None
 
     @classmethod
     def from_orm(cls, triplet_orm: TripletOrm) -> "Triplet":
         return cls(
-            subject=SpanEntity(
+            subject=IdentifiableSpan(
                 id=triplet_orm.subject_id,
+                text=triplet_orm.subj_span_text,
                 start=triplet_orm.subj_span_start,
                 end=triplet_orm.subj_span_end,
             ),
-            predicate=SpanEntity(
+            predicate=IdentifiableSpan(
                 id=triplet_orm.predicate_id,
+                text=triplet_orm.pred_span_text,
                 start=triplet_orm.pred_span_start,
                 end=triplet_orm.pred_span_end,
             ),
-            object=SpanEntity(
+            object=IdentifiableSpan(
                 id=triplet_orm.object_id,
+                text=triplet_orm.obj_span_text,
                 start=triplet_orm.obj_span_start,
                 end=triplet_orm.obj_span_end,
+            ),
+            context=TextContext(
+                doc_id=triplet_orm.doc_id,
+                text=triplet_orm.context
+                if triplet_orm.context
+                else triplet_orm.document.text,
+                doc_offset=triplet_orm.context_offset if triplet_orm.context else 0,
             ),
         )
 
@@ -40,25 +47,95 @@ class Triplet(CamelModel):
         return [cls.from_orm(orm) for orm in triplet_orms]
 
 
-class Tuplet(CamelModel):
-    entity_one: SpanEntity
-    entity_two: SpanEntity
+class TripletGroup(TextContext):
+    triplets: list[Triplet]
+
+    def combine(self, other: "TripletGroup") -> "TripletGroup":
+        super().combine(other)
+        self.triplets = sorted(
+            self.triplets + other.triplets, key=lambda t: t.subject.start
+        )
+        return self
 
     @classmethod
-    def from_orm(cls, tuplet_orm: TupletOrm) -> "Tuplet":
+    def from_triplet(cls, triplet: Triplet) -> "TripletGroup":
+        orig_context = triplet.context
+        triplet.context = None
+
         return cls(
-            entity_one=SpanEntity(
-                id=tuplet_orm.entity_one_id,
-                start=tuplet_orm.entity_one_span_start,
-                end=tuplet_orm.entity_one_span_end,
-            ),
-            entity_two=SpanEntity(
-                id=tuplet_orm.entity_two_id,
-                start=tuplet_orm.entity_two_span_start,
-                end=tuplet_orm.entity_two_span_end,
-            ),
+            doc_id=orig_context.doc_id,
+            text=orig_context.text,
+            doc_offset=orig_context.doc_offset,
+            triplets=[triplet],
         )
 
-    @classmethod
-    def from_orms(cls, tuplet_orms: list[TupletOrm]) -> list["Tuplet"]:
-        return [cls.from_orm(orm) for orm in tuplet_orms]
+    def print_with_ansi_highlight(self) -> None:
+        # ANSI color codes
+        blue = "\033[94m"  # Subject
+        yellow = "\033[93m"  # Predicate
+        red = "\033[91m"  # Object
+        purple = "\033[95m"  # Subject + Object overlap
+        reset = "\033[0m"
+
+        # Collect spans by type
+        subject_spans = {
+            (t.subject.start - self.doc_offset, t.subject.end - self.doc_offset)
+            for t in self.triplets
+        }
+        predicate_spans = {
+            (t.predicate.start - self.doc_offset, t.predicate.end - self.doc_offset)
+            for t in self.triplets
+        }
+        object_spans = {
+            (t.object.start - self.doc_offset, t.object.end - self.doc_offset)
+            for t in self.triplets
+        }
+
+        # Create events with type information
+        events = []
+        for start, end in subject_spans:
+            events.append((start, "subject", 1))
+            events.append((end, "subject", -1))
+        for start, end in predicate_spans:
+            events.append((start, "predicate", 1))
+            events.append((end, "predicate", -1))
+        for start, end in object_spans:
+            events.append((start, "object", 1))
+            events.append((end, "object", -1))
+
+        events.sort(
+            key=lambda x: (x[0], -x[2])
+        )  # Sort by position, then end before start
+
+        result = []
+        last_pos = 0
+        active = {"subject": 0, "predicate": 0, "object": 0}
+
+        for pos, span_type, delta in events:
+            if pos > last_pos:
+                # Determine color based on active spans
+                if active["subject"] > 0 and active["object"] > 0:
+                    color = purple
+                elif active["subject"] > 0:
+                    color = blue
+                elif active["predicate"] > 0:
+                    color = yellow
+                elif active["object"] > 0:
+                    color = red
+                else:
+                    color = ""
+
+                # Add text segment
+                if color:
+                    result.append(f"{color}{self.text[last_pos:pos]}{reset}")
+                else:
+                    result.append(self.text[last_pos:pos])
+
+            active[span_type] += delta
+            last_pos = pos
+
+        # Add remaining text
+        if last_pos < len(self.text):
+            result.append(self.text[last_pos:])
+
+        print("".join(result))

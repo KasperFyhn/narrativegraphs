@@ -151,6 +151,7 @@ class SpacyEntityExtractor(EntityExtractor):
         """
         if batch_size is None:
             batch_size = calculate_batch_size(texts, n_cpu)
-        _logger.info("Using multiple CPU cores. Progress may stand still at first.")
+        if n_cpu != 1:
+            _logger.info("Using multiple CPU cores. Progress may stand still at first.")
         for doc in self.nlp.pipe(texts, n_process=n_cpu, batch_size=batch_size):
             yield self.extract_entities_from_doc(doc)

@@ -18,6 +18,7 @@ from narrativegraphs.db.common import (
 from narrativegraphs.db.documents import AnnotationBackedTextStatsMixin
 from narrativegraphs.db.engine import Base
 from narrativegraphs.db.triplets import TripletOrm
+from narrativegraphs.db.tuplets import TupletOrm
 
 
 class EntityCategory(Base, CategoryMixin):
@@ -79,6 +80,25 @@ class EntityOrm(Base, HasAltLabels, AnnotationBackedTextStatsMixin, Categorizabl
         "EntityCategory",
         foreign_keys=[EntityCategory.target_id],
     )
+
+    _entity_one_tuplets: Mapped[list["TupletOrm"]] = relationship(
+        "TupletOrm",
+        back_populates="entity_one",
+        foreign_keys="TupletOrm.entity_one_id",
+    )
+    _entity_two_tuplets: Mapped[list["TupletOrm"]] = relationship(
+        "TupletOrm",
+        back_populates="entity_two",
+        foreign_keys="TupletOrm.entity_two_id",
+    )
+
+    @property
+    def tuplets(self):
+        return self._entity_one_tuplets + self._entity_two_tuplets
+
+    @property
+    def _annotations(self):
+        return self.triplets + self.tuplets
 
     subject_relations = relationship(
         "RelationOrm", back_populates="subject", foreign_keys="RelationOrm.subject_id"

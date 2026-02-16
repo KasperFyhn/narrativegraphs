@@ -179,7 +179,7 @@ class CooccurrenceGraph(BaseGraph):
         entity_mapper: Mapper = None,
         sqlite_db_path: str = None,
         on_existing_db: Literal["stop", "overwrite", "reuse"] = "stop",
-        n_cpu: int = -1,
+        n_cpu: int = 1,
     ):
         """Initialize a CooccurrenceGraph.
 
@@ -265,7 +265,7 @@ class NarrativeGraph(BaseGraph):
         predicate_mapper: Mapper = None,
         sqlite_db_path: str = None,
         on_existing_db: Literal["stop", "overwrite", "reuse"] = "stop",
-        n_cpu: int = -1,
+        n_cpu: int = 1,
     ):
         """Initialize a NarrativeGraph.
 

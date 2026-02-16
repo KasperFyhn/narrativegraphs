@@ -2,7 +2,12 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from narrativegraphs.dto.entities import EntityDetails, EntityLabel, EntityLabelsRequest
+from narrativegraphs.dto.entities import (
+    EntityDetails,
+    EntityDocsRequest,
+    EntityLabel,
+    EntityLabelsRequest,
+)
 from narrativegraphs.server.routes.common import get_query_service
 from narrativegraphs.service import QueryService
 
@@ -55,3 +60,20 @@ async def get_entity_labels(
         raise HTTPException(status_code=404, detail="No entities found.")
 
     return entity_labels
+
+
+@router.post("/docs")
+async def get_docs_by_entities(
+    request: EntityDocsRequest,
+    service: QueryService = Depends(get_query_service),
+):
+    """Get documents containing any of the specified entities"""
+    doc_ids = service.entities.doc_ids_by_entities(
+        request.entity_ids, limit=request.limit
+    )
+
+    if len(doc_ids) == 0:
+        raise HTTPException(status_code=404, detail="No documents found.")
+
+    docs = service.documents.get_multiple(doc_ids, limit=request.limit)
+    return docs

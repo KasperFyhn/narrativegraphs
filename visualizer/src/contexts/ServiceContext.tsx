@@ -1,4 +1,9 @@
-import React, { createContext, PropsWithChildren, useContext } from 'react';
+import React, {
+  createContext,
+  PropsWithChildren,
+  useContext,
+  useMemo,
+} from 'react';
 import { GraphService, GraphServiceImpl } from '../services/GraphService';
 import { DocService, DocServiceImpl } from '../services/DocService';
 import { EntityService, EntityServiceImpl } from '../services/EntityService';
@@ -53,13 +58,16 @@ export const ServiceContextProvider: React.FC<PropsWithChildren> = ({
   // We find the API url dynamically; we know that it will be served
   const apiUrl = getApiUrl();
 
-  const value: Services = {
-    graphService: new GraphServiceImpl(apiUrl),
-    docService: new DocServiceImpl(apiUrl),
-    entityService: new EntityServiceImpl(apiUrl),
-    cooccurrenceService: new CooccurrenceServiceImpl(apiUrl),
-    relationService: new RelationServiceImpl(apiUrl),
-  };
+  const value: Services = useMemo(
+    () => ({
+      graphService: new GraphServiceImpl(apiUrl),
+      docService: new DocServiceImpl(apiUrl),
+      entityService: new EntityServiceImpl(apiUrl),
+      cooccurrenceService: new CooccurrenceServiceImpl(apiUrl),
+      relationService: new RelationServiceImpl(apiUrl),
+    }),
+    [apiUrl]
+  );
 
   return (
     <ServiceContext.Provider value={value}>{children}</ServiceContext.Provider>

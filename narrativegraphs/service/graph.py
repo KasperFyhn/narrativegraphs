@@ -321,7 +321,7 @@ class GraphService(SubService):
             top_entity_ids = {
                 row[0]
                 for row in db.query(EntityOrm.id)
-                .filter(and_(*entity_conditions))
+                .filter(and_(True, *entity_conditions))
                 .order_by(EntityOrm.frequency.desc())
                 .limit(graph_filter.limit_nodes)
                 .all()

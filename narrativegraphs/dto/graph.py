@@ -53,3 +53,7 @@ class Community(CamelModel):
     density: float
     avg_pmi: float
     conductance: float
+
+    @property
+    def member_ids(self) -> list[int]:
+        return [m.id for m in self.members]

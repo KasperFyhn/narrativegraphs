@@ -47,7 +47,6 @@ export const DocsSection: React.FC<DocsSectionProps> = ({
 
   useEffect(() => {
     if (autoload) handleLoad();
-    // Should just run in the beginning
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

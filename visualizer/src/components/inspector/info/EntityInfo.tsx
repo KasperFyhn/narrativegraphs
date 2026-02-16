@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ClipLoader } from 'react-spinners';
 import { useServiceContext } from '../../../contexts/ServiceContext';
 import { StatsDisplay } from './StatsDisplay';
@@ -26,6 +26,15 @@ export const EntityInfo: React.FC<EntityInfoProps> = ({ id }) => {
       .finally(() => setLoading(false));
   }, [entityService, id]);
 
+  const loadDocs = useCallback(() => {
+    return entityService.getDocs(id);
+  }, [entityService, id]);
+
+  const highlightContext = useMemo(
+    () => ({ type: 'entity' as const, entityId: id }),
+    [id],
+  );
+
   if (loading) {
     return <ClipLoader loading={true} />;
   }
@@ -39,10 +48,7 @@ export const EntityInfo: React.FC<EntityInfoProps> = ({ id }) => {
       <StatsDisplay stats={details.stats} />
       <CategoriesDisplay categories={details.categories} />
       <AltLabelsDisplay altLabels={details.altLabels} />
-      <DocsSection
-        loadDocs={() => entityService.getDocs(id)}
-        highlightContext={{ type: 'entity', entityId: id }}
-      />
+      <DocsSection loadDocs={loadDocs} highlightContext={highlightContext} />
     </>
   );
 };

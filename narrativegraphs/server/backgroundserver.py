@@ -10,12 +10,9 @@ from narrativegraphs.server.app import app
 
 
 class BackgroundServer:
-    def __init__(
-        self, db_engine: Engine, port: int = 8001, cooccurrence_only: bool = False
-    ):
+    def __init__(self, db_engine: Engine, port: int = 8001):
         self._db_engine = db_engine
         self._port = port
-        self._cooccurrence_only = cooccurrence_only
 
         self._server = None
         self._server_task = None

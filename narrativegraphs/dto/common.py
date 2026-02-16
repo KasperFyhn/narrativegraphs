@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Optional
+from typing import Optional, TypeVar
 
 from fastapi_camelcase import CamelModel
 
@@ -17,6 +17,7 @@ class TextOccurrenceStats(CamelModel):
     adjusted_tf_idf: float
     first_occurrence: Optional[date] = None
     last_occurrence: Optional[date] = None
+    doc_ids: set[int]
 
     @classmethod
     def from_mixin(cls, orm: AnnotationBackedTextStatsMixin):
@@ -26,6 +27,7 @@ class TextOccurrenceStats(CamelModel):
             adjusted_tf_idf=orm.adjusted_tf_idf,
             first_occurrence=orm.first_occurrence,
             last_occurrence=orm.last_occurrence,
+            doc_ids=orm.doc_ids,
         )
 
 
@@ -36,3 +38,51 @@ class TextOccurrence(BaseDetails):
 class LabeledTextOccurrence(TextOccurrence):
     label: str
     alt_labels: Optional[list[str]] = None
+
+
+_TextContext = TypeVar("_TextContext", bound="TextContext")
+
+
+class TextContext(CamelModel):
+    doc_id: int
+    text: str
+    doc_offset: int = 0
+
+    def overlaps_or_adjacent(self, other: _TextContext) -> bool:
+        if self.doc_id != other.doc_id:
+            return False
+        first = min(self, other, key=lambda tc: tc.doc_offset)
+        second = self if first is other else other
+        first_end_char = first.doc_offset + len(first.text)
+        return first_end_char >= second.doc_offset
+
+    def combine(self, other: _TextContext) -> _TextContext:
+        if not self.overlaps_or_adjacent(other):
+            raise ValueError("Cannot combine non-overlapping TextContexts")
+        first = min(self, other, key=lambda tc: tc.doc_offset)
+        second = self if first is other else other
+        relative_offset = second.doc_offset - first.doc_offset
+        self.doc_offset = first.doc_offset
+        if len(second.text) >= len(first.text[relative_offset:]):
+            # second extends out over the first text
+            self.text = first.text[:relative_offset] + second.text
+        return self
+
+    @staticmethod
+    def combine_many(text_contexts: list[_TextContext]) -> list[_TextContext]:
+        text_contexts.sort(key=lambda t: (t.doc_id, t.doc_offset))
+        combined = text_contexts[:1]
+        for current in text_contexts[1:]:
+            last = combined[-1]
+            if last.overlaps_or_adjacent(current):
+                last.combine(current)
+            else:
+                combined.append(current)
+        return combined
+
+
+class IdentifiableSpan(CamelModel):
+    id: int
+    text: str
+    start: int
+    end: int

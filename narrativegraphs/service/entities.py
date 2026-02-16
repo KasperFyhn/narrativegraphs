@@ -100,3 +100,20 @@ class EntityService(OrmAssociatedService):
                 .all()
             )
             return [EntityLabel.from_orm(entity) for entity in matches]
+
+    def doc_ids_by_entities(
+        self, entity_ids: list[int], limit: Optional[int] = None
+    ) -> list[int]:
+        with self._get_session_context() as sc:
+            query = (
+                sc.query(TupletOrm.doc_id)
+                .filter(
+                    (TupletOrm.entity_one_id.in_(entity_ids))
+                    & (TupletOrm.entity_two_id.in_(entity_ids))
+                )
+                .distinct()
+            )
+            if limit:
+                query = query.limit(limit)
+
+        return [tuplet.doc_id for tuplet in query.all()]

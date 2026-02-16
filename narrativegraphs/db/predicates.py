@@ -64,3 +64,7 @@ class PredicateOrm(
     categories: Mapped[list[PredicateCategory]] = relationship(
         "PredicateCategory", foreign_keys=[PredicateCategory.target_id]
     )
+
+    @property
+    def _annotations(self):
+        return self.triplets

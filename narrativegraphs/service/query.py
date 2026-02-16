@@ -15,6 +15,7 @@ from narrativegraphs.service.graph import ConnectionType, GraphService
 from narrativegraphs.service.predicates import PredicateService
 from narrativegraphs.service.relations import RelationService
 from narrativegraphs.service.triplets import TripletService
+from narrativegraphs.service.tuplets import TupletService
 
 
 class QueryService(DbService):
@@ -26,6 +27,7 @@ class QueryService(DbService):
         self.predicates = PredicateService(lambda: self.get_session_context())
         self.cooccurrences = CooccurrenceService(lambda: self.get_session_context())
         self.triplets = TripletService(lambda: self.get_session_context())
+        self.tuplets = TupletService(lambda: self.get_session_context())
         self.graph = GraphService(lambda: self.get_session_context())
 
     def _compile_categories(self) -> dict[str, list[str]]:
