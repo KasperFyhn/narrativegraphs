@@ -17,55 +17,18 @@ function toHighlightedSpan(
 }
 
 /**
- * For entity context: highlight all occurrences of the entity as primary,
- * and related spans (from triplets/tuplets containing this entity) as secondary.
+ * For entity context: highlight all occurrences of the entity using entityMentions.
  */
 function extractEntityHighlights(
   doc: Doc,
   entityId: string | number,
-  connectionType: ConnectionType,
 ): HighlightedSpan[] {
   const highlights: HighlightedSpan[] = [];
 
-  if (connectionType === 'relation') {
-    for (const triplet of doc.triplets) {
-      const entityIsSubject = triplet.subject.id === entityId;
-      const entityIsObject = triplet.object.id === entityId;
-
-      if (entityIsSubject || entityIsObject) {
-        // The entity span is primary, others are secondary context
-        highlights.push(
-          toHighlightedSpan(triplet.subject, 'subject', entityIsSubject),
-        );
-        highlights.push(
-          toHighlightedSpan(triplet.predicate, 'predicate', false),
-        );
-        highlights.push(
-          toHighlightedSpan(triplet.object, 'object', entityIsObject),
-        );
-      }
-    }
-  } else {
-    // cooccurrence mode
-    for (const tuplet of doc.tuplets) {
-      const entityIsSubject = tuplet.entityOne.id === entityId;
-      const entityIsObject = tuplet.entityTwo.id === entityId;
-
-      if (entityIsSubject || entityIsObject) {
-        highlights.push(
-          toHighlightedSpan(
-            tuplet.entityOne,
-            entityIsSubject ? 'subject' : 'object',
-            entityIsSubject,
-          ),
-        );
-        highlights.push(
-          toHighlightedSpan(
-            tuplet.entityTwo,
-            entityIsObject ? 'subject' : 'object',
-            entityIsObject,
-          ),
-        );
+  if (doc.entityMentions) {
+    for (const mention of doc.entityMentions) {
+      if (String(mention.id) === String(entityId)) {
+        highlights.push(toHighlightedSpan(mention, 'subject', true, true));
       }
     }
   }
@@ -83,6 +46,8 @@ function extractRelationHighlights(
   objectId: string | number,
 ): HighlightedSpan[] {
   const highlights: HighlightedSpan[] = [];
+
+  if (!doc.triplets) return highlights;
 
   for (const triplet of doc.triplets) {
     const matches =
@@ -109,6 +74,8 @@ function extractCooccurrenceHighlights(
   objectId: string | number,
 ): HighlightedSpan[] {
   const highlights: HighlightedSpan[] = [];
+
+  if (!doc.tuplets) return highlights;
 
   for (const tuplet of doc.tuplets) {
     // Check both orderings since cooccurrence is symmetric
@@ -142,34 +109,54 @@ function extractEntitiesHighlights(
   const entityIdSet = new Set(entityIds.map((id) => id.toString()));
 
   if (connectionType === 'relation') {
-    for (const triplet of doc.triplets) {
+    for (const triplet of doc.triplets ?? []) {
       const subjectIsFocus = entityIdSet.has(triplet.subject.id.toString());
       const objectIsFocus = entityIdSet.has(triplet.object.id.toString());
 
       if (subjectIsFocus || objectIsFocus) {
         highlights.push(
-          toHighlightedSpan(triplet.subject, 'subject', subjectIsFocus, subjectIsFocus),
+          toHighlightedSpan(
+            triplet.subject,
+            'subject',
+            subjectIsFocus,
+            subjectIsFocus,
+          ),
         );
         highlights.push(
           toHighlightedSpan(triplet.predicate, 'predicate', false),
         );
         highlights.push(
-          toHighlightedSpan(triplet.object, 'object', objectIsFocus, objectIsFocus),
+          toHighlightedSpan(
+            triplet.object,
+            'object',
+            objectIsFocus,
+            objectIsFocus,
+          ),
         );
       }
     }
   } else {
     // cooccurrence mode
-    for (const tuplet of doc.tuplets) {
+    for (const tuplet of doc.tuplets ?? []) {
       const entityOneIsFocus = entityIdSet.has(tuplet.entityOne.id.toString());
       const entityTwoIsFocus = entityIdSet.has(tuplet.entityTwo.id.toString());
 
       if (entityOneIsFocus || entityTwoIsFocus) {
         highlights.push(
-          toHighlightedSpan(tuplet.entityOne, 'subject', entityOneIsFocus, entityOneIsFocus),
+          toHighlightedSpan(
+            tuplet.entityOne,
+            'subject',
+            entityOneIsFocus,
+            entityOneIsFocus,
+          ),
         );
         highlights.push(
-          toHighlightedSpan(tuplet.entityTwo, 'object', entityTwoIsFocus, entityTwoIsFocus),
+          toHighlightedSpan(
+            tuplet.entityTwo,
+            'object',
+            entityTwoIsFocus,
+            entityTwoIsFocus,
+          ),
         );
       }
     }
@@ -188,7 +175,7 @@ export function extractHighlights(
 ): HighlightedSpan[] {
   switch (context.type) {
     case 'entity':
-      return extractEntityHighlights(doc, context.entityId, connectionType);
+      return extractEntityHighlights(doc, context.entityId);
     case 'relation':
       return extractRelationHighlights(
         doc,

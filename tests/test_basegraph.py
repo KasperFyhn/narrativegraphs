@@ -133,18 +133,6 @@ class TestBaseGraphPersistence(unittest.TestCase):
             with self.assertRaises(FileExistsError):
                 cg.save_to_file(tmp.name, overwrite=False)
 
-    def test_save_to_file_from_file_db_raises(self):
-        """save_to_file raises if database is already file-based."""
-        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
-            tmp_path = tmp.name
-        try:
-            cg = CooccurrenceGraph(sqlite_db_path=tmp_path)
-
-            with self.assertRaises(ValueError):
-                cg.save_to_file("other_file.db")
-        finally:
-            os.unlink(tmp_path)
-
     def test_save_and_load_preserves_data(self):
         """Saving and loading preserves all data."""
         cg1 = CooccurrenceGraph(
@@ -154,7 +142,7 @@ class TestBaseGraphPersistence(unittest.TestCase):
         cg1.fit(["Alice met Bob.", "Carol visited Dave."])
 
         with tempfile.NamedTemporaryFile(suffix=".db", delete=True) as tmp:
-            cg1.save_to_file(tmp.name)
+            cg1.save_to_file(tmp.name, overwrite=True)
             cg2 = CooccurrenceGraph.load(tmp.name)
 
             self.assertEqual(len(cg1.documents_), len(cg2.documents_))

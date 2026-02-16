@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends
 
 from narrativegraphs.dto.filter import DataBounds
 from narrativegraphs.dto.graph import Community
@@ -27,8 +27,11 @@ async def get_graph(
 
 
 @router.get("/types")
-async def get_types(request: Request) -> list[ConnectionType]:
-    if request.app.state.cooccurrence_only:
+async def get_types(
+    service: QueryService = Depends(get_query_service),
+) -> list[ConnectionType]:
+    relations = service.relations.as_df()
+    if len(relations) == 0:
         return ["cooccurrence"]
     else:
         return ["relation", "cooccurrence"]

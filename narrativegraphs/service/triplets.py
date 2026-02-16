@@ -5,6 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import aliased
 
 from narrativegraphs.db.entities import EntityOrm
+from narrativegraphs.db.entityoccurrences import EntityOccurrenceOrm
 from narrativegraphs.db.predicates import PredicateOrm
 from narrativegraphs.db.triplets import TripletOrm
 from narrativegraphs.dto.common import TextContext
@@ -22,25 +23,36 @@ class TripletService(OrmAssociatedService):
             # Create aliases for the two entity joins
             subject_entity = aliased(EntityOrm)
             object_entity = aliased(EntityOrm)
+            # Create aliases for the two occurrence joins
+            subject_occurrence = aliased(EntityOccurrenceOrm)
+            object_occurrence = aliased(EntityOccurrenceOrm)
 
             df = pd.read_sql(
                 select(
                     TripletOrm.id.label("id"),
                     subject_entity.id.label("subject_entity_id"),
                     subject_entity.label.label("subject_label"),
-                    TripletOrm.subj_span_text.label("subject_span_text"),
-                    TripletOrm.subj_span_start.label("subject_span_start"),
-                    TripletOrm.subj_span_end.label("subject_span_end"),
+                    subject_occurrence.span_text.label("subject_span_text"),
+                    subject_occurrence.span_start.label("subject_span_start"),
+                    subject_occurrence.span_end.label("subject_span_end"),
                     PredicateOrm.id.label("predicate_id"),
                     PredicateOrm.label.label("predicate_label"),
                     TripletOrm.pred_span_text.label("pred_span_text"),
                     object_entity.id.label("object_entity_id"),
                     object_entity.label.label("object_label"),
-                    TripletOrm.obj_span_text.label("object_span_text"),
-                    TripletOrm.obj_span_start.label("object_span_start"),
-                    TripletOrm.obj_span_end.label("object_span_end"),
+                    object_occurrence.span_text.label("object_span_text"),
+                    object_occurrence.span_start.label("object_span_start"),
+                    object_occurrence.span_end.label("object_span_end"),
                 )
                 .join(PredicateOrm)
+                .join(
+                    subject_occurrence,
+                    TripletOrm.subject_occurrence_id == subject_occurrence.id,
+                )
+                .join(
+                    object_occurrence,
+                    TripletOrm.object_occurrence_id == object_occurrence.id,
+                )
                 .join(
                     subject_entity,
                     TripletOrm.subject_id == subject_entity.id,

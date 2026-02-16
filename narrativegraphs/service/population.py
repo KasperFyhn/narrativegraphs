@@ -3,10 +3,10 @@ from datetime import date
 from tqdm import tqdm
 
 from narrativegraphs.db.documents import DocumentCategory, DocumentOrm
-from narrativegraphs.db.triplets import (
-    TripletOrm,
-)
+from narrativegraphs.db.entityoccurrences import EntityOccurrenceOrm
+from narrativegraphs.db.triplets import TripletOrm
 from narrativegraphs.db.tuplets import TupletOrm
+from narrativegraphs.nlp.common.annotation import SpanAnnotation
 from narrativegraphs.nlp.triplets.common import Triplet
 from narrativegraphs.nlp.tuplets.common import Tuplet
 from narrativegraphs.service.cache import (
@@ -91,25 +91,58 @@ class PopulationService(DbService):
         with self.get_session_context() as sc:
             return sc.query(DocumentOrm).all()
 
+    OccurrenceLookup = dict[tuple[int, int, str], EntityOccurrenceOrm]
+
+    def add_entity_occurrences(
+        self,
+        doc: DocumentOrm,
+        entities: list[SpanAnnotation],
+    ) -> OccurrenceLookup:
+        """Add entity occurrences up-front. Returns lookup dict for add_triplets and
+        add_tuplets."""
+        with self.get_session_context() as sc:
+            # Deduplicate by span position and build lookup
+            lookup: PopulationService.OccurrenceLookup = {}
+            for entity in entities:
+                key = (entity.start_char, entity.end_char, entity.text)
+                if key not in lookup:
+                    lookup[key] = EntityOccurrenceOrm(
+                        doc_id=doc.id,
+                        span_start=entity.start_char,
+                        span_end=entity.end_char,
+                        span_text=entity.text,
+                        timestamp=doc.timestamp,
+                    )
+
+            sc.add_all(lookup.values())
+            sc.flush()  # Get IDs assigned
+            return lookup
+
     def add_triplets(
         self,
         doc: DocumentOrm,
         triplets: list[Triplet],
+        occurrence_lookup: OccurrenceLookup,
     ):
+        """Add triplets that reference entity occurrences from the lookup."""
         with self.get_session_context() as sc:
             triplet_orms = [
                 TripletOrm(
                     doc_id=doc.id,
                     timestamp=doc.timestamp,
-                    subj_span_start=triplet.subj.start_char,
-                    subj_span_end=triplet.subj.end_char,
-                    subj_span_text=triplet.subj.text,
+                    subject_occurrence_id=occurrence_lookup[
+                        (
+                            triplet.subj.start_char,
+                            triplet.subj.end_char,
+                            triplet.subj.text,
+                        )
+                    ].id,
+                    object_occurrence_id=occurrence_lookup[
+                        (triplet.obj.start_char, triplet.obj.end_char, triplet.obj.text)
+                    ].id,
                     pred_span_start=triplet.pred.start_char,
                     pred_span_end=triplet.pred.end_char,
                     pred_span_text=triplet.pred.text,
-                    obj_span_start=triplet.obj.start_char,
-                    obj_span_end=triplet.obj.end_char,
-                    obj_span_text=triplet.obj.text,
                     context=triplet.context.text if triplet.context else None,
                     context_offset=triplet.context.doc_offset
                     if triplet.context
@@ -123,18 +156,28 @@ class PopulationService(DbService):
         self,
         doc: DocumentOrm,
         tuplets: list[Tuplet],
+        occurrence_lookup: OccurrenceLookup,
     ):
+        """Add tuplets that reference entity occurrences from the lookup."""
         with self.get_session_context() as sc:
             tuplet_orms = [
                 TupletOrm(
                     doc_id=doc.id,
                     timestamp=doc.timestamp,
-                    entity_one_span_start=tuplet.entity_one.start_char,
-                    entity_one_span_end=tuplet.entity_one.end_char,
-                    entity_one_span_text=tuplet.entity_one.text,
-                    entity_two_span_start=tuplet.entity_two.start_char,
-                    entity_two_span_end=tuplet.entity_two.end_char,
-                    entity_two_span_text=tuplet.entity_two.text,
+                    entity_one_occurrence_id=occurrence_lookup[
+                        (
+                            tuplet.entity_one.start_char,
+                            tuplet.entity_one.end_char,
+                            tuplet.entity_one.text,
+                        )
+                    ].id,
+                    entity_two_occurrence_id=occurrence_lookup[
+                        (
+                            tuplet.entity_two.start_char,
+                            tuplet.entity_two.end_char,
+                            tuplet.entity_two.text,
+                        )
+                    ].id,
                     context=tuplet.context.text if tuplet.context else None,
                     context_offset=tuplet.context.doc_offset
                     if tuplet.context
@@ -144,87 +187,99 @@ class PopulationService(DbService):
             ]
             sc.bulk_save_objects(tuplet_orms)
 
-    def _map_tuplets(
-        self,
-        entity_cache: EntityCache,
-    ):
-        """Map tuplets to entities and cooccurrences."""
-        with self.get_session_context() as sc:
-            tuplets = self.get_tuplets()
-            cooc_cache = CooccurrenceCache(sc, entity_cache, tuplets)
-            if len(tuplets) > 100_000:
-                tuplets = tqdm(tuplets, desc="Mapping tuplets")
-            for tuplet in tuplets:
-                entity_one_id = entity_cache.get_entity_id(tuplet.entity_one_span_text)
-                entity_two_id = entity_cache.get_entity_id(tuplet.entity_two_span_text)
-                cooccurrence_id = cooc_cache.get_cooccurrence_id(
-                    entity_one_id,
-                    entity_two_id,
-                )
+    def _map_occurrences_to_entities(self, sc, entity_cache: EntityCache):
+        """Map all unmapped occurrences to their corresponding entities."""
+        occurrences = self.get_entity_occurrences()
+        for occ in occurrences:
+            occ.entity_id = entity_cache.get_entity_id(occ.span_text)
 
-                tuplet.entity_one_id = entity_one_id
-                tuplet.entity_two_id = entity_two_id
-                tuplet.cooccurrence_id = cooccurrence_id
+    def _map_tuplets(self, sc, entity_cache: EntityCache):
+        """Map tuplets to entities and cooccurrences."""
+        tuplets = self.get_tuplets()
+        cooc_cache = CooccurrenceCache(sc, entity_cache, tuplets)
+        if len(tuplets) > 100_000:
+            tuplets = tqdm(tuplets, desc="Mapping tuplets")
+        for tuplet in tuplets:
+            entity_one_id = entity_cache.get_entity_id(
+                tuplet.entity_one_occurrence.span_text
+            )
+            entity_two_id = entity_cache.get_entity_id(
+                tuplet.entity_two_occurrence.span_text
+            )
+            cooccurrence_id = cooc_cache.get_cooccurrence_id(
+                entity_one_id,
+                entity_two_id,
+            )
+
+            tuplet.entity_one_id = entity_one_id
+            tuplet.entity_two_id = entity_two_id
+            tuplet.cooccurrence_id = cooccurrence_id
 
     def map_tuplets(
         self,
         entity_mappings: dict[str, str],
     ):
         with self.get_session_context() as sc:
-            return self._map_tuplets(EntityCache(sc, entity_mappings))
+            entity_cache = EntityCache(sc, entity_mappings)
+            self._map_tuplets(sc, entity_cache)
+            self._map_occurrences_to_entities(sc, entity_cache)
 
     def _map_triplets(
         self,
+        sc,
         entity_cache: EntityCache,
         predicate_cache: PredicateCache,
         relation_cache: RelationCache,
     ):
-        """Map triples to entities and cooccurrences."""
-        with self.get_session_context():
-            triplets = self.get_triplets()
-            if len(triplets) > 100_000:
-                triplets = tqdm(triplets, desc="Mapping tuplets")
-            for triplet in triplets:
-                subject_id = entity_cache.get_entity_id(triplet.subj_span_text)
-                predicate_id = predicate_cache.get_predicate_id(
-                    triplet.pred_span_text,
-                )
-                object_id = entity_cache.get_entity_id(triplet.obj_span_text)
-                relation_id = relation_cache.get_relation_id(
-                    subject_id,
-                    predicate_id,
-                    object_id,
-                )
-                triplet.subject_id = subject_id
-                triplet.predicate_id = predicate_id
-                triplet.object_id = object_id
-                triplet.relation_id = relation_id
+        """Map triplets to entities, predicates, and relations."""
+        triplets = self.get_triplets()
+        if len(triplets) > 100_000:
+            triplets = tqdm(triplets, desc="Mapping triplets")
+        for triplet in triplets:
+            subject_id = entity_cache.get_entity_id(
+                triplet.subject_occurrence.span_text
+            )
+            predicate_id = predicate_cache.get_predicate_id(
+                triplet.pred_span_text,
+            )
+            object_id = entity_cache.get_entity_id(triplet.object_occurrence.span_text)
+            relation_id = relation_cache.get_relation_id(
+                subject_id,
+                predicate_id,
+                object_id,
+            )
+            triplet.subject_id = subject_id
+            triplet.predicate_id = predicate_id
+            triplet.object_id = object_id
+            triplet.relation_id = relation_id
 
     def map_tuplets_and_triplets(
         self,
         entity_mappings: dict[str, str],
         predicate_mappings: dict[str, str],
     ):
-        """Map triplets to entities, predicates, and relations."""
-
+        """Map triplets and tuplets to entities, predicates, and relations."""
         with self.get_session_context() as sc:
             entity_cache = EntityCache(sc, entity_mappings)
-            self._map_tuplets(entity_cache)
+            self._map_tuplets(sc, entity_cache)
 
             predicate_cache = PredicateCache(sc, predicate_mappings)
             relation_cache = RelationCache(
                 sc, entity_cache, predicate_cache, self.get_triplets()
             )
-            self._map_triplets(entity_cache, predicate_cache, relation_cache)
+            self._map_triplets(sc, entity_cache, predicate_cache, relation_cache)
 
-    def get_triplets(
-        self,
-    ):
+            # Map occurrences to entities after all tuplets and triplets are mapped
+            self._map_occurrences_to_entities(sc, entity_cache)
+
+    def get_triplets(self):
         with self.get_session_context() as sc:
             return sc.query(TripletOrm).all()
 
-    def get_tuplets(
-        self,
-    ):
+    def get_tuplets(self):
         with self.get_session_context() as sc:
             return sc.query(TupletOrm).all()
+
+    def get_entity_occurrences(self):
+        with self.get_session_context() as sc:
+            return sc.query(EntityOccurrenceOrm).all()

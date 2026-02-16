@@ -22,15 +22,16 @@ class TripletOrm(Base, AnnotationMixin):
         Integer, ForeignKey("cooccurrences.id"), nullable=True, index=True
     )
 
-    subj_span_start = Column(Integer, nullable=False)
-    subj_span_end = Column(Integer, nullable=False)
-    subj_span_text = Column(String, nullable=False)
+    subject_occurrence_id = Column(
+        Integer, ForeignKey("entity_occurrences.id"), nullable=False, index=True
+    )
+    object_occurrence_id = Column(
+        Integer, ForeignKey("entity_occurrences.id"), nullable=False, index=True
+    )
+
     pred_span_start = Column(Integer, nullable=False)
     pred_span_end = Column(Integer, nullable=False)
     pred_span_text = Column(String, nullable=False)
-    obj_span_start = Column(Integer, nullable=False)
-    obj_span_end = Column(Integer, nullable=False)
-    obj_span_text = Column(String, nullable=False)
 
     # Relationships
     subject = relationship(
@@ -57,4 +58,12 @@ class TripletOrm(Base, AnnotationMixin):
         "DocumentOrm",
         foreign_keys="TripletOrm.doc_id",
         back_populates="triplets",
+    )
+    subject_occurrence = relationship(
+        "EntityOccurrenceOrm",
+        foreign_keys="TripletOrm.subject_occurrence_id",
+    )
+    object_occurrence = relationship(
+        "EntityOccurrenceOrm",
+        foreign_keys="TripletOrm.object_occurrence_id",
     )

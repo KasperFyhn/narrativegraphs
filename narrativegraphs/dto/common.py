@@ -4,6 +4,7 @@ from typing import Optional, TypeVar
 from fastapi_camelcase import CamelModel
 
 from narrativegraphs.db.documents import AnnotationBackedTextStatsMixin
+from narrativegraphs.db.entityoccurrences import EntityOccurrenceOrm
 
 
 class BaseDetails(CamelModel):
@@ -86,3 +87,15 @@ class IdentifiableSpan(CamelModel):
     text: str
     start: int
     end: int
+
+    @classmethod
+    def from_entity_occurrence_orm(cls, orm: EntityOccurrenceOrm) -> "IdentifiableSpan":
+        return cls(
+            id=orm.entity_id, text=orm.span_text, start=orm.span_start, end=orm.span_end
+        )
+
+    @classmethod
+    def from_entity_occurrence_orms(
+        cls, orms: list[EntityOccurrenceOrm]
+    ) -> list["IdentifiableSpan"]:
+        return [cls.from_entity_occurrence_orm(orm) for orm in orms]

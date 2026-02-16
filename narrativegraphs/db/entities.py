@@ -3,7 +3,6 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     String,
-    case,
     func,
     select,
 )
@@ -17,6 +16,7 @@ from narrativegraphs.db.common import (
 )
 from narrativegraphs.db.documents import AnnotationBackedTextStatsMixin
 from narrativegraphs.db.engine import Base
+from narrativegraphs.db.entityoccurrences import EntityOccurrenceOrm
 from narrativegraphs.db.triplets import TripletOrm
 from narrativegraphs.db.tuplets import TupletOrm
 
@@ -33,33 +33,25 @@ class EntityOrm(Base, HasAltLabels, AnnotationBackedTextStatsMixin, Categorizabl
 
     @hybrid_property
     def alt_labels(self) -> list[str]:
-        subj_labels = [
-            triplet.subj_span_text
-            for triplet in self.subject_triplets
-            if triplet.subj_span_text != self.label
-        ]
-        obj_labels = [
-            triplet.obj_span_text
-            for triplet in self.object_triplets
-            if triplet.obj_span_text != self.label
-        ]
-        return list(set(subj_labels + obj_labels))
+        return list(
+            {occ.span_text for occ in self.occurrences if occ.span_text != self.label}
+        )
 
     @alt_labels.expression
     def alt_labels(cls):  # noqa
         return (
-            select(
-                func.json_group_array(
-                    case(
-                        (TripletOrm.subject_id == cls.id, TripletOrm.subj_span_text),
-                        (TripletOrm.object_id == cls.id, TripletOrm.obj_span_text),
-                    ).distinct()
-                )
-            )
-            .select_from(TripletOrm)
-            .where((TripletOrm.subject_id == cls.id) | (TripletOrm.object_id == cls.id))
+            select(func.json_group_array(EntityOccurrenceOrm.span_text.distinct()))
+            .where(EntityOccurrenceOrm.entity_id == cls.id)
+            .where(EntityOccurrenceOrm.span_text != cls.label)
             .scalar_subquery()
         )
+
+    # Entity occurrences relationship (unified source for all entity mentions)
+    occurrences: Mapped[list["EntityOccurrenceOrm"]] = relationship(
+        "EntityOccurrenceOrm",
+        back_populates="entity",
+        foreign_keys="EntityOccurrenceOrm.entity_id",
+    )
 
     subject_triplets: Mapped[list["TripletOrm"]] = relationship(
         "TripletOrm",

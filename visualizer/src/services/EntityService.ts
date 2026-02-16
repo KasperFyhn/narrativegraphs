@@ -10,7 +10,11 @@ export interface EntityService {
 
   getDocs(id: string | number, limit?: number): Promise<Doc[]>;
 
-  getDocsByEntityIds(ids: (string | number)[], limit?: number): Promise<Doc[]>;
+  getDocsByEntityIds(
+    ids: (string | number)[],
+    connectionType?: 'relation' | 'cooccurrence',
+    limit?: number,
+  ): Promise<Doc[]>;
 }
 
 export class EntityServiceImpl implements EntityService {
@@ -73,12 +77,13 @@ export class EntityServiceImpl implements EntityService {
 
   async getDocsByEntityIds(
     ids: (string | number)[],
+    connectionType: 'relation' | 'cooccurrence' = 'relation',
     limit?: number,
   ): Promise<Doc[]> {
     const response = await fetch(`${this.baseUrl}/entities/docs`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ entityIds: ids, limit }),
+      body: JSON.stringify({ entityIds: ids, connectionType, limit }),
     });
 
     if (!response.ok) {

@@ -35,7 +35,7 @@ async def get_docs_by_entity(
     if len(doc_ids) == 0:
         raise HTTPException(status_code=404, detail="No documents found.")
 
-    docs = service.documents.get_multiple(doc_ids, limit=limit)
+    docs = service.documents.get_multiple_with_mentions(doc_ids, limit=limit)
     return docs
 
 
@@ -75,5 +75,10 @@ async def get_docs_by_entities(
     if len(doc_ids) == 0:
         raise HTTPException(status_code=404, detail="No documents found.")
 
-    docs = service.documents.get_multiple(doc_ids, limit=request.limit)
+    if request.connection_type == "cooccurrence":
+        docs = service.documents.get_multiple_with_tuplets(doc_ids, limit=request.limit)
+    else:
+        docs = service.documents.get_multiple_with_triplets(
+            doc_ids, limit=request.limit
+        )
     return docs

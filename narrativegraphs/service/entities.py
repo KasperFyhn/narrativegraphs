@@ -3,8 +3,8 @@ from typing import Optional
 import pandas as pd
 from sqlalchemy import case, func, select
 
-from narrativegraphs.db.documents import DocumentOrm
 from narrativegraphs.db.entities import EntityCategory, EntityOrm
+from narrativegraphs.db.entityoccurrences import EntityOccurrenceOrm
 from narrativegraphs.db.tuplets import TupletOrm
 from narrativegraphs.dto.entities import (
     EntityDetails,
@@ -51,19 +51,13 @@ class EntityService(OrmAssociatedService):
         self, entity_id: int, limit: Optional[int] = None
     ) -> list[int]:
         with self._get_session_context() as sc:
-            query = (
-                sc.query(DocumentOrm.id)
-                .join(TupletOrm)
-                .filter(
-                    (TupletOrm.entity_one_id == entity_id)
-                    | (TupletOrm.entity_two_id == entity_id)
-                )
-                .distinct()
+            query = sc.query(EntityOccurrenceOrm).filter(
+                EntityOccurrenceOrm.entity_id == entity_id
             )
             if limit:
                 query = query.limit(limit)
 
-        return [doc.id for doc in query.all()]
+        return list({e_occ.doc_id for e_occ in query.all()})
 
     def labels_by_ids(self, entity_ids: list[int]) -> list[EntityLabel]:
         with self._get_session_context() as sc:

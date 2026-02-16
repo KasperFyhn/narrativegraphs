@@ -16,15 +16,15 @@ class Tuplet(CamelModel):
         return cls(
             entity_one=IdentifiableSpan(
                 id=tuplet_orm.entity_one_id,
-                text=tuplet_orm.entity_one_span_text,
-                start=tuplet_orm.entity_one_span_start,
-                end=tuplet_orm.entity_one_span_end,
+                text=tuplet_orm.entity_one_occurrence.span_text,
+                start=tuplet_orm.entity_one_occurrence.span_start,
+                end=tuplet_orm.entity_one_occurrence.span_end,
             ),
             entity_two=IdentifiableSpan(
                 id=tuplet_orm.entity_two_id,
-                text=tuplet_orm.entity_two_span_text,
-                start=tuplet_orm.entity_two_span_start,
-                end=tuplet_orm.entity_two_span_end,
+                text=tuplet_orm.entity_two_occurrence.span_text,
+                start=tuplet_orm.entity_two_occurrence.span_start,
+                end=tuplet_orm.entity_two_occurrence.span_end,
             ),
             context=TextContext(
                 doc_id=tuplet_orm.doc_id,

@@ -24,7 +24,6 @@ class BackgroundServer:
 
         try:
             app.state.db_engine = self._db_engine  # noqa
-            app.state.cooccurrence_only = self._cooccurrence_only  # noqa
             await server.serve()
         except asyncio.CancelledError:
             logging.info("Server cancelled")

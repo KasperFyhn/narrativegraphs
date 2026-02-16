@@ -29,5 +29,5 @@ async def get_docs_by_cooccurrence(
     doc_ids = service.cooccurrences.doc_ids_by_cooccurrence(
         cooccurrence_id, limit=limit
     )
-    docs = service.documents.get_multiple(doc_ids)
+    docs = service.documents.get_multiple_with_tuplets(doc_ids)
     return docs

@@ -19,6 +19,7 @@ class DocumentOrm(Base, CategorizableMixin):
     timestamp = Column(Date, nullable=True)
 
     # Relationships
+    entity_occurrences = relationship("EntityOccurrenceOrm", back_populates="document")
     tuplets = relationship("TupletOrm", back_populates="document")
     triplets = relationship("TripletOrm", back_populates="document")
 
