@@ -98,7 +98,8 @@ class PopulationService(DbService):
         doc: DocumentOrm,
         entities: list[SpanAnnotation],
     ) -> OccurrenceLookup:
-        """Add entity occurrences up-front. Returns lookup dict for add_triplets/add_tuplets."""
+        """Add entity occurrences up-front. Returns lookup dict for add_triplets and
+        add_tuplets."""
         with self.get_session_context() as sc:
             # Deduplicate by span position and build lookup
             lookup: PopulationService.OccurrenceLookup = {}
