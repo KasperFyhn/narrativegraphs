@@ -2,8 +2,11 @@ from typing import Optional
 
 import pandas as pd
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from narrativegraphs.db.documents import DocumentCategory, DocumentOrm
+from narrativegraphs.db.triplets import TripletOrm
+from narrativegraphs.db.tuplets import TupletOrm
 from narrativegraphs.dto.documents import Document
 from narrativegraphs.service.common import OrmAssociatedService
 
@@ -37,16 +40,50 @@ class DocService(OrmAssociatedService):
     def get_multiple(
         self, ids: list[int] = None, limit: Optional[int] = None
     ) -> list[Document]:
+        options = [
+            selectinload(DocumentOrm.triplets).selectinload(
+                TripletOrm.subject_occurrence
+            ),
+            selectinload(DocumentOrm.triplets).selectinload(
+                TripletOrm.object_occurrence
+            ),
+            selectinload(DocumentOrm.triplets),
+            selectinload(DocumentOrm.tuplets).selectinload(
+                TupletOrm.entity_one_occurrence
+            ),
+            selectinload(DocumentOrm.tuplets).selectinload(
+                TupletOrm.entity_two_occurrence
+            ),
+            selectinload(DocumentOrm.tuplets),
+            selectinload(DocumentOrm.entity_occurrences),
+            selectinload(DocumentOrm.categories),
+        ]
         return self._get_multiple_by_ids_and_transform(
-            Document.from_orm, ids=ids, limit=limit
+            Document.from_orm, ids=ids, limit=limit, options=options
         )
 
     def get_docs(
         self,
         limit: Optional[int] = None,
     ) -> list[Document]:
+        options = [
+            selectinload(DocumentOrm.triplets).selectinload(
+                TripletOrm.subject_occurrence
+            ),
+            selectinload(DocumentOrm.triplets).selectinload(
+                TripletOrm.object_occurrence
+            ),
+            selectinload(DocumentOrm.tuplets).selectinload(
+                TupletOrm.entity_one_occurrence
+            ),
+            selectinload(DocumentOrm.tuplets).selectinload(
+                TupletOrm.entity_two_occurrence
+            ),
+            selectinload(DocumentOrm.entity_occurrences),
+            selectinload(DocumentOrm.categories),
+        ]
         with self._get_session_context() as sc:
-            query = sc.query(DocumentOrm)
+            query = sc.query(DocumentOrm).options(*options)
             if limit:
                 query = query.limit(limit)
             return [Document.from_orm(d) for d in query.all()]

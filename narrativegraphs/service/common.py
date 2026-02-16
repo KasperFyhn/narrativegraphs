@@ -95,10 +95,16 @@ class OrmAssociatedService(SubService, ABC):
         pass
 
     def _get_multiple_by_ids_and_transform(
-        self, transform: Callable[[Any], Any], ids: list[int] = None, limit: int = None
+        self,
+        transform: Callable[[Any], Any],
+        ids: list[int] = None,
+        limit: int = None,
+        options: list = None,
     ):
         with self._get_session_context() as sc:
             query = sc.query(self._orm)
+            if options:
+                query = query.options(*options)
             if ids is not None:
                 query = query.filter(self._orm.id.in_(ids))
                 # FIXME: what to do in case of missing entries?
