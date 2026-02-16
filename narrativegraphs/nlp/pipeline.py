@@ -102,26 +102,24 @@ class Pipeline(_AbstractPipeline):
                     docs_and_triplets, desc="Extracting triplets", total=len(docs)
                 )
             for doc, doc_triplets in docs_and_triplets:
-                self._populator.add_triplets(
-                    doc,
-                    doc_triplets,
-                )
+                # Extract entities from triplets
                 entities = list(
                     {e for triplet in doc_triplets for e in [triplet.subj, triplet.obj]}
                 )
+                # Add entity occurrences first, get lookup for efficient referencing
+                occ_lookup = self._populator.add_entity_occurrences(doc, entities)
+                # Then add triplets and tuplets that reference them
+                self._populator.add_triplets(doc, doc_triplets, occ_lookup)
                 doc_tuplets = self._cooccurrence_extractor.extract(doc, entities)
-                self._populator.add_tuplets(doc, doc_tuplets)
+                self._populator.add_tuplets(doc, doc_tuplets, occ_lookup)
 
             _logger.info("Resolving entities and predicates")
-            triplets = self._populator.get_triplets()
-            entities = [
-                entity
-                for triplet in triplets
-                for entity in [triplet.subj_span_text, triplet.obj_span_text]
-            ]
+            entities = [e.span_text for e in self._populator.get_entity_occurrences()]
             entity_mapping = self._entity_mapper.create_mapping(entities)
 
-            predicates = [triplet.pred_span_text for triplet in triplets]
+            predicates = [
+                triplet.pred_span_text for triplet in self._populator.get_triplets()
+            ]
             predicate_mapping = self._predicate_mapper.create_mapping(predicates)
 
             _logger.info("Mapping triplets and tuplets")
@@ -215,19 +213,14 @@ class CooccurrencePipeline(_AbstractPipeline):
                     docs_and_entities, desc="Extracting entities", total=len(docs)
                 )
             for doc, doc_entities in docs_and_entities:
+                # Add entity occurrences first, get lookup for efficient referencing
+                occ_lookup = self._populator.add_entity_occurrences(doc, doc_entities)
+                # Then add tuplets that reference them
                 doc_tuplets = self._cooccurrence_extractor.extract(doc, doc_entities)
-                self._populator.add_tuplets(doc, doc_tuplets)
+                self._populator.add_tuplets(doc, doc_tuplets, occ_lookup)
 
             _logger.info("Resolving entities")
-            tuplets = self._populator.get_tuplets()
-            entities = [
-                entity
-                for tuplet in tuplets
-                for entity in [
-                    tuplet.entity_one_span_text,
-                    tuplet.entity_two_span_text,
-                ]
-            ]
+            entities = [e.span_text for e in self._populator.get_entity_occurrences()]
             entity_mapping = self._entity_mapper.create_mapping(entities)
 
             _logger.info("Mapping tuplets")

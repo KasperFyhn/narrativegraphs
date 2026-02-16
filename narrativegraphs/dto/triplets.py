@@ -17,9 +17,9 @@ class Triplet(CamelModel):
         return cls(
             subject=IdentifiableSpan(
                 id=triplet_orm.subject_id,
-                text=triplet_orm.subj_span_text,
-                start=triplet_orm.subj_span_start,
-                end=triplet_orm.subj_span_end,
+                text=triplet_orm.subject_occurrence.span_text,
+                start=triplet_orm.subject_occurrence.span_start,
+                end=triplet_orm.subject_occurrence.span_end,
             ),
             predicate=IdentifiableSpan(
                 id=triplet_orm.predicate_id,
@@ -29,9 +29,9 @@ class Triplet(CamelModel):
             ),
             object=IdentifiableSpan(
                 id=triplet_orm.object_id,
-                text=triplet_orm.obj_span_text,
-                start=triplet_orm.obj_span_start,
-                end=triplet_orm.obj_span_end,
+                text=triplet_orm.object_occurrence.span_text,
+                start=triplet_orm.object_occurrence.span_start,
+                end=triplet_orm.object_occurrence.span_end,
             ),
             context=TextContext(
                 doc_id=triplet_orm.doc_id,

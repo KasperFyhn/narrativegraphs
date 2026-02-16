@@ -5,6 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import aliased
 
 from narrativegraphs.db.entities import EntityOrm
+from narrativegraphs.db.entityoccurrences import EntityOccurrenceOrm
 from narrativegraphs.db.tuplets import TupletOrm
 from narrativegraphs.dto.common import TextContext
 from narrativegraphs.dto.tuplets import Tuplet, TupletGroup
@@ -21,20 +22,31 @@ class TupletService(OrmAssociatedService):
             # Create aliases for the two entity joins
             entity_one = aliased(EntityOrm)
             entity_two = aliased(EntityOrm)
+            # Create aliases for the two occurrence joins
+            entity_one_occurrence = aliased(EntityOccurrenceOrm)
+            entity_two_occurrence = aliased(EntityOccurrenceOrm)
 
             df = pd.read_sql(
                 select(
                     TupletOrm.id.label("id"),
                     entity_one.id.label("entity_one_id"),
                     entity_one.label.label("entity_one_label"),
-                    TupletOrm.entity_one_span_text.label("entity_one_span_text"),
-                    TupletOrm.entity_one_span_start.label("entity_one_span_start"),
-                    TupletOrm.entity_one_span_end.label("entity_one_span_end"),
+                    entity_one_occurrence.span_text.label("entity_one_span_text"),
+                    entity_one_occurrence.span_start.label("entity_one_span_start"),
+                    entity_one_occurrence.span_end.label("entity_one_span_end"),
                     entity_two.id.label("entity_two_id"),
                     entity_two.label.label("entity_two_label"),
-                    TupletOrm.entity_two_span_text.label("entity_two_span_text"),
-                    TupletOrm.entity_two_span_start.label("entity_two_span_start"),
-                    TupletOrm.entity_two_span_end.label("entity_two_span_end"),
+                    entity_two_occurrence.span_text.label("entity_two_span_text"),
+                    entity_two_occurrence.span_start.label("entity_two_span_start"),
+                    entity_two_occurrence.span_end.label("entity_two_span_end"),
+                )
+                .join(
+                    entity_one_occurrence,
+                    TupletOrm.entity_one_occurrence_id == entity_one_occurrence.id,
+                )
+                .join(
+                    entity_two_occurrence,
+                    TupletOrm.entity_two_occurrence_id == entity_two_occurrence.id,
                 )
                 .join(
                     entity_one,

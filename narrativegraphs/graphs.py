@@ -28,12 +28,7 @@ class BaseGraph(QueryService):
 
     Provides shared functionality for database management, persistence,
     visualization, and access to entities, cooccurrences, and documents.
-
-    Subclasses should set `_cooccurrence_only` to indicate whether they
-    support relations/predicates or only co-occurrences.
     """
-
-    _cooccurrence_only: bool = False  # Override in subclasses
 
     def __init__(
         self,
@@ -107,9 +102,7 @@ class BaseGraph(QueryService):
         """
         from narrativegraphs.server.backgroundserver import BackgroundServer
 
-        server = BackgroundServer(
-            self._engine, port=port, cooccurrence_only=self._cooccurrence_only
-        )
+        server = BackgroundServer(self._engine, port=port)
         if autostart:
             server.start(block=block)
         if not block:
@@ -117,7 +110,7 @@ class BaseGraph(QueryService):
         else:
             return None
 
-    def save_to_file(self, file_path: str, overwrite: bool = True):
+    def save_to_file(self, file_path: str, overwrite: bool = False):
         """Save in-memory database to file.
 
         Args:
@@ -135,11 +128,8 @@ class BaseGraph(QueryService):
             else:
                 os.remove(file_path)
 
-        if str(self._engine.url) == "sqlite:///:memory:":
-            with self.get_session_context() as session:
-                session.execute(text(f"VACUUM main INTO '{file_path}'"))
-        else:
-            raise ValueError("Database is already file-based.")
+        with self.get_session_context() as session:
+            session.execute(text(f"VACUUM main INTO '{file_path}'"))
 
     @classmethod
     def load(cls, file_path: str):
@@ -169,8 +159,6 @@ class CooccurrenceGraph(BaseGraph):
     Use this when you only need entity co-occurrence analysis without
     the overhead of triplet extraction.
     """
-
-    _cooccurrence_only = True
 
     def __init__(
         self,
@@ -254,8 +242,6 @@ class NarrativeGraph(BaseGraph):
     NarrativeGraph extracts subject-predicate-object triplets from text documents
     and builds both a directed relation graph and an undirected co-occurrence graph.
     """
-
-    _cooccurrence_only = False
 
     def __init__(
         self,

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, ForeignKey, Integer, String
+from sqlalchemy import Column, ForeignKey, Integer
 from sqlalchemy.orm import Mapped, relationship
 
 from narrativegraphs.db.documents import AnnotationMixin, DocumentOrm
@@ -19,12 +19,12 @@ class TupletOrm(Base, AnnotationMixin):
         Integer, ForeignKey("cooccurrences.id"), nullable=True, index=True
     )
 
-    entity_one_span_start = Column(Integer, nullable=False)
-    entity_one_span_end = Column(Integer, nullable=False)
-    entity_one_span_text = Column(String, nullable=False)
-    entity_two_span_start = Column(Integer, nullable=False)
-    entity_two_span_end = Column(Integer, nullable=False)
-    entity_two_span_text = Column(String, nullable=False)
+    entity_one_occurrence_id = Column(
+        Integer, ForeignKey("entity_occurrences.id"), nullable=False, index=True
+    )
+    entity_two_occurrence_id = Column(
+        Integer, ForeignKey("entity_occurrences.id"), nullable=False, index=True
+    )
 
     # Relationships
     entity_one = relationship(
@@ -47,4 +47,12 @@ class TupletOrm(Base, AnnotationMixin):
         "DocumentOrm",
         foreign_keys="TupletOrm.doc_id",
         back_populates="tuplets",
+    )
+    entity_one_occurrence = relationship(
+        "EntityOccurrenceOrm",
+        foreign_keys="TupletOrm.entity_one_occurrence_id",
+    )
+    entity_two_occurrence = relationship(
+        "EntityOccurrenceOrm",
+        foreign_keys="TupletOrm.entity_two_occurrence_id",
     )

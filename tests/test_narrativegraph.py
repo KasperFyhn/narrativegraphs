@@ -14,11 +14,6 @@ from tests.mocks import MockMapper, MockTripletExtractor
 
 
 class TestNarrativeGraphSpecific(unittest.TestCase):
-    def test_cooccurrence_only_flag_is_false(self):
-        """NarrativeGraph has _cooccurrence_only=False."""
-        ng = NarrativeGraph()
-        self.assertFalse(ng._cooccurrence_only)
-
     def test_fit_returns_self(self):
         """fit() returns self for method chaining."""
         ng = NarrativeGraph(

@@ -63,8 +63,12 @@ class CooccurrenceCache:
 
         new_cooccurrences = []
         for tuplet in tuplets:
-            entity_id_1 = self._entity_cache.get_entity_id(tuplet.entity_one_span_text)
-            entity_id_2 = self._entity_cache.get_entity_id(tuplet.entity_two_span_text)
+            entity_id_1 = self._entity_cache.get_entity_id(
+                tuplet.entity_one_occurrence.span_text
+            )
+            entity_id_2 = self._entity_cache.get_entity_id(
+                tuplet.entity_two_occurrence.span_text
+            )
             if entity_id_1 > entity_id_2:
                 entity_id_2, entity_id_1 = entity_id_1, entity_id_2
             key = entity_id_1, entity_id_2
@@ -151,11 +155,15 @@ class RelationCache:
 
         new_relations = []
         for triplet in triplets:
-            subject_id = self._entity_cache.get_entity_id(triplet.subj_span_text)
+            subject_id = self._entity_cache.get_entity_id(
+                triplet.subject_occurrence.span_text
+            )
             predicate_id = self._predicate_cache.get_predicate_id(
                 triplet.pred_span_text,
             )
-            object_id = self._entity_cache.get_entity_id(triplet.obj_span_text)
+            object_id = self._entity_cache.get_entity_id(
+                triplet.object_occurrence.span_text
+            )
             relation_key = (subject_id, predicate_id, object_id)
             if relation_key not in relations:
                 relation = RelationOrm(

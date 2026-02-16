@@ -12,11 +12,6 @@ from tests.mocks import MockEntityExtractor, MockMapper
 
 
 class TestCooccurrenceGraphSpecific(unittest.TestCase):
-    def test_cooccurrence_only_flag_is_true(self):
-        """CooccurrenceGraph has _cooccurrence_only=True."""
-        cg = CooccurrenceGraph()
-        self.assertTrue(cg._cooccurrence_only)
-
     def test_fit_returns_self(self):
         """fit() returns self for method chaining."""
         cg = CooccurrenceGraph(
