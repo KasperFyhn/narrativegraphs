@@ -35,19 +35,20 @@ export const EntityInfo: React.FC<EntityInfoProps> = ({ id }) => {
     [id],
   );
 
-  if (loading) {
-    return <ClipLoader loading={true} />;
-  }
-
-  if (!details) {
+  if (!loading && !details) {
     return <p>Failed to load entity details.</p>;
   }
 
   return (
     <>
-      <StatsDisplay stats={details.stats} />
-      <CategoriesDisplay categories={details.categories} />
-      <AltLabelsDisplay altLabels={details.altLabels} />
+      {loading && <ClipLoader loading={true} />}
+      {details && (
+        <>
+          <StatsDisplay stats={details.stats} />
+          <CategoriesDisplay categories={details.categories} />
+          <AltLabelsDisplay altLabels={details.altLabels} />
+        </>
+      )}
       <DocsSection loadDocs={loadDocs} highlightContext={highlightContext} />
     </>
   );

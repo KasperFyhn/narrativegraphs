@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { ClipLoader } from 'react-spinners';
 import { Doc } from '../../../types/doc';
 import { DocInfo } from './DocInfo';
@@ -23,7 +23,7 @@ export const DocsSection: React.FC<DocsSectionProps> = ({
   const [docs, setDocs] = useState<Doc[]>([]);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
-  const handleLoad = async (): Promise<void> => {
+  const handleLoad = useCallback(async (): Promise<void> => {
     setLoadingState('loading');
     try {
       const result = await loadDocs();
@@ -33,7 +33,7 @@ export const DocsSection: React.FC<DocsSectionProps> = ({
       console.error('Failed to load docs:', error);
       setLoadingState('idle');
     }
-  };
+  }, [loadDocs]);
 
   const handleHide = (): void => {
     setLoadingState('idle');
@@ -47,8 +47,7 @@ export const DocsSection: React.FC<DocsSectionProps> = ({
 
   useEffect(() => {
     if (autoload) handleLoad();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [autoload, handleLoad, loadDocs]);
 
   if (loadingState === 'idle') {
     return <button onClick={handleLoad}>Load docs</button>;

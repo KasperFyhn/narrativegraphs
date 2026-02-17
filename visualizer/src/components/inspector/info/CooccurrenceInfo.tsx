@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ClipLoader } from 'react-spinners';
 import { useServiceContext } from '../../../contexts/ServiceContext';
 import { StatsDisplay } from './StatsDisplay';
@@ -25,29 +25,39 @@ export const CooccurrenceInfo: React.FC<CooccurrenceInfoProps> = ({ id }) => {
       .finally(() => setLoading(false));
   }, [cooccurrenceService, id]);
 
-  if (loading) {
-    return <ClipLoader loading={true} />;
-  }
+  const loadDocs = useCallback(() => {
+    return cooccurrenceService.getDocs(id);
+  }, [cooccurrenceService, id]);
 
-  if (!details) {
+  const highlightContext = useMemo(
+    () =>
+      details
+        ? {
+            type: 'cooccurrence' as const,
+            entityOneId: details.entityOneId,
+            entityTwoId: details.entityTwoId,
+          }
+        : undefined,
+    [details],
+  );
+
+  if (!loading && !details) {
     return <p>Failed to load cooccurrence details.</p>;
   }
 
   return (
     <>
-      <StatsDisplay
-        stats={details.stats}
-        extra={[{ name: 'PMI', value: details.stats.pmi.toPrecision(3) }]}
-      />
-      <CategoriesDisplay categories={details.categories} />
-      <DocsSection
-        loadDocs={() => cooccurrenceService.getDocs(id)}
-        highlightContext={{
-          type: 'cooccurrence',
-          entityOneId: details.entityOneId,
-          entityTwoId: details.entityTwoId,
-        }}
-      />
+      {loading && <ClipLoader loading={true} />}
+      {details && (
+        <>
+          <StatsDisplay
+            stats={details.stats}
+            extra={[{ name: 'PMI', value: details.stats.pmi.toPrecision(3) }]}
+          />
+          <CategoriesDisplay categories={details.categories} />
+        </>
+      )}
+      <DocsSection loadDocs={loadDocs} highlightContext={highlightContext} />
     </>
   );
 };
