@@ -63,6 +63,11 @@ class BaseGraph(QueryService):
         return self.entities.as_df()
 
     @property
+    def entity_mentions_(self) -> pd.DataFrame:
+        """Entity mentions as a pandas DataFrame."""
+        return self.mentions.as_df()
+
+    @property
     def cooccurrences_(self) -> pd.DataFrame:
         """Co-occurrences as a pandas DataFrame."""
         return self.cooccurrences.as_df()

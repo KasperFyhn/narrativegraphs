@@ -3,6 +3,32 @@ import numpy as np
 import pandas as pd
 
 
+def fit_and_visualize_entity_frequencies(df: pd.DataFrame):
+    # Assuming df has columns 'entity' and 'frequency'
+    df_sorted = df.sort_values("frequency", ascending=False).reset_index(drop=True)
+    df_sorted["rank"] = df_sorted.index + 1
+
+    fig, ax = plt.subplots()
+    ax.loglog(df_sorted["rank"], df_sorted["frequency"], "o", markersize=3, alpha=0.7)
+
+    # Fit a power law line for reference
+    log_rank = np.log(df_sorted["rank"])
+    log_freq = np.log(df_sorted["frequency"])
+    slope, intercept = np.polyfit(log_rank, log_freq, 1)
+    ax.loglog(
+        df_sorted["rank"],
+        np.exp(intercept) * df_sorted["rank"] ** slope,
+        "r--",
+        label=f"Fit: slope = {slope:.2f}",
+    )
+
+    ax.set_xlabel("Rank")
+    ax.set_ylabel("Frequency")
+    ax.set_title("Zipf's Law Check")
+    ax.legend()
+    plt.show()
+
+
 def visualize_pmi_by_frequency(coocs: pd.DataFrame):
     # Create frequency bins
     max_freq = max(
