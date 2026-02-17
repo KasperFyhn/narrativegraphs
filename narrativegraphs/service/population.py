@@ -1,7 +1,5 @@
 from datetime import date
 
-from tqdm.auto import tqdm
-
 from narrativegraphs.db.documents import DocumentCategory, DocumentOrm
 from narrativegraphs.db.entityoccurrences import EntityOccurrenceOrm
 from narrativegraphs.db.triplets import TripletOrm
@@ -197,8 +195,6 @@ class PopulationService(DbService):
         """Map tuplets to entities and cooccurrences."""
         tuplets = self.get_tuplets()
         cooc_cache = CooccurrenceCache(sc, entity_cache, tuplets)
-        if len(tuplets) > 100_000:
-            tuplets = tqdm(tuplets, desc="Mapping tuplets")
         for tuplet in tuplets:
             entity_one_id = entity_cache.get_entity_id(
                 tuplet.entity_one_occurrence.span_text
@@ -233,8 +229,6 @@ class PopulationService(DbService):
     ):
         """Map triplets to entities, predicates, and relations."""
         triplets = self.get_triplets()
-        if len(triplets) > 100_000:
-            triplets = tqdm(triplets, desc="Mapping triplets")
         for triplet in triplets:
             subject_id = entity_cache.get_entity_id(
                 triplet.subject_occurrence.span_text

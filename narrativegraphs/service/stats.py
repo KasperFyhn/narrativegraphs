@@ -9,6 +9,7 @@ from narrativegraphs.db.cooccurrences import CooccurrenceCategory, CooccurrenceO
 from narrativegraphs.db.documents import AnnotationMixin, DocumentCategory, DocumentOrm
 from narrativegraphs.db.engine import Base
 from narrativegraphs.db.entities import EntityCategory, EntityOrm
+from narrativegraphs.db.entityoccurrences import EntityOccurrenceOrm
 from narrativegraphs.db.predicates import PredicateCategory, PredicateOrm
 from narrativegraphs.db.relations import RelationCategory, RelationOrm
 from narrativegraphs.db.triplets import TripletOrm
@@ -146,28 +147,21 @@ class StatsCalculator(DbService):
 
             session.execute(insert_stmt)
 
-    def update_entity_info(self, n_docs: int = None, from_triplets: bool = True):
-        if from_triplets:
-            backing_anno_type = TripletOrm
-            anno_fk_columns = [TripletOrm.subject_id, TripletOrm.object_id]
-        else:
-            backing_anno_type = TupletOrm
-            anno_fk_columns = [TupletOrm.entity_one_id, TupletOrm.entity_two_id]
-
+    def update_entity_info(self, n_docs: int = None):
         with self.get_session_context() as session:
             if n_docs is None:
                 n_docs = session.query(DocumentOrm).count()
 
             self._update_stats_for_type(
                 EntityOrm,
-                backing_anno_type,
-                anno_fk_columns,
+                EntityOccurrenceOrm,
+                EntityOccurrenceOrm.entity_id,
                 n_docs,
             )
             self._update_categories_for_type(
                 EntityCategory,
-                backing_anno_type,
-                anno_fk_columns,
+                EntityOccurrenceOrm,
+                EntityOccurrenceOrm.entity_id,
             )
             session.commit()
 
@@ -311,7 +305,7 @@ class StatsCalculator(DbService):
         with self.get_session_context() as session:
             n_docs = session.query(DocumentOrm).count()
 
-            self.update_entity_info(n_docs=n_docs, from_triplets=has_triplets)
+            self.update_entity_info(n_docs=n_docs)
             self.update_cooccurrence_info(n_docs=n_docs)
             if has_triplets:
                 self.update_predicate_info(n_docs=n_docs)
