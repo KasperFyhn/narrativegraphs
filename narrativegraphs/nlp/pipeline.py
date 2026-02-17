@@ -3,7 +3,7 @@ from abc import ABC
 from datetime import date, datetime
 
 from sqlalchemy import Engine
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from narrativegraphs.nlp.common.transformcategories import normalize_categories
 from narrativegraphs.nlp.entities.common import EntityExtractor
