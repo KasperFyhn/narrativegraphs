@@ -1,6 +1,6 @@
 from datetime import date
 
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from narrativegraphs.db.documents import DocumentCategory, DocumentOrm
 from narrativegraphs.db.entityoccurrences import EntityOccurrenceOrm

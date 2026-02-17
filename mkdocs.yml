@@ -40,7 +40,7 @@ plugins:
             members_order: source
   - mkdocs-jupyter:
       include_source: true
-      execute: false
+      execute: true
       # execute_ignore:
       #   - "notebooks/slow_example.ipynb"  # Ignore specific notebooks
 
@@ -65,4 +65,8 @@ nav:
       - Triplet Extraction: api/triplet_extraction.md
   - Developer Guide:
       - ORM Structure: developer/orm-structure.md
+      - NLP Layer: developer/nlp-layer.md
+      - Service Layer: developer/service-layer.md
+      - Server Layer: developer/server-layer.md
+      - Visualizer: developer/visualizer.md
   - Contributing: contributing.md
