@@ -2,6 +2,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+from narrativegraphs.dto.graph import Community
+from narrativegraphs.dto.tuplets import TupletGroup
+
 
 def fit_and_visualize_entity_frequencies(df: pd.DataFrame):
     # Assuming df has columns 'entity' and 'frequency'
@@ -30,6 +33,17 @@ def fit_and_visualize_entity_frequencies(df: pd.DataFrame):
 
 
 def visualize_pmi_by_frequency(coocs: pd.DataFrame):
+    # Create mirrored copy with swapped entity frequencies
+    mirrored = coocs.rename(
+        columns={
+            "entity_one_frequency": "entity_two_frequency",
+            "entity_two_frequency": "entity_one_frequency",
+        }
+    )
+
+    # Concatenate and proceed with symmetric data
+    coocs = pd.concat([coocs, mirrored], ignore_index=True)
+
     # Create frequency bins
     max_freq = max(
         coocs["entity_one_frequency"].max(), coocs["entity_two_frequency"].max()
@@ -75,3 +89,10 @@ def visualize_pmi_by_frequency(coocs: pd.DataFrame):
 
     plt.tight_layout()
     plt.show()
+
+
+def print_comm_with_contexts(comm: Community, contexts: list[TupletGroup]):
+    print("COMMUNITY:", ", ".join(e.label for e in comm.members))
+    for context in contexts:
+        context.print_with_ansi_highlight()
+    print()

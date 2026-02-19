@@ -32,8 +32,8 @@ class BackgroundServer:
         try:
             app.state.db_engine = self._db_engine  # noqa
             await server.serve()
-        except asyncio.CancelledError:
-            logging.info("Server cancelled")
+        except (asyncio.CancelledError, KeyboardInterrupt):
+            logging.info("Server stopped")
 
     def start(self, block: bool = True):
         """Start the server.
