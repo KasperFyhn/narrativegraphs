@@ -314,7 +314,7 @@ class GraphService(SubService):
         self,
         connection_type: ConnectionType,
         graph_filter: GraphFilter = GraphFilter(),
-    ):
+    ) -> Graph:
         entity_conditions = create_entity_conditions(graph_filter)
 
         with self._get_session_context() as db:
