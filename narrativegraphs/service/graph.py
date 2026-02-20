@@ -154,40 +154,37 @@ class GraphService(SubService):
         # Entity conditions and DB references
         source_entity = aliased(EntityOrm)
         target_entity = aliased(EntityOrm)
-        source_entity_conditions = create_entity_conditions(
-            graph_filter, alias=source_entity
-        )
-        target_entity_conditions = create_entity_conditions(
-            graph_filter, alias=target_entity
-        )
 
         with self._get_session_context() as db:
             base_query = (
                 db.query(connection_orm_type)
                 .join(source_entity, source_col == source_entity.id)
                 .join(target_entity, target_col == target_entity.id)
-                .filter(
-                    *connection_conditions,
-                    *source_entity_conditions,
-                    *target_entity_conditions,
-                )
+                .filter(*connection_conditions)
+            )
+
+            source_entity_conditions = create_entity_conditions(
+                graph_filter, alias=source_entity
+            )
+            target_entity_conditions = create_entity_conditions(
+                graph_filter, alias=target_entity
             )
 
             if len(entity_ids) < 1000:  # use in_ condition
                 if connection_type == "relation":
-                    connect_to_ids_conditions = [
-                        RelationOrm.subject_id.in_(entity_ids),
-                        RelationOrm.object_id.in_(entity_ids),
-                    ]
+                    source_in_entities = RelationOrm.subject_id.in_(entity_ids)
+                    target_in_entities = RelationOrm.object_id.in_(entity_ids)
                 elif connection_type == "cooccurrence":
-                    connect_to_ids_conditions = [
-                        CooccurrenceOrm.entity_one_id.in_(entity_ids),
-                        CooccurrenceOrm.entity_two_id.in_(entity_ids),
-                    ]
+                    source_in_entities = CooccurrenceOrm.entity_one_id.in_(entity_ids)
+                    target_in_entities = CooccurrenceOrm.entity_two_id.in_(entity_ids)
+
                 if expand:
-                    id_filter = or_(*connect_to_ids_conditions)
+                    id_filter = or_(
+                        and_(source_in_entities, *target_entity_conditions),
+                        and_(*source_entity_conditions, target_in_entities),
+                    )
                 else:
-                    id_filter = and_(*connect_to_ids_conditions)
+                    id_filter = and_(source_in_entities, target_in_entities)
 
                 return base_query.filter(id_filter).all()
 
@@ -197,10 +194,10 @@ class GraphService(SubService):
                 if expand:
                     source_query = base_query.join(
                         temp_ids, source_col == temp_ids.c.id
-                    )
+                    ).filter(*target_entity_conditions)
                     target_query = base_query.join(
                         temp_ids, target_col == temp_ids.c.id
-                    )
+                    ).filter(*source_entity_conditions)
                     return source_query.union(target_query).all()
                 else:
                     temp_source = temp_ids.alias("temp_source")
