@@ -201,6 +201,7 @@ class CooccurrenceGraph(BaseGraph):
         docs: list[str],
         doc_ids: list[int | str] = None,
         timestamps: list[datetime | date] = None,
+        timestamps_ordinal: list[int] = None,
         categories: (
             list[str | list[str]]
             | dict[str, list[str | list[str]]]
@@ -213,6 +214,8 @@ class CooccurrenceGraph(BaseGraph):
             docs: Required argument, a list of documents as strings.
             doc_ids: Optional list of document ids. Same length as docs.
             timestamps: Optional list of document timestamps. Same length as docs.
+            timestamps_ordinal: Optional list of document timestamps as an arbitrary
+                integer, e.g. page, section or chapter number. Same length as docs.
             categories: Optional list of document categories. Supports single or
                 multiple categories. A document can have a single or multiple labels
                 per category.
@@ -224,6 +227,7 @@ class CooccurrenceGraph(BaseGraph):
             docs,
             doc_ids=doc_ids,
             timestamps=timestamps,
+            timestamps_ordinal=timestamps_ordinal,
             categories=categories,
         )
         return self

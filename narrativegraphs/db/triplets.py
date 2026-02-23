@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Date, ForeignKey, Integer, String
+from sqlalchemy import Column, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, relationship
 
 from narrativegraphs.db.documents import AnnotationMixin, DocumentOrm
@@ -7,10 +7,6 @@ from narrativegraphs.db.engine import Base
 
 class TripletOrm(Base, AnnotationMixin):
     __tablename__ = "triplets"
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    doc_id = Column(Integer, ForeignKey("documents.id"), nullable=False, index=True)
-
-    timestamp = Column(Date, nullable=True)
 
     subject_id = Column(Integer, ForeignKey("entities.id"), nullable=True, index=True)
     predicate_id = Column(

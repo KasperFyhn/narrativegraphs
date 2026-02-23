@@ -11,6 +11,7 @@ class Document(BaseDetails):
     str_id: Optional[str] = None
     text: str
     timestamp: Optional[date]
+    timestamp_ordinal: Optional[int]
     triplets: Optional[list[Triplet]] = None
     tuplets: Optional[list[Tuplet]] = None
     entity_mentions: Optional[list[IdentifiableSpan]] = None
@@ -29,6 +30,7 @@ class Document(BaseDetails):
             str_id=doc_orm.str_id,
             text=doc_orm.text,
             timestamp=doc_orm.timestamp,
+            timestamp_ordinal=doc_orm.timestamp_ordinal,
             triplets=Triplet.from_orms(doc_orm.triplets) if include_triplets else None,
             tuplets=Tuplet.from_orms(doc_orm.tuplets) if include_tuplets else None,
             entity_mentions=(

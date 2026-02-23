@@ -173,6 +173,7 @@ class CooccurrencePipeline(_AbstractPipeline):
         docs: list[str],
         doc_ids: list[int | str] = None,
         timestamps: list[datetime | date] = None,
+        timestamps_ordinal: list[int] = None,
         categories: (
             list[str | list[str]]
             | dict[str, list[str | list[str]]]
@@ -185,6 +186,8 @@ class CooccurrencePipeline(_AbstractPipeline):
             docs: List of document texts
             doc_ids: Optional list of document identifiers
             timestamps: Optional list of document timestamps
+            timestamps_ordinal: Optional list of document timestamps as arbitrary
+                integers
             categories: Optional document categorization
 
         Returns:
@@ -199,6 +202,7 @@ class CooccurrencePipeline(_AbstractPipeline):
                 docs,
                 doc_ids=doc_ids,
                 timestamps=timestamps,
+                timestamps_ordinal=timestamps_ordinal,
                 categories=categories,
             )
 

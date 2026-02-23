@@ -46,12 +46,15 @@ class PopulationService(DbService):
         docs: list[str],
         doc_ids: list[int | str] = None,
         timestamps: list[date] = None,
+        timestamps_ordinal: list[int] = None,
         categories: list[dict[str, list[str]]] = None,
     ):
         if doc_ids is None:
             doc_ids = [None] * len(docs)
         if timestamps is None:
             timestamps = [None] * len(docs)
+        if timestamps_ordinal is None:
+            timestamps_ordinal = [None] * len(docs)
         if categories is None:
             categories = [{}] * len(docs)
 
@@ -63,14 +66,15 @@ class PopulationService(DbService):
         bulk = []
         doc_cats = []
         with self.get_session_context():
-            for doc_text, doc_id, timestamp, categorization in zip(
-                docs, doc_ids, timestamps, categories, strict=True
+            for doc_text, doc_id, timestamp, timestamp_ordinal, categorization in zip(
+                docs, doc_ids, timestamps, timestamps_ordinal, categories, strict=True
             ):
                 doc_orm = DocumentOrm(
                     text=doc_text,
                     id=doc_id if isinstance(doc_id, int) else None,
                     str_id=doc_id if isinstance(doc_id, str) else None,
                     timestamp=timestamp,
+                    timestamp_ordinal=timestamp_ordinal,
                 )
                 bulk.append(doc_orm)
                 doc_cats.append(categorization)

@@ -17,6 +17,7 @@ class DocumentOrm(Base, CategorizableMixin):
 
     str_id = Column(String, nullable=True, index=True)
     timestamp = Column(Date, nullable=True)
+    timestamp_ordinal = Column(Integer, nullable=True)
 
     # Relationships
     entity_occurrences = relationship("EntityOccurrenceOrm", back_populates="document")
@@ -31,6 +32,7 @@ class DocumentOrm(Base, CategorizableMixin):
 class AnnotationMixin(CategorizableMixin):
     doc_id = Column(Integer, ForeignKey("documents.id"), nullable=False, index=True)
     timestamp = Column(Date, nullable=True)
+    timestamp_ordinal = Column(Integer, nullable=True)
     context = Column(Text, nullable=True)
     context_offset = Column(Integer, nullable=True)
 
@@ -44,20 +46,22 @@ class AnnotationMixin(CategorizableMixin):
 class AnnotationBackedTextStatsMixin:
     frequency = Column(Integer, default=-1, nullable=False)
     doc_frequency = Column(Integer, default=-1, nullable=False)
-    spread = Column(Float, default=-1, nullable=False)
     adjusted_tf_idf = Column(Float, default=-1, nullable=False)
     first_occurrence = Column(Date, nullable=True)
     last_occurrence = Column(Date, nullable=True)
+    first_occurrence_ordinal = Column(Integer, nullable=True)
+    last_occurrence_ordinal = Column(Integer, nullable=True)
 
     @classmethod
     def stats_columns(cls):
         return [
             cls.frequency,
             cls.doc_frequency,
-            cls.spread,
             cls.adjusted_tf_idf,
             cls.first_occurrence,
             cls.last_occurrence,
+            cls.first_occurrence_ordinal,
+            cls.last_occurrence_ordinal,
         ]
 
     @property
