@@ -15,6 +15,7 @@ class Document(BaseDetails):
     triplets: Optional[list[Triplet]] = None
     tuplets: Optional[list[Tuplet]] = None
     entity_mentions: Optional[list[IdentifiableSpan]] = None
+    metadata: Optional[dict[str, str]] = None
 
     @classmethod
     def from_orm(
@@ -39,4 +40,5 @@ class Document(BaseDetails):
                 else None
             ),
             categories=doc_orm.category_dict,
+            metadata=doc_orm.meta_dict,
         )

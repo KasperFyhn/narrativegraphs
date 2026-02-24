@@ -20,7 +20,6 @@ class TextOccurrenceStats(CamelModel):
     last_occurrence: Optional[date] = None
     first_occurrence_ordinal: Optional[int] = None
     last_occurrence_ordinal: Optional[int] = None
-    doc_ids: set[int]
 
     @classmethod
     def from_mixin(cls, orm: AnnotationBackedTextStatsMixin):
@@ -30,9 +29,6 @@ class TextOccurrenceStats(CamelModel):
             adjusted_tf_idf=orm.adjusted_tf_idf,
             first_occurrence=orm.first_occurrence,
             last_occurrence=orm.last_occurrence,
-            first_occurrence_ordinal=orm.first_occurrence_ordinal,
-            last_occurrence_ordinal=orm.last_occurrence_ordinal,
-            doc_ids=orm.doc_ids,
         )
 
 

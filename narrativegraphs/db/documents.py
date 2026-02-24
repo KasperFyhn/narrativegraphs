@@ -1,8 +1,17 @@
+from typing import Optional
+
 from sqlalchemy import Column, Date, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, relationship
 
 from narrativegraphs.db.common import CategorizableMixin, CategoryMixin
 from narrativegraphs.db.engine import Base
+
+
+class DocumentMetadata(Base):
+    __tablename__ = "document_metadata"
+    name = Column(String)
+    value = Column(String)
+    doc_id = Column(Integer, ForeignKey("documents.id"))
 
 
 class DocumentCategory(Base, CategoryMixin):
@@ -27,6 +36,17 @@ class DocumentOrm(Base, CategorizableMixin):
     categories: Mapped[list[DocumentCategory]] = relationship(
         "DocumentCategory", foreign_keys=[DocumentCategory.target_id]
     )
+
+    meta: Mapped[list[DocumentMetadata]] = relationship(
+        "DocumentMetadata", foreign_keys=[DocumentMetadata.doc_id]
+    )
+
+    @property
+    def meta_dict(self) -> Optional[dict[str, str]]:
+        result = {m.name: m.value for m in self.meta}
+        if not result:
+            return None
+        return result
 
 
 class AnnotationMixin(CategorizableMixin):

@@ -24,4 +24,5 @@ export interface Doc {
   tuplets?: Tuplet[];
   entityMentions?: Span[];
   categories: { [key: string]: string[] };
+  metadata: { [key: string]: string };
 }

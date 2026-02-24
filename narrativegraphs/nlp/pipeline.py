@@ -1,6 +1,7 @@
 import logging
 from abc import ABC
 from datetime import date, datetime
+from typing import Any
 
 from sqlalchemy import Engine
 from tqdm.auto import tqdm
@@ -179,6 +180,7 @@ class CooccurrencePipeline(_AbstractPipeline):
             | dict[str, list[str | list[str]]]
             | list[dict[str, str | list[str]]]
         ) = None,
+        metadata: list[dict[str, Any]] = None,
     ):
         """Run the co-occurrence pipeline on a set of documents.
 
@@ -189,6 +191,7 @@ class CooccurrencePipeline(_AbstractPipeline):
             timestamps_ordinal: Optional list of document timestamps as arbitrary
                 integers
             categories: Optional document categorization
+            metadata: Optional document metadata
 
         Returns:
             self for method chaining
@@ -204,6 +207,7 @@ class CooccurrencePipeline(_AbstractPipeline):
                 timestamps=timestamps,
                 timestamps_ordinal=timestamps_ordinal,
                 categories=categories,
+                metadata=metadata,
             )
 
             _logger.info("Extracting entities")

@@ -1,7 +1,7 @@
 import logging
 import os
 from datetime import date, datetime
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import networkx as nx
 import pandas as pd
@@ -207,6 +207,7 @@ class CooccurrenceGraph(BaseGraph):
             | dict[str, list[str | list[str]]]
             | list[dict[str, str | list[str]]]
         ) = None,
+        metadata: list[dict[str, Any]] = None,
     ) -> "CooccurrenceGraph":
         """Fit a co-occurrence graph from documents.
 
@@ -219,6 +220,7 @@ class CooccurrenceGraph(BaseGraph):
             categories: Optional list of document categories. Supports single or
                 multiple categories. A document can have a single or multiple labels
                 per category.
+            metadata: Optional list of document metadata. Same length as docs.
 
         Returns:
             A fitted CooccurrenceGraph instance.
@@ -229,6 +231,7 @@ class CooccurrenceGraph(BaseGraph):
             timestamps=timestamps,
             timestamps_ordinal=timestamps_ordinal,
             categories=categories,
+            metadata=metadata,
         )
         return self
 
