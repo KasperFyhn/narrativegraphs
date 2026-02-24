@@ -52,11 +52,11 @@ class StatsCalculator(DbService):
                         fk_column.label("target_id"),
                         backing_annotation_type.id.label("annotation_id"),
                         backing_annotation_type.doc_id.label("doc_id"),
-                        backing_annotation_type.timestamp.label("timestamp"),
-                        backing_annotation_type.timestamp_ordinal.label(
-                            "timestamp_ordinal"
-                        ),
-                    ).where(fk_column.isnot(None))
+                        DocumentOrm.timestamp.label("timestamp"),
+                        DocumentOrm.timestamp_ordinal.label("timestamp_ordinal"),
+                    )
+                    .join(DocumentOrm, backing_annotation_type.doc_id == DocumentOrm.id)
+                    .where(fk_column.isnot(None))
                 )
 
             # union_all handles single query case

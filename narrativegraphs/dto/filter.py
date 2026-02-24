@@ -13,6 +13,8 @@ class DataBounds(CamelModel):
     categories: Optional[dict[str, list[str]]] = None
     earliest_date: Optional[date] = None
     latest_date: Optional[date] = None
+    earliest_ordinal_time: Optional[int] = None
+    latest_ordinal_time: Optional[int] = None
 
 
 class GraphFilter(CamelModel):
@@ -30,5 +32,7 @@ class GraphFilter(CamelModel):
     maximum_edge_doc_frequency: Optional[int] = None
     earliest_date: Optional[date] = None
     latest_date: Optional[date] = None
+    earliest_ordinal_time: Optional[int] = None
+    latest_ordinal_time: Optional[int] = None
     blacklisted_entity_ids: Optional[set[int]] = None
     categories: Optional[dict[str, list[str]]] = None

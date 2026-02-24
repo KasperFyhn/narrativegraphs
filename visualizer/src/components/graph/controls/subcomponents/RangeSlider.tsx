@@ -1,4 +1,6 @@
 import LogarithmicRangeSlider from '../../../common/userinput/LogarithmicRangeSlider';
+import MultiRangeSlider from 'multi-range-slider-react';
+
 import React from 'react';
 import { useGraphQuery } from '../../../../hooks/useGraphQuery';
 
@@ -10,7 +12,7 @@ export interface FrequencySliderProps {
   onChange: (values: { minValue: number; maxValue: number }) => void;
 }
 
-const FrequencySlider: React.FC<FrequencySliderProps> = (
+const RangeSlider: React.FC<FrequencySliderProps> = (
   props: FrequencySliderProps,
 ) => {
   return (
@@ -26,7 +28,7 @@ const FrequencySlider: React.FC<FrequencySliderProps> = (
 export const NodeFrequencySlider: React.FC = () => {
   const { dataBounds, filter, setNodeFrequencyRange } = useGraphQuery();
   return (
-    <FrequencySlider
+    <RangeSlider
       onChange={(e) => {
         setNodeFrequencyRange(e.minValue, e.maxValue);
       }}
@@ -45,7 +47,7 @@ export const NodeFrequencySlider: React.FC = () => {
 export const EdgeFrequencySlider: React.FC = () => {
   const { dataBounds, filter, setEdgeFrequencyRange } = useGraphQuery();
   return (
-    <FrequencySlider
+    <RangeSlider
       onChange={(e) => {
         setEdgeFrequencyRange(e.minValue, e.maxValue);
       }}
@@ -58,5 +60,32 @@ export const EdgeFrequencySlider: React.FC = () => {
       }
       max={dataBounds.maximumPossibleEdgeFrequency}
     />
+  );
+};
+
+export const OrdinalTimeFrequencySlider: React.FC = () => {
+  const { dataBounds, filter, setOrdinalTimeRange } = useGraphQuery();
+  if (
+    dataBounds.earliestOrdinalTime === undefined ||
+    dataBounds.latestOrdinalTime === undefined
+  ) {
+    return <p>NOT POSSIBLE</p>;
+  }
+
+  return (
+    <div style={{ minWidth: '150px' }}>
+      <MultiRangeSlider
+        onChange={(e: { minValue: number; maxValue: number }) =>
+          setOrdinalTimeRange(e.minValue, e.maxValue)
+        }
+        min={dataBounds.earliestOrdinalTime}
+        max={dataBounds.latestOrdinalTime}
+        minValue={filter.earliestOrdinalTime || dataBounds.earliestOrdinalTime}
+        maxValue={filter.latestOrdinalTime || dataBounds.latestOrdinalTime}
+        barInnerColor={'transparent'}
+        ruler={false}
+        style={{ border: 'none', boxShadow: 'none', padding: '15px 10px' }}
+      />
+    </div>
   );
 };

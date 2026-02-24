@@ -113,7 +113,6 @@ class PopulationService(DbService):
                         span_start=entity.start_char,
                         span_end=entity.end_char,
                         span_text=entity.text,
-                        timestamp=doc.timestamp,
                     )
 
             sc.add_all(lookup.values())
@@ -131,7 +130,6 @@ class PopulationService(DbService):
             triplet_orms = [
                 TripletOrm(
                     doc_id=doc.id,
-                    timestamp=doc.timestamp,
                     subject_occurrence_id=occurrence_lookup[
                         (
                             triplet.subj.start_char,
@@ -165,7 +163,6 @@ class PopulationService(DbService):
             tuplet_orms = [
                 TupletOrm(
                     doc_id=doc.id,
-                    timestamp=doc.timestamp,
                     entity_one_occurrence_id=occurrence_lookup[
                         (
                             tuplet.entity_one.start_char,

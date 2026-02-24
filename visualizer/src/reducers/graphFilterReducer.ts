@@ -19,6 +19,10 @@ export type GraphFilterAction =
     }
   | { type: 'SET_DATE_RANGE'; payload: { start?: Date; end?: Date } }
   | {
+      type: 'SET_ORDINAL_TIME_RANGE';
+      payload: { start?: number; end?: number };
+    }
+  | {
       type: 'ADD_BLACKLIST_ENTITY';
       payload: string[];
     }
@@ -109,6 +113,13 @@ export function graphFilterReducer(
         ...state,
         earliestDate: action.payload.start,
         latestDate: action.payload.end,
+      };
+
+    case 'SET_ORDINAL_TIME_RANGE':
+      return {
+        ...state,
+        earliestOrdinalTime: action.payload.start,
+        latestOrdinalTime: action.payload.end,
       };
 
     case 'ADD_BLACKLIST_ENTITY':
