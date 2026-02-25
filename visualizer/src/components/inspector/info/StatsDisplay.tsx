@@ -22,6 +22,12 @@ export const StatsDisplay: React.FC<StatsDisplayProps> = ({ stats, extra }) => {
       {stats.lastOccurrence && (
         <p>Latest date: {stats.lastOccurrence.toString()}</p>
       )}
+      {stats.firstOccurrenceOrdinal && (
+        <p>Earliest time: {stats.firstOccurrenceOrdinal.toString()}</p>
+      )}
+      {stats.lastOccurrenceOrdinal && (
+        <p>Latest time: {stats.lastOccurrenceOrdinal.toString()}</p>
+      )}
       {extra &&
         extra.length > 0 &&
         extra?.map((stat) => (

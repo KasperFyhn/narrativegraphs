@@ -51,9 +51,12 @@ class StatsCalculator(DbService):
                     select(
                         fk_column.label("target_id"),
                         backing_annotation_type.id.label("annotation_id"),
-                        backing_annotation_type.doc_id,
-                        backing_annotation_type.timestamp,
-                    ).where(fk_column.isnot(None))
+                        backing_annotation_type.doc_id.label("doc_id"),
+                        DocumentOrm.timestamp.label("timestamp"),
+                        DocumentOrm.timestamp_ordinal.label("timestamp_ordinal"),
+                    )
+                    .join(DocumentOrm, backing_annotation_type.doc_id == DocumentOrm.id)
+                    .where(fk_column.isnot(None))
                 )
 
             # union_all handles single query case
@@ -69,6 +72,12 @@ class StatsCalculator(DbService):
                     ),
                     func.min(annotation_union.c.timestamp).label("first_occurrence"),
                     func.max(annotation_union.c.timestamp).label("last_occurrence"),
+                    func.min(annotation_union.c.timestamp_ordinal).label(
+                        "first_occurrence_ordinal"
+                    ),
+                    func.max(annotation_union.c.timestamp_ordinal).label(
+                        "last_occurrence_ordinal"
+                    ),
                 )
                 .group_by(annotation_union.c.target_id)
                 .subquery()
@@ -80,13 +89,14 @@ class StatsCalculator(DbService):
                 .values(
                     frequency=stats_subquery.c.frequency,
                     doc_frequency=stats_subquery.c.doc_frequency,
-                    spread=stats_subquery.c.doc_frequency / n_docs,
                     adjusted_tf_idf=(
                         (stats_subquery.c.frequency - 1)
                         * (n_docs / (stats_subquery.c.doc_frequency + 1))
                     ),
                     first_occurrence=stats_subquery.c.first_occurrence,
                     last_occurrence=stats_subquery.c.last_occurrence,
+                    first_occurrence_ordinal=stats_subquery.c.first_occurrence_ordinal,
+                    last_occurrence_ordinal=stats_subquery.c.last_occurrence_ordinal,
                 )
                 .where(orm_class.id == stats_subquery.c.target_id)
             )

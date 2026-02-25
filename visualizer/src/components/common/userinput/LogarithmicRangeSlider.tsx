@@ -100,9 +100,8 @@ const LogarithmicRangeSlider: React.FC<LogarithmicRangeSliderProps> = ({
 
   const labels = [
     String(min),
-    String(linearScaleToRealValue(25)),
-    String(linearScaleToRealValue(50)),
-    String(linearScaleToRealValue(75)),
+    String(linearScaleToRealValue(33)),
+    String(linearScaleToRealValue(66)),
     String(max),
   ].filter((value, index, array) => index === 0 || value !== array[index - 1]);
 

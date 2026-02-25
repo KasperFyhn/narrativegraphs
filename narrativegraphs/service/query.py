@@ -65,4 +65,10 @@ class QueryService(DbService):
                 earliest_date=db.query(func.min(DocumentOrm.timestamp)).scalar()
                 or None,
                 latest_date=db.query(func.max(DocumentOrm.timestamp)).scalar() or None,
+                earliest_ordinal_time=db.query(
+                    func.min(DocumentOrm.timestamp_ordinal)
+                ).scalar(),
+                latest_ordinal_time=db.query(
+                    func.max(DocumentOrm.timestamp_ordinal)
+                ).scalar(),
             )

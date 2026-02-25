@@ -24,7 +24,10 @@ export const DocInfo: React.FC<DocInfoProps> = ({
   return (
     <div className="doc-info">
       <div className="doc-info__header">
-        <span className="doc-info__id">{document.id}</span>
+        <span className="doc-info__id">
+          {document.id}
+          {document.strId && <span>&nbsp;({document.strId})</span>}
+        </span>{' '}
         {document.timestamp && (
           <span className="doc-info__date">
             {document.timestamp.toString()}
@@ -32,13 +35,21 @@ export const DocInfo: React.FC<DocInfoProps> = ({
         )}
       </div>
 
-      {document.strId && <p className="doc-info__id">{document.strId}</p>}
-
       {Object.entries(document.categories).length > 0 && (
         <div className="doc-info__categories">
           {Object.entries(document.categories).map(([name, values]) => (
             <span key={name} className="doc-info__category">
               {name}: {values.join(', ')}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {Object.entries(document.metadata).length > 0 && (
+        <div className="doc-info__categories">
+          {Object.entries(document.metadata).map(([name, value]) => (
+            <span key={name} className="doc-info__category">
+              {name}: {value}
             </span>
           ))}
         </div>
