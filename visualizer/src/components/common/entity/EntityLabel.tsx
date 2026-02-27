@@ -5,18 +5,27 @@ import { useSelectionContext } from '../../../contexts/SelectionContext';
 export interface EntityLabelProps {
   id: string | number;
   label: string;
+  rightSection?: React.ReactNode;
 }
 
-export const EntityLabel: React.FC<EntityLabelProps> = ({ id, label }) => {
+export const EntityLabel: React.FC<EntityLabelProps> = ({
+  id,
+  label,
+  rightSection,
+}) => {
   const { getEntityColor } = useSelectionContext();
   return (
     <Badge
       radius="sm"
+      rightSection={rightSection}
       style={{
         backgroundColor: getEntityColor(id),
         color: 'black',
         textTransform: 'none',
         fontWeight: 500,
+        paddingTop: 3,
+        paddingBottom: 3,
+        height: 'auto',
       }}
     >
       {label}

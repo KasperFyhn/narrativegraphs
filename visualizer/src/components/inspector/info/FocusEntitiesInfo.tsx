@@ -4,29 +4,20 @@ import { useGraphQuery } from '../../../hooks/useGraphQuery';
 import { DocsSection } from '../docs/DocsSection';
 import { useServiceContext } from '../../../contexts/ServiceContext';
 import { HighlightContext } from '../docs/types';
-import { Identifiable } from '../../../types/graph';
-import { EntityLabel } from '../../common/entity/EntityLabel';
 
-export const FocusEntitiesPane: React.FC = () => {
+export const FocusEntitiesInfo: React.FC = () => {
   const { query } = useGraphQuery();
   const entityCount = query.focusEntities?.length ?? 0;
 
   const { entityService } = useServiceContext();
 
-  const [entityIds, setEntityIds] = useState<(string | number)[]>([]);
-  const [entityLabels, setEntityLabels] = useState<Identifiable[]>([]);
+  const [entityIds, setEntityIds] = useState<(string | number)[]>(
+    query.focusEntities || [],
+  );
 
   useEffect(() => {
     if (query.focusEntities) setEntityIds(query.focusEntities);
-  }, [entityService, query.focusEntities]);
-
-  useEffect(() => {
-    if (entityIds.length > 0) {
-      entityService.getLabels(entityIds).then(setEntityLabels);
-    } else {
-      setEntityLabels([]);
-    }
-  }, [entityIds, entityService]);
+  }, [query.focusEntities]);
 
   const getDocs = useCallback(async () => {
     const docs = await entityService.getDocsByEntityIds(
@@ -74,23 +65,6 @@ export const FocusEntitiesPane: React.FC = () => {
         Showing text passages for {entityCount} focus{' '}
         {entityCount === 1 ? 'entity' : 'entities'}
       </p>
-      {entityIds.length > 0 && (
-        <div
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '8px',
-            marginBottom: '12px',
-          }}
-        >
-          {entityIds.map((id) => {
-            const label =
-              entityLabels.find((e) => String(e.id) === String(id))?.label ??
-              String(id);
-            return <EntityLabel key={id} id={id} label={label} />;
-          })}
-        </div>
-      )}
       <DocsSection
         loadDocs={getDocs}
         highlightContext={highlightContext}
