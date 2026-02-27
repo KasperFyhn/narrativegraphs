@@ -1,32 +1,49 @@
 import React, { ComponentPropsWithRef, PropsWithChildren } from 'react';
-import './Panel.css';
+import { Paper, PaperProps } from '@mantine/core';
 
-interface PanelProps extends PropsWithChildren, ComponentPropsWithRef<'div'> {}
+interface PanelProps extends PropsWithChildren, Omit<PaperProps, 'children'> {
+  className?: string;
+}
 
 export const Panel: React.FC<PanelProps> = ({
   children,
   className,
+  style,
   ...rest
-}) => {
-  return (
-    <div className={'panel ' + className} {...rest}>
-      {children}
-    </div>
-  );
-};
+}) => (
+  <Paper
+    withBorder
+    radius="md"
+    p="sm"
+    className={className}
+    style={{ overflowY: 'auto', ...style }}
+    {...rest}
+  >
+    {children}
+  </Paper>
+);
 
 interface SubPanelProps
   extends PropsWithChildren,
-    ComponentPropsWithRef<'div'> {}
+    Omit<PaperProps, 'children'> {
+  className?: string;
+}
 
 export const SubPanel: React.FC<SubPanelProps> = ({
   children,
   className,
+  style,
   ...rest
-}) => {
-  return (
-    <div className={'panel__sub-panel ' + className} {...rest}>
-      {children}
-    </div>
-  );
-};
+}) => (
+  <Paper
+    withBorder
+    radius="sm"
+    p="xs"
+    mb={4}
+    className={className}
+    style={style}
+    {...rest}
+  >
+    {children}
+  </Paper>
+);

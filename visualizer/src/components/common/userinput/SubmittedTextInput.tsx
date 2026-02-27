@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { TextInput, ActionIcon } from '@mantine/core';
+import { Search } from 'lucide-react';
 
 export interface SubmittedTextInputProps {
   startValue?: string;
@@ -9,26 +11,28 @@ export const SubmittedTextInput: React.FC<SubmittedTextInputProps> = ({
   startValue,
   onSubmit,
 }: SubmittedTextInputProps) => {
-  const [value, setValue] = useState(startValue || '');
+  const [value, setValue] = useState(startValue ?? '');
 
   return (
     <form
       style={{ margin: 0 }}
-      onSubmit={(event) => {
-        event.preventDefault();
+      onSubmit={(e) => {
+        e.preventDefault();
         onSubmit(value);
       }}
     >
-      <input
-        type={'search'}
+      <TextInput
         value={value}
-        autoFocus={true}
-        onChange={(event) => {
-          const newValue = event.target.value;
+        autoFocus
+        rightSection={
+          <ActionIcon type="submit" variant="subtle" size="sm">
+            <Search size={14} />
+          </ActionIcon>
+        }
+        onChange={(e) => {
+          const newValue = e.target.value;
           setValue(newValue);
-          if (newValue === '') {
-            onSubmit(newValue);
-          }
+          if (newValue === '') onSubmit('');
         }}
       />
     </form>

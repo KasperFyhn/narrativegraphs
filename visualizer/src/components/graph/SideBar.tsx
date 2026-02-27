@@ -1,9 +1,9 @@
 import React from 'react';
+import { Paper, ScrollArea } from '@mantine/core';
 import { GraphOptionsPanel } from './controls/GraphOptionsPanel';
 import { Filter, LucideIcon, Puzzle, Search, Settings } from 'lucide-react';
 import { GraphFilterPanel } from './controls/GraphFilterPanel';
 import { CommunitiesPanel } from './controls/CommunitiesPanel';
-import { Panel } from '../common/Panel';
 import './SideBar.css';
 import { FocusPanel } from './controls/FocusPanel';
 
@@ -61,10 +61,6 @@ const ToggleButton: React.FC<ToggleButtonProps> = ({
   </button>
 );
 
-const ControlPanel: React.FC<React.PropsWithChildren> = ({ children }) => (
-  <Panel className="control-panel">{children}</Panel>
-);
-
 export const SideBar: React.FC = () => {
   const [activePanel, setActivePanel] = React.useState<ControlType | null>(
     null,
@@ -85,10 +81,18 @@ export const SideBar: React.FC = () => {
             <Icon />
           </ToggleButton>
           {activePanel === type && (
-            <ControlPanel>
-              <h2>{title}</h2>
-              <Component />
-            </ControlPanel>
+            <Paper
+              withBorder
+              radius="md"
+              p="sm"
+              className="control-panel"
+              style={{ overflowY: 'auto' }}
+            >
+              <h2 style={{ marginTop: 0 }}>{title}</h2>
+              <ScrollArea type="auto">
+                <Component />
+              </ScrollArea>
+            </Paper>
           )}
         </div>
       ))}

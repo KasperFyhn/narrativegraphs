@@ -14,7 +14,6 @@
     "dayjs": "^1.11.19",
     "draft-js": "^0.11.7",
     "lucide-react": "^0.546.0",
-    "multi-range-slider-react": "^2.0.7",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-graph-vis": "^1.0.7",

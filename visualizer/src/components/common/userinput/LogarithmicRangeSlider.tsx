@@ -1,15 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import MultiRangeSlider from 'multi-range-slider-react';
+import { RangeSlider, Text, Stack } from '@mantine/core';
 
 interface LogarithmicRangeSliderProps {
-  min: number; // Real-world minimum value
-  max: number; // Real-world maximum value
-  minValue: number; // Current minimum value
-  maxValue: number; // Current maximum value
-  // callback for value changes
+  min: number;
+  max: number;
+  minValue: number;
+  maxValue: number;
   onChange: (values: { minValue: number; maxValue: number }) => void;
-  style?: React.CSSProperties; // Optional style prop
-  ruler?: boolean; // Optional ruler prop
+  style?: React.CSSProperties;
+  ruler?: boolean;
 }
 
 const linearToLog = (
@@ -47,81 +46,56 @@ const LogarithmicRangeSlider: React.FC<LogarithmicRangeSliderProps> = ({
   minValue,
   maxValue,
   onChange,
-  ruler,
-  ...rest
+  style,
 }) => {
-  const [minCaption, setMinCaption] = useState(Math.round(minValue));
-  const [maxCaption, setMaxCaption] = useState(Math.round(maxValue));
-  useEffect(() => {
-    setMinCaption(minValue);
-    setMaxCaption(maxValue);
-  }, [minValue, maxValue]);
-
-  // Slider operates on a linear scale
   const linearMin = 0;
   const linearMax = 100;
-  const realValueToLinearScale = useMemo(() => {
-    return (realValue: number) =>
-      Math.round(logToLinear(realValue, linearMin, linearMax, min, max));
-  }, [min, max]);
-  const linearScaleToRealValue = useMemo(() => {
-    return (linearScaleValue: number) =>
-      Math.round(linearToLog(linearScaleValue, linearMin, linearMax, min, max));
-  }, [min, max]);
 
-  const handleSliderInput = (e: {
-    minValue: number;
-    maxValue: number;
-  }): void => {
-    const realMinValue = linearScaleToRealValue(e.minValue);
-    const realMaxValue = linearScaleToRealValue(e.maxValue);
-    setMinCaption(realMinValue);
-    setMaxCaption(realMaxValue);
-  };
+  const [displayMin, setDisplayMin] = useState(Math.round(minValue));
+  const [displayMax, setDisplayMax] = useState(Math.round(maxValue));
 
-  const [key, setKey] = useState(0);
+  useEffect(() => {
+    setDisplayMin(minValue);
+    setDisplayMax(maxValue);
+  }, [minValue, maxValue]);
 
-  const handleSliderChange = (e: {
-    minValue: number;
-    maxValue: number;
-  }): void => {
-    const realMinValue = linearScaleToRealValue(e.minValue);
-    const realMaxValue = linearScaleToRealValue(e.maxValue);
-    if (minValue !== realMinValue || maxValue !== realMaxValue) {
-      onChange({
-        minValue: realMinValue,
-        maxValue: realMaxValue,
-      });
-    } else {
-      // forces a re-mount and thereby snap to valid value
-      setKey((prev) => prev + 1);
-    }
-  };
+  const realValueToLinear = useMemo(
+    () =>
+      (realValue: number): number =>
+        Math.round(logToLinear(realValue, linearMin, linearMax, min, max)),
+    [min, max],
+  );
 
-  const labels = [
-    String(min),
-    String(linearScaleToRealValue(25)),
-    String(linearScaleToRealValue(50)),
-    String(linearScaleToRealValue(75)),
-    String(max),
-  ].filter((value, index, array) => index === 0 || value !== array[index - 1]);
+  const linearToReal = useMemo(
+    () =>
+      (linearValue: number): number =>
+        Math.round(linearToLog(linearValue, linearMin, linearMax, min, max)),
+    [min, max],
+  );
 
   return (
-    <MultiRangeSlider
-      key={key}
-      min={linearMin}
-      max={linearMax}
-      minValue={realValueToLinearScale(minValue)}
-      maxValue={realValueToLinearScale(maxValue)}
-      onInput={handleSliderInput}
-      onChange={handleSliderChange}
-      minCaption={String(minCaption)} // Use the updated caption state
-      maxCaption={String(maxCaption)} // Use the updated caption state
-      labels={labels}
-      barInnerColor={'transparent'}
-      {...rest}
-      ruler={ruler || false}
-    />
+    <Stack gap={4} style={style}>
+      <Text size="xs" c="dimmed">
+        {displayMin} – {displayMax}
+      </Text>
+      <RangeSlider
+        min={linearMin}
+        max={linearMax}
+        value={[realValueToLinear(minValue), realValueToLinear(maxValue)]}
+        label={(v) => String(linearToReal(v))}
+        onChange={([lo, hi]) => {
+          setDisplayMin(linearToReal(lo));
+          setDisplayMax(linearToReal(hi));
+        }}
+        onChangeEnd={([lo, hi]) => {
+          const realMin = linearToReal(lo);
+          const realMax = linearToReal(hi);
+          onChange({ minValue: realMin, maxValue: realMax });
+        }}
+        size="sm"
+        style={{ minWidth: 140 }}
+      />
+    </Stack>
   );
 };
 

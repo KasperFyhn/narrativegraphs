@@ -1,4 +1,5 @@
 import React from 'react';
+import { Radio, Group, Stack } from '@mantine/core';
 
 interface RadioGroupProps {
   name: string;
@@ -7,6 +8,7 @@ interface RadioGroupProps {
   onChange: (value: string) => void;
   formatLabel?: (option: string) => string;
   direction?: 'row' | 'column';
+  label?: string;
 }
 
 export const RadioGroup: React.FC<RadioGroupProps> = ({
@@ -16,26 +18,23 @@ export const RadioGroup: React.FC<RadioGroupProps> = ({
   onChange,
   formatLabel = (option) => option.charAt(0).toUpperCase() + option.slice(1),
   direction = 'column',
+  label,
 }: RadioGroupProps) => {
+  const radios = options.map((option) => (
+    <Radio key={option} value={option} label={formatLabel(option)} />
+  ));
+
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: direction,
-        alignItems: 'flex-end',
-      }}
-    >
-      {options.map((option) => (
-        <label key={option}>
-          {formatLabel(option)}
-          <input
-            type="radio"
-            name={name}
-            checked={value === option}
-            onChange={() => onChange(option)}
-          />
-        </label>
-      ))}
-    </div>
+    <Radio.Group name={name} value={value} onChange={onChange} label={label}>
+      {direction === 'row' ? (
+        <Group mt={label ? 'xs' : 0} gap="sm">
+          {radios}
+        </Group>
+      ) : (
+        <Stack mt={label ? 'xs' : 0} gap="xs">
+          {radios}
+        </Stack>
+      )}
+    </Radio.Group>
   );
 };

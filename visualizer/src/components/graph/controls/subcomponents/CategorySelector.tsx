@@ -1,6 +1,8 @@
 import { useGraphQuery } from '../../../../hooks/useGraphQuery';
 import React, { useEffect, useMemo } from 'react';
+import { Stack, Group, Button, Checkbox, Text } from '@mantine/core';
 import { FloatingWindow } from '../../../common/FloatingWindow';
+import { SubPanel } from '../../../common/Panel';
 
 interface CategorySelectorInnerProps {
   name: string;
@@ -21,83 +23,82 @@ const CategorySelectorInner: React.FC<CategorySelectorInnerProps> = ({
   );
 
   const selected = useMemo((): string[] => {
-    if (filter.categories === undefined) {
-      return [];
-    } else {
-      return filter.categories[name] ?? [];
-    }
+    if (filter.categories === undefined) return [];
+    return filter.categories[name] ?? [];
   }, [filter.categories, name]);
 
   const [editing, setEditing] = React.useState<boolean>(false);
-
   const [selectedExpanded, setSelectedExpanded] = React.useState(false);
+
   useEffect(() => {
     if (selected.length < 4) setSelectedExpanded(false);
   }, [selected]);
 
   return (
-    <div
-      className={'flex-container--vertical panel__sub-panel'}
-      style={{ width: '100%' }}
-    >
-      {showHeader && <>{capitalizedName}&nbsp;</>}
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          setEditing((prev) => !prev);
-        }}
-      >
-        Edit
-      </button>
-      {editing && (
-        <FloatingWindow
-          title={'Categories'}
-          onCloseOrClickOutside={() => setEditing(false)}
+    <SubPanel style={{ width: '100%' }}>
+      <Stack gap="xs">
+        {showHeader && (
+          <Text size="sm" fw={500}>
+            {capitalizedName}
+          </Text>
+        )}
+        <Button
+          size="xs"
+          onClick={(e) => {
+            e.stopPropagation();
+            setEditing((prev) => !prev);
+          }}
         >
-          <div className={'flex-container'}>
-            <button
-              onClick={() => resetCategory(name)}
-              style={{ backgroundColor: 'red' }}
-              disabled={selected.length === 0}
-            >
-              Reset
-            </button>
-            {values.sort().map((value) => (
-              <div key={value} style={{ margin: '2px' }}>
-                <label htmlFor={value}>
-                  <input
-                    type={'checkbox'}
-                    name={value}
+          Edit
+        </Button>
+        {editing && (
+          <FloatingWindow
+            title="Categories"
+            onCloseOrClickOutside={() => setEditing(false)}
+          >
+            <Stack gap="xs">
+              <Button
+                size="xs"
+                color="red"
+                onClick={() => resetCategory(name)}
+                disabled={selected.length === 0}
+              >
+                Reset
+              </Button>
+              <Group gap="xs" wrap="wrap">
+                {values.sort().map((value) => (
+                  <Checkbox
+                    key={value}
+                    label={value}
                     checked={selected.includes(value)}
                     onChange={(e) => {
                       e.stopPropagation();
                       toggleCategoryValue(name, value);
                     }}
                   />
-                  {value}
-                </label>
-              </div>
-            ))}
-          </div>
-        </FloatingWindow>
-      )}
-      {selected.length === 0 && (
-        <div>
-          <i>All included</i>
-        </div>
-      )}
-      {0 < selected.length && selected.length < 4 && (
-        <div>{selected.join(', ')}</div>
-      )}
-      {4 <= selected.length && (
-        <details>
-          <summary onClick={() => setSelectedExpanded((prev) => !prev)}>
-            {selectedExpanded ? '' : selected.slice(0, 3).join(', ') + ' ...'}
-          </summary>
-          {selected.join(', ')}
-        </details>
-      )}
-    </div>
+                ))}
+              </Group>
+            </Stack>
+          </FloatingWindow>
+        )}
+        {selected.length === 0 && (
+          <Text size="xs" c="dimmed" fs="italic">
+            All included
+          </Text>
+        )}
+        {0 < selected.length && selected.length < 4 && (
+          <Text size="xs">{selected.join(', ')}</Text>
+        )}
+        {4 <= selected.length && (
+          <details>
+            <summary onClick={() => setSelectedExpanded((prev) => !prev)}>
+              {selectedExpanded ? '' : selected.slice(0, 3).join(', ') + ' ...'}
+            </summary>
+            <Text size="xs">{selected.join(', ')}</Text>
+          </details>
+        )}
+      </Stack>
+    </SubPanel>
   );
 };
 
@@ -105,7 +106,7 @@ export const CategorySelector: React.FC = () => {
   const { dataBounds } = useGraphQuery();
 
   return (
-    <div className={'flex-container'} style={{ maxWidth: '175px' }}>
+    <Group gap="xs" style={{ maxWidth: '175px' }}>
       {dataBounds.categories &&
         Object.entries(dataBounds.categories).map(([name, values]) => (
           <CategorySelectorInner
@@ -115,6 +116,6 @@ export const CategorySelector: React.FC = () => {
             showHeader={Object.keys(dataBounds.categories ?? []).length > 1}
           />
         ))}
-    </div>
+    </Group>
   );
 };

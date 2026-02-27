@@ -1,4 +1,5 @@
 import React from 'react';
+import { Badge } from '@mantine/core';
 import { useSelectionContext } from '../../../contexts/SelectionContext';
 
 export interface EntityLabelProps {
@@ -6,23 +7,19 @@ export interface EntityLabelProps {
   label: string;
 }
 
-export const EntityLabel: React.FC<EntityLabelProps> = ({
-  id,
-  label,
-}: EntityLabelProps) => {
+export const EntityLabel: React.FC<EntityLabelProps> = ({ id, label }) => {
   const { getEntityColor } = useSelectionContext();
   return (
-    <span
-      key={id}
+    <Badge
+      radius="sm"
       style={{
         backgroundColor: getEntityColor(id),
-        padding: '4px 8px',
-        borderRadius: '4px',
-        fontSize: '0.9em',
+        color: 'black',
+        textTransform: 'none',
         fontWeight: 500,
       }}
     >
       {label}
-    </span>
+    </Badge>
   );
 };

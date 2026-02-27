@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Stack, Group, Button, Text, ScrollArea } from '@mantine/core';
 import { useGraphQuery } from '../../../hooks/useGraphQuery';
 import { useServiceContext } from '../../../contexts/ServiceContext';
 import { useSelectionContext } from '../../../contexts/SelectionContext';
@@ -32,40 +33,45 @@ export const FocusPanel: React.FC = () => {
   }, [entityService, labelSearch]);
 
   return (
-    <div>
+    <Stack gap="sm">
       <FocusEntitiesControl />
       {showContextsPane && <FocusEntitiesPane />}
       <hr />
-      <span>
-        Search: <SubmittedTextInput onSubmit={setLabelSearch} />
-      </span>
-      <br />
-      {results == null && <ClipLoader loading={results == null} />}
-      {results != null &&
-        results.length > 0 &&
-        results.map((result: Identifiable) => {
-          return (
-            <SubPanel
-              key={result.id}
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-            >
-              <EntityLabel {...result} />
-              <button onClick={() => addFocusEntityId(result.id.toString())}>
-                +
-              </button>
-            </SubPanel>
-          );
-        })}
+      <Text size="sm">Search:</Text>
+      <SubmittedTextInput onSubmit={setLabelSearch} />
+
+      {results == null && <ClipLoader loading={true} />}
+
+      <ScrollArea h={300} type="auto">
+        <Stack gap="xs">
+          {results != null &&
+            results.length > 0 &&
+            results.map((result: Identifiable) => (
+              <SubPanel key={result.id}>
+                <Group justify="space-between" align="center">
+                  <EntityLabel {...result} />
+                  <Button
+                    size="xs"
+                    onClick={() => addFocusEntityId(result.id.toString())}
+                  >
+                    +
+                  </Button>
+                </Group>
+              </SubPanel>
+            ))}
+        </Stack>
+      </ScrollArea>
+
       {results != null && results.length === 0 && labelSearch !== '' && (
-        <p>No results</p>
+        <Text size="sm" c="dimmed">
+          No results
+        </Text>
       )}
       {results != null && results.length === 0 && labelSearch === '' && (
-        <p>Type your search string and hit Enter</p>
+        <Text size="sm" c="dimmed">
+          Type your search string and hit Enter
+        </Text>
       )}
-    </div>
+    </Stack>
   );
 };
