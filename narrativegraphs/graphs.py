@@ -1,7 +1,7 @@
 import logging
 import os
 from datetime import date, datetime
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import networkx as nx
 import pandas as pd
@@ -61,6 +61,11 @@ class BaseGraph(QueryService):
     def entities_(self) -> pd.DataFrame:
         """Entities as a pandas DataFrame."""
         return self.entities.as_df()
+
+    @property
+    def entity_mentions_(self) -> pd.DataFrame:
+        """Entity mentions as a pandas DataFrame."""
+        return self.mentions.as_df()
 
     @property
     def cooccurrences_(self) -> pd.DataFrame:
@@ -196,11 +201,13 @@ class CooccurrenceGraph(BaseGraph):
         docs: list[str],
         doc_ids: list[int | str] = None,
         timestamps: list[datetime | date] = None,
+        timestamps_ordinal: list[int] = None,
         categories: (
             list[str | list[str]]
             | dict[str, list[str | list[str]]]
             | list[dict[str, str | list[str]]]
         ) = None,
+        metadata: list[dict[str, Any]] = None,
     ) -> "CooccurrenceGraph":
         """Fit a co-occurrence graph from documents.
 
@@ -208,9 +215,12 @@ class CooccurrenceGraph(BaseGraph):
             docs: Required argument, a list of documents as strings.
             doc_ids: Optional list of document ids. Same length as docs.
             timestamps: Optional list of document timestamps. Same length as docs.
+            timestamps_ordinal: Optional list of document timestamps as an arbitrary
+                integer, e.g. page, section or chapter number. Same length as docs.
             categories: Optional list of document categories. Supports single or
                 multiple categories. A document can have a single or multiple labels
                 per category.
+            metadata: Optional list of document metadata. Same length as docs.
 
         Returns:
             A fitted CooccurrenceGraph instance.
@@ -219,7 +229,9 @@ class CooccurrenceGraph(BaseGraph):
             docs,
             doc_ids=doc_ids,
             timestamps=timestamps,
+            timestamps_ordinal=timestamps_ordinal,
             categories=categories,
+            metadata=metadata,
         )
         return self
 

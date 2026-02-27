@@ -6,7 +6,8 @@ import { SubmittedNumberInput } from '../../common/userinput/SubmittedNumberInpu
 import {
   EdgeFrequencySlider,
   NodeFrequencySlider,
-} from './subcomponents/FrequencySlider';
+  OrdinalTimeFrequencySlider,
+} from './subcomponents/RangeSlider';
 import { SubmittedDataRangeInput } from '../../common/userinput/SubmittedDateRangeInput';
 import { EntityBlacklistControl } from './subcomponents/EntityListControl';
 import { CategorySelector } from './subcomponents/CategorySelector';
@@ -78,6 +79,12 @@ export const GraphFilterPanel: React.FC = () => {
           />
         </NamedInput>
       )}
+      {dataBounds.earliestOrdinalTime !== undefined &&
+        dataBounds.latestOrdinalTime && (
+          <NamedInput name={'Time Range'}>
+            <OrdinalTimeFrequencySlider />
+          </NamedInput>
+        )}
       <EntityBlacklistControl />
     </div>
   );

@@ -3,8 +3,13 @@ from typing import Literal, Optional
 from sqlalchemy import and_, between, inspect, or_
 from sqlalchemy.orm.util import AliasedClass
 
+from narrativegraphs.db.common import CategoryMixin
 from narrativegraphs.db.cooccurrences import CooccurrenceCategory, CooccurrenceOrm
-from narrativegraphs.db.documents import DocumentCategory, DocumentOrm
+from narrativegraphs.db.documents import (
+    AnnotationBackedTextStatsMixin,
+    DocumentCategory,
+    DocumentOrm,
+)
 from narrativegraphs.db.entities import EntityCategory, EntityOrm
 from narrativegraphs.db.relations import RelationCategory, RelationOrm
 from narrativegraphs.dto.filter import GraphFilter
@@ -12,7 +17,9 @@ from narrativegraphs.dto.filter import GraphFilter
 EntityAlias = type[EntityOrm] | AliasedClass[EntityOrm]
 
 
-def date_filter(model_class, graph_filter: GraphFilter) -> list:
+def date_filter(
+    model_class: type[AnnotationBackedTextStatsMixin], graph_filter: GraphFilter
+) -> list:
     """Create date filtering conditions for entities/relations"""
     conditions = []
     if graph_filter.earliest_date:
@@ -22,7 +29,22 @@ def date_filter(model_class, graph_filter: GraphFilter) -> list:
     return conditions
 
 
-_category_model_map = {
+def ordinal_time_filter(
+    model_class: type[AnnotationBackedTextStatsMixin], graph_filter: GraphFilter
+) -> list:
+    conditions = []
+    if graph_filter.earliest_ordinal_time:
+        conditions.append(
+            model_class.last_occurrence_ordinal >= graph_filter.earliest_ordinal_time
+        )
+    if graph_filter.latest_ordinal_time:
+        conditions.append(
+            model_class.first_occurrence_ordinal <= graph_filter.latest_ordinal_time
+        )
+    return conditions
+
+
+_category_model_map: dict[type[AnnotationBackedTextStatsMixin], type[CategoryMixin]] = {
     EntityOrm: EntityCategory,
     RelationOrm: RelationCategory,
     DocumentOrm: DocumentCategory,
@@ -30,7 +52,9 @@ _category_model_map = {
 }
 
 
-def category_filter(model_class, graph_filter: GraphFilter) -> list:
+def category_filter(
+    model_class: type[AnnotationBackedTextStatsMixin], graph_filter: GraphFilter
+) -> list:
     """Create category filtering conditions"""
     if graph_filter.categories is None:
         return []
@@ -143,6 +167,7 @@ def create_entity_conditions(
 ) -> list:
     return combine_filters(
         date_filter(alias, graph_filter),
+        ordinal_time_filter(alias, graph_filter),
         category_filter(alias, graph_filter),
         entity_frequency_filter(alias, graph_filter),
         entity_doc_frequency_filter(alias, graph_filter),
@@ -153,6 +178,7 @@ def create_entity_conditions(
 def create_relation_conditions(graph_filter: GraphFilter) -> list:
     return combine_filters(
         date_filter(RelationOrm, graph_filter),
+        ordinal_time_filter(RelationOrm, graph_filter),
         category_filter(RelationOrm, graph_filter),
         relation_frequency_filter(graph_filter),
         relation_doc_frequency_filter(graph_filter),
@@ -162,6 +188,7 @@ def create_relation_conditions(graph_filter: GraphFilter) -> list:
 def create_cooccurrence_conditions(graph_filter: GraphFilter) -> list:
     return combine_filters(
         date_filter(CooccurrenceOrm, graph_filter),
+        ordinal_time_filter(CooccurrenceOrm, graph_filter),
         category_filter(CooccurrenceOrm, graph_filter),
         cooccurrence_frequency_filter(graph_filter),
         cooccurrence_doc_frequency_filter(graph_filter),

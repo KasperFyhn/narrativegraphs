@@ -12,6 +12,7 @@ from narrativegraphs.service.cooccurrences import CooccurrenceService
 from narrativegraphs.service.documents import DocService
 from narrativegraphs.service.entities import EntityService
 from narrativegraphs.service.graph import ConnectionType, GraphService
+from narrativegraphs.service.mention import EntityMentionService
 from narrativegraphs.service.predicates import PredicateService
 from narrativegraphs.service.relations import RelationService
 from narrativegraphs.service.triplets import TripletService
@@ -28,6 +29,7 @@ class QueryService(DbService):
         self.cooccurrences = CooccurrenceService(lambda: self.get_session_context())
         self.triplets = TripletService(lambda: self.get_session_context())
         self.tuplets = TupletService(lambda: self.get_session_context())
+        self.mentions = EntityMentionService(lambda: self.get_session_context())
         self.graph = GraphService(lambda: self.get_session_context())
 
     def _compile_categories(self) -> dict[str, list[str]]:
@@ -63,4 +65,10 @@ class QueryService(DbService):
                 earliest_date=db.query(func.min(DocumentOrm.timestamp)).scalar()
                 or None,
                 latest_date=db.query(func.max(DocumentOrm.timestamp)).scalar() or None,
+                earliest_ordinal_time=db.query(
+                    func.min(DocumentOrm.timestamp_ordinal)
+                ).scalar(),
+                latest_ordinal_time=db.query(
+                    func.max(DocumentOrm.timestamp_ordinal)
+                ).scalar(),
             )

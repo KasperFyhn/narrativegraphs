@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ClipLoader } from 'react-spinners';
 import { useServiceContext } from '../../../contexts/ServiceContext';
 import { StatsDisplay } from './StatsDisplay';
@@ -30,35 +30,48 @@ export const RelationInfo: React.FC<RelationInfoProps> = ({
       .finally(() => setLoading(false));
   }, [relationService, id]);
 
-  if (loading) {
-    return <ClipLoader loading={true} />;
-  }
+  const loadDocs = useCallback(() => {
+    return relationService.getDocs(id);
+  }, [relationService, id]);
 
-  if (!details) {
+  const highlightContext = useMemo(
+    () =>
+      details
+        ? {
+            type: 'relation' as const,
+            subjectId: details.subjectId,
+            predicateId: details.predicateId,
+            objectId: details.objectId,
+          }
+        : undefined,
+    [details],
+  );
+
+  if (!loading && !details) {
     return <p>Failed to load relation details.</p>;
   }
 
   return (
     <>
-      <StatsDisplay
-        stats={details.stats}
-        extra={[
-          {
-            name: 'Significance',
-            value: details.stats.significance.toPrecision(3),
-          },
-        ]}
-      />
-      <CategoriesDisplay categories={details.categories} />
-      <AltLabelsDisplay altLabels={details.altLabels} />
+      {loading && <ClipLoader loading={true} />}
+      {details && (
+        <>
+          <StatsDisplay
+            stats={details.stats}
+            extra={[
+              {
+                name: 'Significance',
+                value: details.stats.significance.toPrecision(3),
+              },
+            ]}
+          />
+          <CategoriesDisplay categories={details.categories} />
+          <AltLabelsDisplay altLabels={details.altLabels} />
+        </>
+      )}
       <DocsSection
-        loadDocs={() => relationService.getDocs(id)}
-        highlightContext={{
-          type: 'relation',
-          subjectId: details.subjectId,
-          predicateId: details.predicateId,
-          objectId: details.objectId,
-        }}
+        loadDocs={loadDocs}
+        highlightContext={highlightContext}
         autoload={autoLoadDocs}
       />
     </>
