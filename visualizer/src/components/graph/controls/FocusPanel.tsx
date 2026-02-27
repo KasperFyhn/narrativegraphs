@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Stack, Group, Button, Text, ScrollArea } from '@mantine/core';
+import { Stack, Group, Button, Text } from '@mantine/core';
 import { useGraphQuery } from '../../../hooks/useGraphQuery';
 import { useServiceContext } from '../../../contexts/ServiceContext';
 import { useSelectionContext } from '../../../contexts/SelectionContext';
@@ -42,25 +42,23 @@ export const FocusPanel: React.FC = () => {
 
       {results == null && <ClipLoader loading={true} />}
 
-      <ScrollArea h={300} type="auto">
-        <Stack gap="xs">
-          {results != null &&
-            results.length > 0 &&
-            results.map((result: Identifiable) => (
-              <SubPanel key={result.id}>
-                <Group justify="space-between" align="center">
-                  <EntityLabel {...result} />
-                  <Button
-                    size="xs"
-                    onClick={() => addFocusEntityId(result.id.toString())}
-                  >
-                    +
-                  </Button>
-                </Group>
-              </SubPanel>
-            ))}
-        </Stack>
-      </ScrollArea>
+      <Stack gap="xs">
+        {results != null &&
+          results.length > 0 &&
+          results.map((result: Identifiable) => (
+            <SubPanel key={result.id}>
+              <Group justify="space-between" align="center">
+                <EntityLabel {...result} />
+                <Button
+                  size="xs"
+                  onClick={() => addFocusEntityId(result.id.toString())}
+                >
+                  +
+                </Button>
+              </Group>
+            </SubPanel>
+          ))}
+      </Stack>
 
       {results != null && results.length === 0 && labelSearch !== '' && (
         <Text size="sm" c="dimmed">

@@ -6,6 +6,7 @@ import { ServiceContextProvider } from './contexts/ServiceContext';
 import { GraphQueryContextProvider } from './contexts/GraphQueryContext';
 import { GraphOptionsContextProvider } from './contexts/GraphOptionsContext';
 import { SelectionContextProvider } from './contexts/SelectionContext';
+import { CommunitiesContextProvider } from './contexts/CommunitiesContext';
 
 export const App: React.FC = () => {
   return (
@@ -14,7 +15,9 @@ export const App: React.FC = () => {
         <GraphOptionsContextProvider>
           <GraphQueryContextProvider>
             <SelectionContextProvider>
-              <GraphViewer />
+              <CommunitiesContextProvider>
+                <GraphViewer />
+              </CommunitiesContextProvider>
             </SelectionContextProvider>
           </GraphQueryContextProvider>
         </GraphOptionsContextProvider>

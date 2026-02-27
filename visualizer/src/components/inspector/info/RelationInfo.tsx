@@ -2,8 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { ClipLoader } from 'react-spinners';
 import { useServiceContext } from '../../../contexts/ServiceContext';
 import { StatsDisplay } from './StatsDisplay';
-import { CategoriesDisplay } from './CategoriesDisplay';
-import { AltLabelsDisplay } from './AltLabelsDisplay';
 import { DocsSection } from '../docs/DocsSection';
 import { RelationDetails } from '../../../types/graph';
 
@@ -47,10 +45,22 @@ export const RelationInfo: React.FC<RelationInfoProps> = ({
             name: 'Significance',
             value: details.stats.significance.toPrecision(3),
           },
+          ...Object.entries(details.categories).map(([name, values]) => ({
+            name: name.charAt(0).toUpperCase() + name.slice(1),
+            value: values.join(', '),
+          })),
+          ...(details.altLabels && details.altLabels.length > 0
+            ? [
+                {
+                  name: 'Alternative Labels',
+                  value:
+                    details.altLabels.slice(0, 10).join(', ') +
+                    (details.altLabels.length > 10 ? '...' : ''),
+                },
+              ]
+            : []),
         ]}
       />
-      <CategoriesDisplay categories={details.categories} />
-      <AltLabelsDisplay altLabels={details.altLabels} />
       <DocsSection
         loadDocs={() => relationService.getDocs(id)}
         highlightContext={{

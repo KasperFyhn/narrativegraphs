@@ -1,5 +1,5 @@
 import React from 'react';
-import { Paper, ScrollArea } from '@mantine/core';
+import { Paper } from '@mantine/core';
 import { GraphOptionsPanel } from './controls/GraphOptionsPanel';
 import { Filter, LucideIcon, Puzzle, Search, Settings } from 'lucide-react';
 import { GraphFilterPanel } from './controls/GraphFilterPanel';
@@ -89,9 +89,7 @@ export const SideBar: React.FC = () => {
               style={{ overflowY: 'auto' }}
             >
               <h2 style={{ marginTop: 0 }}>{title}</h2>
-              <ScrollArea type="auto">
-                <Component />
-              </ScrollArea>
+              <Component />
             </Paper>
           )}
         </div>

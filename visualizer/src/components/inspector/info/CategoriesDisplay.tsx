@@ -1,4 +1,5 @@
 import React from 'react';
+import { Text } from '@mantine/core';
 
 export type Categories = Record<string, string[]>;
 
@@ -19,9 +20,12 @@ export const CategoriesDisplay: React.FC<CategoriesDisplayProps> = ({
   return (
     <>
       {entries.map(([name, values]) => (
-        <p key={name}>
-          {capitalize(name)}: {values.join(', ')}
-        </p>
+        <Text key={name} size="sm">
+          <Text span fw={500}>
+            {capitalize(name)}:
+          </Text>{' '}
+          {values.join(', ')}
+        </Text>
       ))}
     </>
   );

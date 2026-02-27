@@ -34,7 +34,7 @@ export const SubmittedDataRangeInput: React.FC<
         minDate={min}
         maxDate={max}
         value={range}
-        onChange={setRange}
+        onChange={(v) => setRange(v as [Date | null, Date | null])}
         clearable={false}
         size="xs"
       />

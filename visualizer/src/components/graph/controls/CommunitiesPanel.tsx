@@ -1,26 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import {
-  Stack,
-  Group,
-  Button,
-  Switch,
-  Slider,
-  Text,
-  ScrollArea,
-} from '@mantine/core';
+import React from 'react';
+import { Stack, Group, Button, Switch, Slider, Text } from '@mantine/core';
 import { useGraphQuery } from '../../../hooks/useGraphQuery';
 import { useServiceContext } from '../../../contexts/ServiceContext';
-import { Community } from '../../../types/graph';
 import { EntityLabel } from '../../common/entity/EntityLabel';
 import { ClipLoader } from 'react-spinners';
 import {
-  CommunitiesRequest,
   CommunityDetectionMethod,
   WeightMeasure,
 } from '../../../types/graphQuery';
 import { RadioGroup } from '../../common/userinput/RadioGroup';
 import { FocusEntitiesPane } from '../../inspector/info/FocusEntitiesPane';
 import { useSelectionContext } from '../../../contexts/SelectionContext';
+import { useCommunitiesContext } from '../../../contexts/CommunitiesContext';
 import { SubPanel } from '../../common/Panel';
 
 export const CommunitiesPanel: React.FC = () => {
@@ -28,24 +19,18 @@ export const CommunitiesPanel: React.FC = () => {
   const { query, setConnectionType, filter, setFocusEntities } =
     useGraphQuery();
   const { hasSelection } = useSelectionContext();
-
-  const [communities, setCommunities] = useState<Community[] | null>([]);
-  const [showIsolated, setShowIsolated] = useState(true);
+  const {
+    communities,
+    setCommunities,
+    commRequest,
+    setCommRequest,
+    showIsolated,
+    setShowIsolated,
+  } = useCommunitiesContext();
 
   const hasFocusEntities =
     query.focusEntities && query.focusEntities.length > 0;
   const showContextsPane = hasFocusEntities && !hasSelection;
-
-  const [commRequest, setCommRequest] = useState<CommunitiesRequest>({
-    weightMeasure: 'pmi',
-    minWeight: 0.0,
-    communityDetectionMethod: 'louvain',
-    communityDetectionMethodArgs: {},
-  });
-
-  useEffect(() => {
-    setCommunities([]);
-  }, [commRequest]);
 
   return (
     <Stack gap="md">
@@ -111,51 +96,49 @@ export const CommunitiesPanel: React.FC = () => {
         Find communities
       </Button>
 
-      <ScrollArea h={400} type="auto">
-        <Stack gap="xs">
-          {communities === null && <ClipLoader loading={true} />}
-          {communities !== null &&
-            communities
-              .filter((c) => c.conductance > 0 || showIsolated)
-              .sort((c1, c2) =>
-                commRequest.communityDetectionMethod === 'louvain'
-                  ? c2.members.length - c1.members.length
-                  : c2.score - c1.score,
-              )
-              .map((c, i) => (
-                <SubPanel
-                  key={i}
-                  style={{ fontSize: 'small', position: 'relative' }}
+      <Stack gap="xs">
+        {communities === null && <ClipLoader loading={true} />}
+        {communities !== null &&
+          communities
+            .filter((c) => c.conductance > 0 || showIsolated)
+            .sort((c1, c2) =>
+              commRequest.communityDetectionMethod === 'louvain'
+                ? c2.members.length - c1.members.length
+                : c2.score - c1.score,
+            )
+            .map((c, i) => (
+              <SubPanel
+                key={i}
+                style={{ fontSize: 'small', position: 'relative' }}
+              >
+                <Button
+                  size="xs"
+                  style={{
+                    position: 'absolute',
+                    top: 8,
+                    right: 8,
+                    zIndex: 10,
+                  }}
+                  onClick={() =>
+                    setFocusEntities(c.members.map((m) => m.id.toString()))
+                  }
                 >
-                  <Button
-                    size="xs"
-                    style={{
-                      position: 'absolute',
-                      top: 8,
-                      right: 8,
-                      zIndex: 10,
-                    }}
-                    onClick={() =>
-                      setFocusEntities(c.members.map((m) => m.id.toString()))
-                    }
-                  >
-                    Select
-                  </Button>
-                  <Text size="xs">Score: {c.score.toPrecision(3)}</Text>
-                  <Text size="xs">Density: {c.density.toPrecision(3)}</Text>
-                  <Text size="xs">
-                    Conductance: {c.conductance.toPrecision(3)}
-                  </Text>
-                  <Text size="xs">Avg. PMI: {c.avgPmi.toPrecision(3)}</Text>
-                  <Group gap={4} wrap="wrap" mt={4}>
-                    {c.members.map((m) => (
-                      <EntityLabel key={m.id} id={m.id} label={m.label} />
-                    ))}
-                  </Group>
-                </SubPanel>
-              ))}
-        </Stack>
-      </ScrollArea>
+                  Select
+                </Button>
+                <Text size="xs">Score: {c.score.toPrecision(3)}</Text>
+                <Text size="xs">Density: {c.density.toPrecision(3)}</Text>
+                <Text size="xs">
+                  Conductance: {c.conductance.toPrecision(3)}
+                </Text>
+                <Text size="xs">Avg. PMI: {c.avgPmi.toPrecision(3)}</Text>
+                <Group gap={4} wrap="wrap" mt={4}>
+                  {c.members.map((m) => (
+                    <EntityLabel key={m.id} id={m.id} label={m.label} />
+                  ))}
+                </Group>
+              </SubPanel>
+            ))}
+      </Stack>
     </Stack>
   );
 };

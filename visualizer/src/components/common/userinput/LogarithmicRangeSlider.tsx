@@ -51,14 +51,6 @@ const LogarithmicRangeSlider: React.FC<LogarithmicRangeSliderProps> = ({
   const linearMin = 0;
   const linearMax = 100;
 
-  const [displayMin, setDisplayMin] = useState(Math.round(minValue));
-  const [displayMax, setDisplayMax] = useState(Math.round(maxValue));
-
-  useEffect(() => {
-    setDisplayMin(minValue);
-    setDisplayMax(maxValue);
-  }, [minValue, maxValue]);
-
   const realValueToLinear = useMemo(
     () =>
       (realValue: number): number =>
@@ -73,27 +65,47 @@ const LogarithmicRangeSlider: React.FC<LogarithmicRangeSliderProps> = ({
     [min, max],
   );
 
+  // Internal state so thumbs track the mouse; parent is notified only on release
+  const [sliderValue, setSliderValue] = useState<[number, number]>([
+    realValueToLinear(minValue),
+    realValueToLinear(maxValue),
+  ]);
+
+  useEffect(() => {
+    setSliderValue([realValueToLinear(minValue), realValueToLinear(maxValue)]);
+  }, [minValue, maxValue, realValueToLinear]);
+
+  // Powers-of-10 tick marks to visualise the logarithmic scale
+  const marks = useMemo(() => {
+    const result: { value: number; label: string }[] = [];
+    const minPow = Math.ceil(Math.log10(min));
+    const maxPow = Math.floor(Math.log10(max));
+    for (let p = minPow; p <= maxPow; p++) {
+      const realVal = Math.pow(10, p);
+      const label = realVal >= 1000 ? `${realVal / 1000}k` : String(realVal);
+      result.push({ value: realValueToLinear(realVal), label });
+    }
+    return result;
+  }, [min, max, realValueToLinear]);
+
   return (
     <Stack gap={4} style={style}>
       <Text size="xs" c="dimmed">
-        {displayMin} – {displayMax}
+        {linearToReal(sliderValue[0])} – {linearToReal(sliderValue[1])}
       </Text>
       <RangeSlider
         min={linearMin}
         max={linearMax}
-        value={[realValueToLinear(minValue), realValueToLinear(maxValue)]}
+        value={sliderValue}
         label={(v) => String(linearToReal(v))}
-        onChange={([lo, hi]) => {
-          setDisplayMin(linearToReal(lo));
-          setDisplayMax(linearToReal(hi));
-        }}
-        onChangeEnd={([lo, hi]) => {
-          const realMin = linearToReal(lo);
-          const realMax = linearToReal(hi);
-          onChange({ minValue: realMin, maxValue: realMax });
-        }}
+        onChange={(value) => setSliderValue(value)}
+        onChangeEnd={([lo, hi]) =>
+          onChange({ minValue: linearToReal(lo), maxValue: linearToReal(hi) })
+        }
+        marks={marks}
         size="sm"
         style={{ minWidth: 140 }}
+        mb={marks.length > 0 ? 'md' : 0}
       />
     </Stack>
   );
