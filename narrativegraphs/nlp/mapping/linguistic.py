@@ -3,7 +3,7 @@ from collections import defaultdict
 from typing import Callable, Counter, Literal
 
 import nltk
-from nltk import PorterStemmer, pos_tag, word_tokenize
+from nltk import SnowballStemmer, pos_tag, word_tokenize
 
 from narrativegraphs.nlp.mapping.common import Mapper
 
@@ -27,7 +27,7 @@ class StemmingMapper(Mapper):
         _ensure_nltk_model("punkt_tab")
         _ensure_nltk_model("averaged_perceptron_tagger_eng")
         self._pos_tag = nltk.pos_tag
-        self._stemmer = PorterStemmer()
+        self._stemmer = SnowballStemmer("english")
 
     @staticmethod
     def _pos_tagged_tokens(label: str):
@@ -35,13 +35,14 @@ class StemmingMapper(Mapper):
 
     def _normalize(self, label: str) -> str:
         if self._ignore_determiners:
-            label = " ".join(w[0] for w in self._pos_tagged_tokens(label)
-                             if w[1] != "DT")
+            label = " ".join(
+                w[0] for w in self._pos_tagged_tokens(label) if w[1] != "DT"
+            )
         return self._stemmer.stem(label)
 
     @staticmethod
     def _negative_length(label: str) -> int:
-        return -len(label.split())
+        return -len(word_tokenize(label))
 
     def create_mapping(self, labels: list[str]) -> dict[str, str]:
         if self._ranking == "shortest":
@@ -67,16 +68,16 @@ class SubgramStemmingMapper(StemmingMapper):
         self,
         head_word_type: Literal["noun", "verb"],
         ignore_determiners: bool = True,
-        min_main_label_length: int = 2,
-        min_main_label_frequency: int = 10,
-        min_frequency_ratio: float = 2.0,
-        ranking: Literal["shortest", "most_frequent"] = "most_frequent",
+        min_subgram_length: int = 2,
+        min_subgram_frequency: int = 10,
+        min_subgram_frequency_ratio: float = 2.0,
+        ranking: Literal["shortest", "most_frequent"] = "shortest",
     ):
         super().__init__(ignore_determiners=ignore_determiners, ranking=ranking)
         self._head_word_subtag = "NN" if head_word_type == "noun" else "VB"
-        self._min_main_label_length = min_main_label_length
-        self._min_main_label_frequency = min_main_label_frequency
-        self._min_frequency_ratio = min_frequency_ratio
+        self._min_subgram_length = min_subgram_length
+        self._min_subgram_frequency = min_subgram_frequency
+        self._min_subgram_frequency_ratio = min_subgram_frequency_ratio
 
     def _ranker(self, labels: list[str]) -> Callable[[str], tuple[int, int]]:
         counter = Counter(labels)
@@ -110,8 +111,8 @@ class SubgramStemmingMapper(StemmingMapper):
             label
             for label in labels_set
             if self._matches_head_word_subtag(label)
-            and len(self._normalize(label).split()) >= self._min_main_label_length
-            and counter[label] >= self._min_main_label_frequency
+            and len(self._normalize(label).split()) >= self._min_subgram_length
+            and counter[label] >= self._min_subgram_frequency
         }
 
         for label in labels_set:
@@ -121,7 +122,8 @@ class SubgramStemmingMapper(StemmingMapper):
                 for candidate in main_label_candidates
                 if norm_map[candidate] in norm_label
                 # Only map if the candidate is considerably more frequent
-                and counter[candidate] >= self._min_frequency_ratio * counter[label]
+                and counter[candidate]
+                >= self._min_subgram_frequency_ratio * counter[label]
             ]
             if not matches:
                 continue

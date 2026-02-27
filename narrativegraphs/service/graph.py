@@ -365,7 +365,7 @@ class GraphService(SubService):
         self,
         graph_filter: GraphFilter = None,
         weight_measure: Literal["pmi", "frequency"] = "pmi",
-        min_weight: float = 2.0,
+        min_weight: float | None = 0.0,
         community_detection_method: Literal[
             "louvain", "k_clique", "connected_components"
         ]
@@ -395,7 +395,8 @@ class GraphService(SubService):
 
         # Build relation filter conditions
         coc_conditions = create_cooccurrence_conditions(graph_filter)
-        coc_conditions.append(CooccurrenceOrm.pmi >= min_weight)
+        if min_weight is not None:
+            coc_conditions.append(CooccurrenceOrm.pmi >= min_weight)
 
         with self._get_session_context() as db:
             entity_subquery = db.query(EntityOrm.id).filter(and_(*entity_conditions))
