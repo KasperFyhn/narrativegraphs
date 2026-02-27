@@ -15,27 +15,17 @@
     "ecmaVersion": 12,
     "sourceType": "module"
   },
-  "plugins": [
-    "react",
-    "@typescript-eslint",
-    "react-hooks"
-  ],
+  "plugins": ["react", "@typescript-eslint", "react-hooks"],
   "rules": {
     "no-use-before-define": "warn",
-    "@typescript-eslint/no-use-before-define": [
-      "error"
-    ],
+    "@typescript-eslint/no-use-before-define": ["error"],
     "react/jsx-filename-extension": [
       "warn",
       {
-        "extensions": [
-          ".tsx"
-        ]
+        "extensions": [".tsx"]
       }
     ],
-    "@typescript-eslint/no-shadow": [
-      "warn"
-    ],
+    "@typescript-eslint/no-shadow": ["warn"],
     "@typescript-eslint/explicit-function-return-type": [
       "warn",
       {
@@ -63,9 +53,5 @@
       "version": "detect"
     }
   },
-  "ignorePatterns": [
-    "build/",
-    "*.css",
-    "*.svg"
-  ]
+  "ignorePatterns": ["dist/", "*.css", "*.svg"]
 }

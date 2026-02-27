@@ -18,8 +18,7 @@ import {
 
 const getApiUrl = (): string => {
   // 1. Check for explicit override (highest priority)
-  // Vite uses VITE_ prefix, CRA uses REACT_APP_ prefix
-  const envApiUrl = process.env.REACT_APP_API_URL;
+  const envApiUrl = import.meta.env.VITE_API_URL;
   if (envApiUrl) {
     console.log('Using API URL from environment:', envApiUrl);
     return envApiUrl;
@@ -66,7 +65,7 @@ export const ServiceContextProvider: React.FC<PropsWithChildren> = ({
       cooccurrenceService: new CooccurrenceServiceImpl(apiUrl),
       relationService: new RelationServiceImpl(apiUrl),
     }),
-    [apiUrl]
+    [apiUrl],
   );
 
   return (

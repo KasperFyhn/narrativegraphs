@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2023"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "node16",
+    "noEmit": true
+  },
+  "include": ["vite.config.ts", "postcss.config.cjs"]
+}
