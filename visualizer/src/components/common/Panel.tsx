@@ -1,4 +1,4 @@
-import React, { ComponentPropsWithRef, PropsWithChildren } from 'react';
+import React, { PropsWithChildren } from 'react';
 import { Paper, PaperProps } from '@mantine/core';
 
 interface PanelProps extends PropsWithChildren, Omit<PaperProps, 'children'> {

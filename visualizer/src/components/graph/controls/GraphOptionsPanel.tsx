@@ -3,13 +3,15 @@ import '../graph.css';
 import { Stack, Switch, Slider, Text } from '@mantine/core';
 import {
   isSmoothEnabled,
+  layoutPrecisionToParams,
   useGraphOptionsContext,
 } from '../../../contexts/GraphOptionsContext';
 import { ConnectionType, useGraphQuery } from '../../../hooks/useGraphQuery';
 import { RadioGroup } from '../../common/userinput/RadioGroup';
 
 export const GraphOptionsPanel: React.FC = () => {
-  const { options, setOptions } = useGraphOptionsContext();
+  const { options, setOptions, layoutPrecision, setLayoutPrecision } =
+    useGraphOptionsContext();
   const { query, setConnectionType, connectionTypes } = useGraphQuery();
 
   return (
@@ -64,6 +66,19 @@ export const GraphOptionsPanel: React.FC = () => {
               },
             })
           }
+        />
+      </Stack>
+      <Stack gap={4}>
+        <Text size="sm">Layout Precision </Text>
+        <Slider
+          min={0}
+          max={100}
+          value={layoutPrecision}
+          label={(v) => {
+            const { iterations, minVelocity } = layoutPrecisionToParams(v);
+            return `${iterations} iter / v<${minVelocity.toFixed(1)}`;
+          }}
+          onChange={setLayoutPrecision}
         />
       </Stack>
     </Stack>

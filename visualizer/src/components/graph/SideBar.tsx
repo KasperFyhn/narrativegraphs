@@ -14,6 +14,7 @@ interface PanelConfig {
   icon: LucideIcon;
   title: string;
   component: React.FC;
+  overflowY?: 'auto' | 'visible';
 }
 
 const panels: PanelConfig[] = [
@@ -40,6 +41,7 @@ const panels: PanelConfig[] = [
     icon: Settings,
     title: 'Settings',
     component: GraphOptionsPanel,
+    overflowY: 'visible',
   },
 ];
 
@@ -72,28 +74,30 @@ export const SideBar: React.FC = () => {
 
   return (
     <div className="side-bar">
-      {panels.map(({ type, icon: Icon, title, component: Component }) => (
-        <div key={type}>
-          <ToggleButton
-            onToggle={() => togglePanel(type)}
-            toggled={activePanel === type}
-          >
-            <Icon />
-          </ToggleButton>
-          {activePanel === type && (
-            <Paper
-              withBorder
-              radius="md"
-              p="sm"
-              className="control-panel"
-              style={{ overflowY: 'auto' }}
+      {panels.map(
+        ({ type, icon: Icon, title, component: Component, overflowY }) => (
+          <div key={type}>
+            <ToggleButton
+              onToggle={() => togglePanel(type)}
+              toggled={activePanel === type}
             >
-              <h2 style={{ marginTop: 0 }}>{title}</h2>
-              <Component />
-            </Paper>
-          )}
-        </div>
-      ))}
+              <Icon />
+            </ToggleButton>
+            {activePanel === type && (
+              <Paper
+                withBorder
+                radius="md"
+                p="sm"
+                className="control-panel"
+                style={{ overflowY: overflowY ?? 'auto' }}
+              >
+                <h2 style={{ marginTop: 0 }}>{title}</h2>
+                <Component />
+              </Paper>
+            )}
+          </div>
+        ),
+      )}
     </div>
   );
 };
