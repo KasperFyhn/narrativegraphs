@@ -24,7 +24,7 @@ Uses a `TripletExtractor` to extract subject-predicate-object triplets, then der
 
 Default components:
 
-- Triplet extraction: `DependencyGraphExtractor`
+- Triplet extraction: `DependencyGraphExtractor` (default; `EntityPairDependencyExtractor` is an alternative)
 - Cooccurrence extraction: `ChunkCooccurrenceExtractor`
 - Entity mapping: `SubgramStemmingMapper("noun")`
 - Predicate mapping: `SubgramStemmingMapper("verb")`
@@ -58,10 +58,11 @@ Default components:
 
 ### Triplet Extraction (`triplets/`)
 
-| Class                        | Description                                    |
-| ---------------------------- | ---------------------------------------------- |
-| **TripletExtractor**         | Abstract base class                            |
-| **DependencyGraphExtractor** | Extracts triplets from spaCy dependency parses |
+| Class                             | Description                                                                             |
+| --------------------------------- | --------------------------------------------------------------------------------------- |
+| **TripletExtractor**              | Abstract base class                                                                     |
+| **DependencyGraphExtractor**      | Verb-first (top-down from ROOT); fine-grained boolean flags per relation type           |
+| **EntityPairDependencyExtractor** | Entity-pair (bottom-up, path matching); declarative `PathPattern` list; sentence guards |
 
 Triplets consist of:
 

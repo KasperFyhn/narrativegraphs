@@ -27,7 +27,8 @@ Both handle: document ingestion → extraction → mapping → stats calculation
 ### Triplet Extraction (`triplets/`)
 
 - **TripletExtractor** - Abstract base class
-- **DependencyGraphExtractor** - Extracts (subject, predicate, object) from dependency parses
+- **DependencyGraphExtractor** - Verb-first traversal; fine-grained boolean flags per relation type; no sentence-length limits
+- **EntityPairExtractor** - Entity-pair traversal; declarative `PathPattern` list; supports compound "verb prep" predicates; guards: `max_sentence_length=60`, `max_entity_distance=10`
 
 ### Cooccurrence Extraction (`tuplets/`)
 
@@ -65,7 +66,7 @@ Pipeline / CooccurrencePipeline
 
 **Pipeline:**
 
-- `DependencyGraphExtractor` (triplets)
+- `DependencyGraphExtractor` (triplets, default; `EntityPairDependencyExtractor` is an alternative)
 - `ChunkCooccurrenceExtractor` (cooccurrences)
 - `SubgramStemmingMapper("noun")` (entities)
 - `SubgramStemmingMapper("verb")` (predicates)
