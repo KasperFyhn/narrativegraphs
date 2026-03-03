@@ -1,9 +1,12 @@
 import unittest
 
 from narrativegraphs.nlp.triplets.common import Triplet
+from narrativegraphs.nlp.triplets.spacy.common import SpacyTripletExtractor
 
 
 class ExtractorTest(unittest.TestCase):
+    extractor: SpacyTripletExtractor
+
     def assert_triplet_equal(self, expected: Triplet, actual: Triplet):
         """
         Custom assertion to compare Triplet NamedTuples.
@@ -26,7 +29,18 @@ class ExtractorTest(unittest.TestCase):
 
         self.assertTrue(len(errors) == 0, "\n".join(errors))
 
-    def assert_triplets_equal(self, expected: list[Triplet], actual: list[Triplet]):
+    def assert_triplets_equal(
+        self, expected: list[Triplet], actual: list[Triplet], sort=True
+    ):
+        if sort:
+            expected = sorted(
+                expected,
+                key=lambda t: (t.subj.start_char, t.pred.start_char, t.obj.start_char),
+            )
+            actual = sorted(
+                actual,
+                key=lambda t: (t.subj.start_char, t.pred.start_char, t.obj.start_char),
+            )
         assert len(expected) == len(actual), (
             f"Expected {len(expected)}, got {len(actual)}: {actual}"
         )
