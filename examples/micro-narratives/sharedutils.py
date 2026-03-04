@@ -1,3 +1,5 @@
+import os
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -7,7 +9,97 @@ from narrativegraphs.dto.graph import Community
 from narrativegraphs.dto.tuplets import TupletGroup
 
 
-def fit_and_visualize_entity_frequencies(df: pd.DataFrame):
+def output_path(filename: str) -> str:
+    from config import OUTPUT_DIR
+
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    return os.path.join(OUTPUT_DIR, filename)
+
+
+def compute_communities(model):
+    """Compute (or load from cache) both k-clique and Louvain communities.
+
+    Results are pickled to COMMUNITIES_CACHE_PATH. Delete the file to recompute
+    (e.g. after changing hyperparameters in config.py).
+    """
+    import os
+    import pickle
+
+    from config import (
+        COMMUNITIES_CACHE_PATH,
+        K_CLIQUE_K,
+        LOUVAIN_RESOLUTION,
+        MIN_NODE_FREQUENCY,
+        MIN_WEIGHT,
+    )
+
+    if os.path.exists(COMMUNITIES_CACHE_PATH):
+        with open(COMMUNITIES_CACHE_PATH, "rb") as f:
+            return pickle.load(f)
+
+    from narrativegraphs import GraphFilter
+
+    graph_filter = GraphFilter(minimum_node_frequency=MIN_NODE_FREQUENCY)
+
+    k_clique_comms_raw = model.graph.find_communities(
+        graph_filter=graph_filter,
+        min_weight=MIN_WEIGHT,
+        community_detection_method_args=dict(k=K_CLIQUE_K),
+    )
+
+    k_clique_comms_with_contexts = []
+    k_clique_big_comms = []
+    last_size = None
+    for comm in sorted(k_clique_comms_raw, key=lambda c: len(c.members)):
+        size = len(comm.members)
+        if size < 2:
+            continue
+        if last_size and size > 2 * last_size:
+            k_clique_big_comms.append(comm)
+            continue
+        contexts = model.tuplets.get_contexts_by_entity_ids(comm.member_ids)
+        contexts.sort(key=lambda c: c.doc_id)
+        k_clique_comms_with_contexts.append((comm, contexts))
+        last_size = size
+
+    louvain_comms_raw = model.graph.find_communities(
+        graph_filter=graph_filter,
+        min_weight=None,
+        community_detection_method="louvain",
+        community_detection_method_args=dict(resolution=LOUVAIN_RESOLUTION),
+    )
+
+    louvain_comms_with_contexts = []
+    for comm in sorted(louvain_comms_raw, key=lambda c: c.score, reverse=True):
+        size = len(comm.members)
+        if size < 2 or size > 1000:
+            continue
+        contexts = model.tuplets.get_contexts_by_entity_ids(comm.member_ids)
+        contexts.sort(key=lambda c: c.doc_id)
+        louvain_comms_with_contexts.append((comm, contexts))
+
+    result = (
+        k_clique_comms_with_contexts,
+        k_clique_big_comms,
+        louvain_comms_with_contexts,
+    )
+    os.makedirs(os.path.dirname(COMMUNITIES_CACHE_PATH), exist_ok=True)
+    with open(COMMUNITIES_CACHE_PATH, "wb") as f:
+        pickle.dump(result, f)
+
+    return result
+
+
+def spike_analysis(comms_with_contexts):
+    spike_values, spread_values = [], []
+    for comm, contexts in comms_with_contexts:
+        ids = {c.doc_id for c in contexts}
+        spike_values.append(len(ids))
+        spread_values.append(max(ids) - min(ids) + 1)
+    return spike_values, spread_values
+
+
+def fit_and_visualize_entity_frequencies(df: pd.DataFrame, save_path: str):
     # Assuming df has columns 'entity' and 'frequency'
     df_sorted = df.sort_values("frequency", ascending=False).reset_index(drop=True)
     df_sorted["rank"] = df_sorted.index + 1
@@ -30,10 +122,11 @@ def fit_and_visualize_entity_frequencies(df: pd.DataFrame):
     ax.set_ylabel("Frequency")
     ax.set_title("Zipf's Law Check")
     ax.legend()
-    plt.show()
+    fig.savefig(save_path, bbox_inches="tight")
+    plt.close(fig)
 
 
-def visualize_pmi_by_frequency(coocs: pd.DataFrame):
+def visualize_pmi_by_frequency(coocs: pd.DataFrame, save_path: str):
     # Create mirrored copy with swapped entity frequencies
     mirrored = coocs.rename(
         columns={
@@ -89,7 +182,8 @@ def visualize_pmi_by_frequency(coocs: pd.DataFrame):
     cbar.set_label("Mean PMI", rotation=270, labelpad=20, fontsize=20)
 
     plt.tight_layout()
-    plt.show()
+    fig.savefig(save_path, bbox_inches="tight")
+    plt.close(fig)
 
 
 def print_comm_with_contexts(comm: Community, contexts: list[TupletGroup]):
@@ -111,7 +205,7 @@ def multi_spike_df(spike_values, spread_values):
     return df
 
 
-def multi_spike_heatmap(df):
+def multi_spike_heatmap(df, save_path: str):
     fig, ax = plt.subplots(figsize=(14, 5))
     log_base = 10
     df["floored_log_spread"] = np.floor(np.emath.logn(log_base, df.spread))
@@ -148,7 +242,8 @@ def multi_spike_heatmap(df):
 
     plt.suptitle("Community spread vs. spikes", fontsize=14)
     plt.tight_layout()
-    plt.show()
+    fig.savefig(save_path, bbox_inches="tight")
+    plt.close(fig)
 
 
 def activation_score(comm, contexts):
