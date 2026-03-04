@@ -94,6 +94,20 @@ class Pipeline(_AbstractPipeline):
         predicate_mapper: Mapper = None,
         n_cpu: int = 1,
     ):
+        """Initialize the pipeline.
+
+        Args:
+            engine: SQLAlchemy engine for database access.
+            triplet_extractor: Extractor for subject-predicate-object triplets
+                (default: DependencyGraphExtractor).
+            cooccurrence_extractor: Extractor for entity co-occurrences
+                (default: ChunkCooccurrenceExtractor).
+            entity_mapper: Mapper for entity normalization
+                (default: SubgramStemmingMapper("noun")).
+            predicate_mapper: Mapper for predicate normalization
+                (default: SubgramStemmingMapper("verb")).
+            n_cpu: Number of CPUs for parallel processing.
+        """
         super().__init__(engine, n_cpu=n_cpu)
         # Analysis components
         self._triplet_extractor = triplet_extractor or DependencyGraphExtractor()

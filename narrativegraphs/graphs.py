@@ -178,8 +178,10 @@ class CooccurrenceGraph(BaseGraph):
 
         Args:
             entity_extractor: Extractor for entities (default: SpacyEntityExtractor).
-            cooccurrence_extractor: Extractor for entity co-occurrences.
-            entity_mapper: Mapper for entity normalization.
+            cooccurrence_extractor: Extractor for entity co-occurrences
+                (default: ChunkCooccurrenceExtractor).
+            entity_mapper: Mapper for entity normalization
+                (default: SubgramStemmingMapper("noun")).
             sqlite_db_path: Path to SQLite database file. If None, uses in-memory DB.
             on_existing_db: Behavior when database exists:
                 - "stop": Raise error if DB contains data
@@ -268,10 +270,14 @@ class NarrativeGraph(BaseGraph):
         """Initialize a NarrativeGraph.
 
         Args:
-            triplet_extractor: Extractor for subject-predicate-object triplets.
-            cooccurrence_extractor: Extractor for entity co-occurrences.
-            entity_mapper: Mapper for entity normalization.
-            predicate_mapper: Mapper for predicate normalization.
+            triplet_extractor: Extractor for subject-predicate-object triplets
+                (default: DependencyGraphExtractor).
+            cooccurrence_extractor: Extractor for entity co-occurrences
+                (default: ChunkCooccurrenceExtractor).
+            entity_mapper: Mapper for entity normalization
+                (default: SubgramStemmingMapper("noun")).
+            predicate_mapper: Mapper for predicate normalization
+                (default: SubgramStemmingMapper("verb")).
             sqlite_db_path: Path to SQLite database file. If None, uses in-memory DB.
             on_existing_db: Behavior when database exists:
                 - "stop": Raise error if DB contains data
