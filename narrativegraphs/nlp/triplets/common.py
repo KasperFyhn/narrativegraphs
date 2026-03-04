@@ -1,12 +1,14 @@
 from abc import ABC, abstractmethod
 from typing import Generator, Iterable, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from narrativegraphs.nlp.common.annotation import AnnotationContext, SpanAnnotation
 
 
 class Triplet(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
     subj: SpanAnnotation
     pred: SpanAnnotation
     obj: SpanAnnotation
