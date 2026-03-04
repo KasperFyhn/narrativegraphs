@@ -72,7 +72,7 @@ export const CommunitiesPanel: React.FC = () => {
       <RadioGroup
         name="commDetectionMethod"
         label="Algorithm"
-        options={['louvain', 'k_clique', 'connected_components'] as const}
+        options={['louvain', 'k_clique'] as const}
         value={commRequest.communityDetectionMethod}
         onChange={(choice) =>
           setCommRequest({

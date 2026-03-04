@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { NumberInput } from '@mantine/core';
+import { Box, NumberInput } from '@mantine/core';
 
 export interface SubmittedNumberInputProps {
   startValue: number;
@@ -19,8 +19,9 @@ export const SubmittedNumberInput: React.FC<SubmittedNumberInputProps> = ({
   };
 
   return (
-    <form
-      onSubmit={(e) => {
+    <Box
+      component="form"
+      onSubmit={(e: React.FormEvent) => {
         e.preventDefault();
         submit();
       }}
@@ -34,6 +35,6 @@ export const SubmittedNumberInput: React.FC<SubmittedNumberInputProps> = ({
         onBlur={submit}
         w={80}
       />
-    </form>
+    </Box>
   );
 };
