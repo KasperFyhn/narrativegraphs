@@ -53,9 +53,9 @@ export const GraphOptionsContextProvider: React.FC<
   const [options, setOptions] = useState<Options>({
     physics: {
       enabled: true,
-      barnesHut: {
-        springLength: 300,
-      },
+      solver: 'barnesHut',
+      barnesHut: { springLength: 300 },
+      forceAtlas2Based: { springLength: 300 },
     },
     edges: {
       smooth: true,

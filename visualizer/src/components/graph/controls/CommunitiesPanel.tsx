@@ -1,13 +1,5 @@
 import React from 'react';
-import {
-  Stack,
-  Group,
-  Button,
-  Switch,
-  Slider,
-  Text,
-  Alert,
-} from '@mantine/core';
+import { Alert, Button, Slider, Stack, Switch, Text } from '@mantine/core';
 import { useGraphQuery } from '../../../hooks/useGraphQuery';
 import { useServiceContext } from '../../../contexts/ServiceContext';
 import { EntityLabelList } from '../../common/entity/EntityLabelList';

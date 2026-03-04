@@ -9,10 +9,17 @@ import {
 import { ConnectionType, useGraphQuery } from '../../../hooks/useGraphQuery';
 import { RadioGroup } from '../../common/userinput/RadioGroup';
 
+const SOLVERS = ['barnesHut', 'forceAtlas2Based'] as const;
+type Solver = (typeof SOLVERS)[number];
+
 export const GraphOptionsPanel: React.FC = () => {
   const { options, setOptions, layoutPrecision, setLayoutPrecision } =
     useGraphOptionsContext();
   const { query, setConnectionType, connectionTypes } = useGraphQuery();
+
+  const currentSolver = (options.physics.solver ?? 'barnesHut') as Solver;
+  const springLength = (options.physics[currentSolver]?.springLength ??
+    300) as number;
 
   return (
     <Stack gap="md">
@@ -40,6 +47,18 @@ export const GraphOptionsPanel: React.FC = () => {
           })
         }
       />
+      <RadioGroup
+        name="solver"
+        label="Layout solver"
+        options={SOLVERS}
+        value={currentSolver}
+        onChange={(s) =>
+          setOptions({
+            ...options,
+            physics: { ...options.physics, solver: s },
+          })
+        }
+      />
       <Switch
         label="Rounded Edges"
         checked={isSmoothEnabled(options)}
@@ -55,14 +74,14 @@ export const GraphOptionsPanel: React.FC = () => {
         <Slider
           min={50}
           max={1000}
-          value={options.physics.barnesHut.springLength}
+          value={springLength}
           label={(v) => String(v)}
           onChange={(v) =>
             setOptions({
               ...options,
               physics: {
                 ...options.physics,
-                barnesHut: { springLength: v },
+                [currentSolver]: { springLength: v },
               },
             })
           }
