@@ -6,6 +6,8 @@ export interface DataBounds {
   categories?: { [key: string]: string[] };
   earliestDate?: Date;
   latestDate?: Date;
+  earliestOrdinalTime?: number;
+  latestOrdinalTime?: number;
 }
 
 export interface GraphQuery {
@@ -23,6 +25,8 @@ export interface GraphFilter {
   maximumEdgeFrequency?: number;
   earliestDate?: Date;
   latestDate?: Date;
+  earliestOrdinalTime?: number;
+  latestOrdinalTime?: number;
   blacklistedEntityIds?: string[];
   categories?: { [key: string]: string[] | undefined };
 }

@@ -21,6 +21,7 @@ interface GraphFilterActions {
   setNodeFrequencyRange: (min: number, max: number) => void;
   setEdgeFrequencyRange: (min: number, max: number) => void;
   setDateRange: (start: Date, end: Date) => void;
+  setOrdinalTimeRange: (start: number, end: number) => void;
   addBlacklistedEntityId: (...entityIds: string[]) => void;
   removeBlacklistedEntityId: (entityId: string) => void;
   clearBlacklist: () => void;
@@ -32,7 +33,8 @@ interface GraphFilterActions {
 }
 
 export interface GraphQueryAccessors
-  extends GraphQueryActions, GraphFilterActions {
+  extends GraphQueryActions,
+    GraphFilterActions {
   query: GraphQuery;
   dataBounds: DataBounds;
   connectionTypes: ConnectionType[];
@@ -108,7 +110,11 @@ export function useGraphQuery(): GraphQueryAccessors {
           type: 'SET_DATE_RANGE',
           payload: { start, end },
         }),
-
+      setOrdinalTimeRange: (start: number, end: number) =>
+        dispatchFilterAction({
+          type: 'SET_ORDINAL_TIME_RANGE',
+          payload: { start, end },
+        }),
       addBlacklistedEntityId: (...entityIds: string[]) =>
         dispatchFilterAction({
           type: 'ADD_BLACKLIST_ENTITY',

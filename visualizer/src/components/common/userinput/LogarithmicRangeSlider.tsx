@@ -7,8 +7,6 @@ interface LogarithmicRangeSliderProps {
   minValue: number;
   maxValue: number;
   onChange: (values: { minValue: number; maxValue: number }) => void;
-  style?: React.CSSProperties;
-  ruler?: boolean;
 }
 
 const linearToLog = (
@@ -46,7 +44,6 @@ const LogarithmicRangeSlider: React.FC<LogarithmicRangeSliderProps> = ({
   minValue,
   maxValue,
   onChange,
-  style,
 }) => {
   const linearMin = 0;
   const linearMax = 100;
@@ -89,25 +86,20 @@ const LogarithmicRangeSlider: React.FC<LogarithmicRangeSliderProps> = ({
   }, [min, max, realValueToLinear]);
 
   return (
-    <Stack gap={4} style={style}>
-      <Text size="xs" c="dimmed">
-        {linearToReal(sliderValue[0])} – {linearToReal(sliderValue[1])}
-      </Text>
-      <RangeSlider
-        min={linearMin}
-        max={linearMax}
-        value={sliderValue}
-        label={(v) => String(linearToReal(v))}
-        onChange={(value) => setSliderValue(value)}
-        onChangeEnd={([lo, hi]) =>
-          onChange({ minValue: linearToReal(lo), maxValue: linearToReal(hi) })
-        }
-        marks={marks}
-        size="sm"
-        style={{ minWidth: 140 }}
-        mb={marks.length > 0 ? 'md' : 0}
-      />
-    </Stack>
+    <RangeSlider
+      min={linearMin}
+      max={linearMax}
+      value={sliderValue}
+      label={(v) => String(linearToReal(v))}
+      onChange={(value) => setSliderValue(value)}
+      onChangeEnd={([lo, hi]) =>
+        onChange({ minValue: linearToReal(lo), maxValue: linearToReal(hi) })
+      }
+      marks={marks}
+      size="sm"
+      style={{ minWidth: 140 }}
+      mb={marks.length > 0 ? 'md' : 0}
+    />
   );
 };
 

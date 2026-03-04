@@ -33,34 +33,33 @@ export const EntityInfo: React.FC<EntityInfoProps> = ({ id }) => {
     [id],
   );
 
-  if (loading) {
-    return <ClipLoader loading={true} />;
-  }
-
-  if (!details) {
+  if (!loading && !details) {
     return <p>Failed to load entity details.</p>;
   }
 
-  const extra = [
-    ...Object.entries(details.categories).map(([name, values]) => ({
-      name: name.charAt(0).toUpperCase() + name.slice(1),
-      value: values.join(', '),
-    })),
-    ...(details.altLabels && details.altLabels.length > 0
-      ? [
-          {
-            name: 'Alternative Labels',
-            value:
-              details.altLabels.slice(0, 10).join(', ') +
-              (details.altLabels.length > 10 ? '...' : ''),
-          },
-        ]
-      : []),
-  ];
+  const extra = details
+    ? [
+        ...Object.entries(details.categories).map(([name, values]) => ({
+          name: name.charAt(0).toUpperCase() + name.slice(1),
+          value: values.join(', '),
+        })),
+        ...(details.altLabels && details.altLabels.length > 0
+          ? [
+              {
+                name: 'Alternative Labels',
+                value:
+                  details.altLabels.slice(0, 10).join(', ') +
+                  (details.altLabels.length > 10 ? '...' : ''),
+              },
+            ]
+          : []),
+      ]
+    : [];
 
   return (
     <>
-      <StatsDisplay stats={details.stats} extra={extra} />
+      {loading && <ClipLoader loading={true} />}
+      {details && <StatsDisplay stats={details.stats} extra={extra} />}
       <DocsSection loadDocs={loadDocs} highlightContext={highlightContext} />
     </>
   );

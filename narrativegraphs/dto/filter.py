@@ -2,6 +2,7 @@ from datetime import date
 from typing import Optional
 
 from fastapi_camelcase import CamelModel
+from pydantic import ConfigDict
 
 
 class DataBounds(CamelModel):
@@ -12,9 +13,13 @@ class DataBounds(CamelModel):
     categories: Optional[dict[str, list[str]]] = None
     earliest_date: Optional[date] = None
     latest_date: Optional[date] = None
+    earliest_ordinal_time: Optional[int] = None
+    latest_ordinal_time: Optional[int] = None
 
 
 class GraphFilter(CamelModel):
+    model_config = ConfigDict(extra="forbid")
+
     limit_nodes: int = None
     limit_edges: int = None
     minimum_node_frequency: Optional[int] = None
@@ -27,5 +32,7 @@ class GraphFilter(CamelModel):
     maximum_edge_doc_frequency: Optional[int] = None
     earliest_date: Optional[date] = None
     latest_date: Optional[date] = None
+    earliest_ordinal_time: Optional[int] = None
+    latest_ordinal_time: Optional[int] = None
     blacklisted_entity_ids: Optional[set[int]] = None
     categories: Optional[dict[str, list[str]]] = None

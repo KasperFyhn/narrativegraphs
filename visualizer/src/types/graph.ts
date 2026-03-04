@@ -39,8 +39,10 @@ export interface TextStats {
   frequency: number;
   docFrequency: number;
   adjustedTfIdf: number;
-  firstOccurrence?: Date | null;
-  lastOccurrence?: Date | null;
+  firstOccurrence?: Date;
+  lastOccurrence?: Date;
+  firstOccurrenceOrdinal?: number;
+  lastOccurrenceOrdinal?: number;
 }
 
 export interface Details extends Identifiable {
