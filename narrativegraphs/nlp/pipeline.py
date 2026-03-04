@@ -1,5 +1,5 @@
 import logging
-from abc import ABC
+from abc import ABC, abstractmethod
 from datetime import date, datetime
 from typing import Any
 
@@ -47,7 +47,7 @@ class _AbstractPipeline(ABC):
         ) = None,
         metadata: list[dict[str, Any]] = None,
     ):
-        with self._populator.get_session_context() as sc:
+        with self._populator.get_session_context():
             _logger.info(f"Adding {len(docs)} documents to database")
             if categories is not None:
                 categories = normalize_categories(categories)
@@ -61,7 +61,27 @@ class _AbstractPipeline(ABC):
                 metadata=metadata,
             )
 
-            sc.commit()
+    @abstractmethod
+    def _process_docs(self):
+        pass
+
+    def run(
+        self,
+        docs: list[str],
+        doc_ids: list[int | str] = None,
+        timestamps: list[datetime | date] = None,
+        timestamps_ordinal: list[int] = None,
+        categories: (
+            list[str | list[str]]
+            | dict[str, list[str | list[str]]]
+            | list[dict[str, str | list[str]]]
+        ) = None,
+        metadata: list[dict[str, Any]] = None,
+    ):
+        self._add_documents_to_db(
+            docs, doc_ids, timestamps, timestamps_ordinal, categories, metadata
+        )
+        self._process_docs()
 
 
 class Pipeline(_AbstractPipeline):
@@ -83,24 +103,8 @@ class Pipeline(_AbstractPipeline):
         self._entity_mapper = entity_mapper or SubgramStemmingMapper("noun")
         self._predicate_mapper = predicate_mapper or SubgramStemmingMapper("verb")
 
-    def run(
-        self,
-        docs: list[str],
-        doc_ids: list[int | str] = None,
-        timestamps: list[datetime | date] = None,
-        timestamps_ordinal: list[int] = None,
-        categories: (
-            list[str | list[str]]
-            | dict[str, list[str | list[str]]]
-            | list[dict[str, str | list[str]]]
-        ) = None,
-        metadata: list[dict[str, Any]] = None,
-    ):
+    def _process_docs(self):
         with self._populator.get_session_context():
-            self._add_documents_to_db(
-                docs, doc_ids, timestamps, timestamps_ordinal, categories, metadata
-            )
-
             _logger.info("Extracting triplets")
             # TODO: use generators instead of lists here
             doc_orms = self._populator.get_docs()
@@ -110,7 +114,7 @@ class Pipeline(_AbstractPipeline):
             docs_and_triplets = zip(doc_orms, extracted_triplets)
             if _logger.isEnabledFor(logging.INFO):
                 docs_and_triplets = tqdm(
-                    docs_and_triplets, desc="Extracting triplets", total=len(docs)
+                    docs_and_triplets, desc="Extracting triplets", total=len(doc_orms)
                 )
             for doc, doc_triplets in docs_and_triplets:
                 # Extract entities from triplets
@@ -141,8 +145,6 @@ class Pipeline(_AbstractPipeline):
 
             _logger.info("Calculating stats")
             self._stats.calculate_stats()
-
-            return self
 
 
 class CooccurrencePipeline(_AbstractPipeline):
@@ -179,39 +181,8 @@ class CooccurrencePipeline(_AbstractPipeline):
         )
         self._entity_mapper = entity_mapper or SubgramStemmingMapper("noun")
 
-    def run(
-        self,
-        docs: list[str],
-        doc_ids: list[int | str] = None,
-        timestamps: list[datetime | date] = None,
-        timestamps_ordinal: list[int] = None,
-        categories: (
-            list[str | list[str]]
-            | dict[str, list[str | list[str]]]
-            | list[dict[str, str | list[str]]]
-        ) = None,
-        metadata: list[dict[str, Any]] = None,
-    ):
-        """Run the co-occurrence pipeline on a set of documents.
-
-        Args:
-            docs: List of document texts
-            doc_ids: Optional list of document identifiers
-            timestamps: Optional list of document timestamps
-            timestamps_ordinal: Optional list of document timestamps as arbitrary
-                integers
-            categories: Optional document categorization
-            metadata: Optional document metadata
-
-        Returns:
-            self for method chaining
-        """
-
+    def _process_docs(self):
         with self._populator.get_session_context():
-            self._add_documents_to_db(
-                docs, doc_ids, timestamps, timestamps_ordinal, categories, metadata
-            )
-
             _logger.info("Extracting entities")
             doc_orms = self._populator.get_docs()
             extracted_entities = self._entity_extractor.batch_extract(
@@ -220,7 +191,7 @@ class CooccurrencePipeline(_AbstractPipeline):
             docs_and_entities = zip(doc_orms, extracted_entities)
             if _logger.isEnabledFor(logging.INFO):
                 docs_and_entities = tqdm(
-                    docs_and_entities, desc="Extracting entities", total=len(docs)
+                    docs_and_entities, desc="Extracting entities", total=len(doc_orms)
                 )
             for doc, doc_entities in docs_and_entities:
                 # Add entity occurrences first, get lookup for efficient referencing
@@ -238,5 +209,3 @@ class CooccurrencePipeline(_AbstractPipeline):
 
             _logger.info("Calculating stats")
             self._stats.calculate_stats(has_triplets=False)
-
-            return self
