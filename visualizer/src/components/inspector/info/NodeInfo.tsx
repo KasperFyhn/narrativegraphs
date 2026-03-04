@@ -2,6 +2,7 @@ import React from 'react';
 import { Node } from '../../../types/graph';
 import { Panel } from '../../common/Panel';
 import { EntityInfo } from './EntityInfo';
+import { Title } from '@mantine/core';
 
 interface SubnodeListProps {
   subnodes: Node[];
@@ -31,7 +32,9 @@ export interface NodeInfoProps {
 export const NodeInfo: React.FC<NodeInfoProps> = ({ node }) => {
   return (
     <Panel className="info-pane">
-      <h2>{node.label}</h2>
+      <Title order={2} mb="sm">
+        {node.label}
+      </Title>
       {node.supernode && <p>Supernode: {node.supernode.label}</p>}
 
       <EntityInfo id={node.id} />

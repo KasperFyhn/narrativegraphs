@@ -4,6 +4,7 @@ import { useGraphQuery } from '../../../hooks/useGraphQuery';
 import { DocsSection } from '../docs/DocsSection';
 import { useServiceContext } from '../../../contexts/ServiceContext';
 import { HighlightContext } from '../docs/types';
+import { Title } from '@mantine/core';
 
 export const FocusEntitiesInfo: React.FC = () => {
   const { query } = useGraphQuery();
@@ -60,7 +61,9 @@ export const FocusEntitiesInfo: React.FC = () => {
 
   return (
     <Panel className="info-pane">
-      <h2>Focus Entities Contexts</h2>
+      <Title order={1} size="h2">
+        Focus Entities Contexts
+      </Title>
       <p>
         Showing text passages for {entityCount} focus{' '}
         {entityCount === 1 ? 'entity' : 'entities'}

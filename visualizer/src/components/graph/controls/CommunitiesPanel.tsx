@@ -1,5 +1,13 @@
 import React from 'react';
-import { Stack, Group, Button, Switch, Slider, Text } from '@mantine/core';
+import {
+  Stack,
+  Group,
+  Button,
+  Switch,
+  Slider,
+  Text,
+  Alert,
+} from '@mantine/core';
 import { useGraphQuery } from '../../../hooks/useGraphQuery';
 import { useServiceContext } from '../../../contexts/ServiceContext';
 import { EntityLabelList } from '../../common/entity/EntityLabelList';
@@ -79,13 +87,16 @@ export const CommunitiesPanel: React.FC = () => {
         onChange={() => setShowIsolated(!showIsolated)}
       />
 
+      {query.connectionType !== 'cooccurrence' && (
+        <Alert variant="light" color="blue">
+          Running community detection will switch edges to co-occurrences.
+        </Alert>
+      )}
+
       <Button
         onClick={() => {
           if (query.connectionType !== 'cooccurrence') {
             setConnectionType('cooccurrence');
-            alert(
-              'Edges were set to cooccurrences. To switch back, look under settings.',
-            );
           }
           setCommunities(null);
           graphService

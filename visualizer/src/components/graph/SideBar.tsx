@@ -1,5 +1,5 @@
 import React from 'react';
-import { Paper } from '@mantine/core';
+import { Paper, Title } from '@mantine/core';
 import { GraphOptionsPanel } from './controls/GraphOptionsPanel';
 import { Filter, LucideIcon, Puzzle, Search, Settings } from 'lucide-react';
 import { GraphFilterPanel } from './controls/GraphFilterPanel';
@@ -91,7 +91,9 @@ export const SideBar: React.FC = () => {
                 className="control-panel"
                 style={{ overflowY: overflowY ?? 'auto' }}
               >
-                <h2 style={{ marginTop: 0 }}>{title}</h2>
+                <Title order={1} size="h2" mb="sm">
+                  {title}
+                </Title>
                 <Component />
               </Paper>
             )}

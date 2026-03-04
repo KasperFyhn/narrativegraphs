@@ -20,7 +20,6 @@ const getApiUrl = (): string => {
   // 1. Check for explicit override (highest priority)
   const envApiUrl = import.meta.env.VITE_API_URL;
   if (envApiUrl) {
-    console.log('Using API URL from environment:', envApiUrl);
     return envApiUrl;
   }
 
@@ -29,16 +28,12 @@ const getApiUrl = (): string => {
     window.location.hostname === 'localhost' ||
     window.location.hostname === '127.0.0.1'
   ) {
-    const devApiUrl = 'http://localhost:8001';
-    console.log('Detected localhost, using dev API:', devApiUrl);
-    return devApiUrl;
+    return 'http://localhost:8001';
   }
 
   // 3. Production - strip /vis from current URL
   const currentUrl = window.location.href;
-  const baseUrl = currentUrl.split('/vis')[0];
-  console.log('Using calculated API URL:', baseUrl);
-  return baseUrl;
+  return currentUrl.split('/vis')[0];
 };
 
 interface Services {
