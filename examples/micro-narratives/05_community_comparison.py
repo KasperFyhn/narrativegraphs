@@ -94,7 +94,8 @@ with open(output_path("05_community_comparison.txt"), "w") as f, redirect_stdout
 
     print("\nk-clique covered by Louvain:", coverage(k_clique_sets, louvain_sets))
     print("Louvain covered by k-clique:", coverage(louvain_sets, k_clique_sets))
-    print(
-        "Louvain covered by giant k-clique comm:",
-        coverage(louvain_sets, k_clique_big_sets),
-    )
+    if k_clique_big_sets:
+        print(
+            "Louvain covered by giant k-clique comm:",
+            coverage(louvain_sets, k_clique_big_sets),
+        )

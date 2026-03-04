@@ -26,8 +26,8 @@ k_clique_comms_with_contexts, _, louvain_comms_with_contexts = compute_communiti
     model
 )
 
-k_clique_spikes, k_clique_spread = spike_analysis(k_clique_comms_with_contexts)
-louvain_spikes, louvain_spread = spike_analysis(louvain_comms_with_contexts)
+k_clique_spikes, k_clique_spread = spike_analysis(k_clique_comms_with_contexts, model)
+louvain_spikes, louvain_spread = spike_analysis(louvain_comms_with_contexts, model)
 
 k_clique_df = multi_spike_df(k_clique_spikes, k_clique_spread)
 louvain_df = multi_spike_df(louvain_spikes, louvain_spread)

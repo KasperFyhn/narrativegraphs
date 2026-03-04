@@ -9,9 +9,10 @@ from narrativegraphs.db.engine import Base
 
 class DocumentMetadata(Base):
     __tablename__ = "document_metadata"
+    id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String)
     value = Column(String)
-    doc_id = Column(Integer, ForeignKey("documents.id"))
+    doc_id = Column(Integer, ForeignKey("documents.id"), index=True)
 
 
 class DocumentCategory(Base, CategoryMixin):

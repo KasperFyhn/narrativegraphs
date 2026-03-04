@@ -1,27 +1,34 @@
-"""Load text sections and build (or reload) the CooccurrenceGraph."""
+"""Build or reload the CooccurrenceGraph from the prepared docs JSONL."""
 
-import glob
+import json
 import os.path
-import re
 from contextlib import redirect_stdout
 
-from config import DB_PATH, INPUT_GLOB, SECTION_SPLIT_PATTERN
+from config import DB_PATH, DOCS_PATH, N_CPU
 from sharedutils import output_path
 
 from narrativegraphs import CooccurrenceGraph
 from narrativegraphs.nlp.entities import SpacyEntityExtractor
 from narrativegraphs.nlp.mapping import SubgramStemmingMapper
 
-docs = []
-section_splitter = re.compile(SECTION_SPLIT_PATTERN)
-for file in glob.glob(INPUT_GLOB):
-    with open(file) as f:
-        text = f.read()
-        sections = section_splitter.split(text)
-        for section in sections:
-            section = section.strip()
-            if section:
-                docs.append(section)
+with open(DOCS_PATH) as f:
+    rows = [json.loads(line) for line in f]
+
+docs = [r["text"] for r in rows]
+
+if "timestamp_ordinal" in rows[0]:
+    fit_kwargs = {"timestamps_ordinal": [r["timestamp_ordinal"] for r in rows]}
+else:
+    from datetime import date
+
+    fit_kwargs = {
+        "doc_ids": [r["id"] for r in rows],
+        "timestamps": [date.fromisoformat(r["timestamp"]) for r in rows],
+        "categories": [r["category"] for r in rows],
+        "metadata": [r.get("metadata", {}) for r in rows],
+    }
+
+os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 
 if os.path.exists(DB_PATH):
     model = CooccurrenceGraph.load(DB_PATH)
@@ -39,14 +46,10 @@ else:
             min_subgram_frequency_ratio=2,
         ),
         sqlite_db_path=DB_PATH,
-        n_cpu=1,
-    ).fit(docs, timestamps_ordinal=list(range(len(docs))))
+        n_cpu=N_CPU,
+    ).fit(docs, **fit_kwargs)
 
 with open(output_path("01_build_graph.txt"), "w") as f, redirect_stdout(f):
-    print(f"Input files: {len(glob.glob(INPUT_GLOB))}")
-    print(f"Sections: {len(docs)}")
+    print(f"Documents: {len(docs)}")
     print(f"Entities: {len(model.entities_)}")
     print(f"Cooccurrences: {len(model.cooccurrences_)}")
-
-# Uncomment to launch the interactive visualizer:
-# model.serve_visualizer()

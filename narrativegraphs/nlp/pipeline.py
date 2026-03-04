@@ -39,13 +39,15 @@ class _AbstractPipeline(ABC):
         docs: list[str],
         doc_ids: list[int | str] = None,
         timestamps: list[datetime | date] = None,
+        timestamps_ordinal: list[int] = None,
         categories: (
             list[str | list[str]]
             | dict[str, list[str | list[str]]]
             | list[dict[str, str | list[str]]]
         ) = None,
+        metadata: list[dict[str, Any]] = None,
     ):
-        with self._populator.get_session_context():
+        with self._populator.get_session_context() as sc:
             _logger.info(f"Adding {len(docs)} documents to database")
             if categories is not None:
                 categories = normalize_categories(categories)
@@ -54,8 +56,12 @@ class _AbstractPipeline(ABC):
                 docs,
                 doc_ids=doc_ids,
                 timestamps=timestamps,
+                timestamps_ordinal=timestamps_ordinal,
                 categories=categories,
+                metadata=metadata,
             )
+
+            sc.commit()
 
 
 class Pipeline(_AbstractPipeline):
@@ -82,14 +88,18 @@ class Pipeline(_AbstractPipeline):
         docs: list[str],
         doc_ids: list[int | str] = None,
         timestamps: list[datetime | date] = None,
+        timestamps_ordinal: list[int] = None,
         categories: (
             list[str | list[str]]
             | dict[str, list[str | list[str]]]
             | list[dict[str, str | list[str]]]
         ) = None,
+        metadata: list[dict[str, Any]] = None,
     ):
         with self._populator.get_session_context():
-            self._add_documents_to_db(docs, doc_ids, timestamps, categories)
+            self._add_documents_to_db(
+                docs, doc_ids, timestamps, timestamps_ordinal, categories, metadata
+            )
 
             _logger.info("Extracting triplets")
             # TODO: use generators instead of lists here
@@ -196,18 +206,10 @@ class CooccurrencePipeline(_AbstractPipeline):
         Returns:
             self for method chaining
         """
-        with self._populator.get_session_context():
-            _logger.info(f"Adding {len(docs)} documents to database")
-            if categories is not None:
-                categories = normalize_categories(categories)
 
-            self._populator.add_documents(
-                docs,
-                doc_ids=doc_ids,
-                timestamps=timestamps,
-                timestamps_ordinal=timestamps_ordinal,
-                categories=categories,
-                metadata=metadata,
+        with self._populator.get_session_context():
+            self._add_documents_to_db(
+                docs, doc_ids, timestamps, timestamps_ordinal, categories, metadata
             )
 
             _logger.info("Extracting entities")

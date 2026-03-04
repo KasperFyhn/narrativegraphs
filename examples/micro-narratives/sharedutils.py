@@ -90,12 +90,20 @@ def compute_communities(model):
     return result
 
 
-def spike_analysis(comms_with_contexts):
+def spike_analysis(comms_with_contexts, model):
+    docs = model.documents_
+    if "timestamp_ordinal" in docs.columns and docs["timestamp_ordinal"].notna().all():
+        doc_id_to_timestamp = dict(zip(docs.id, docs.timestamp_ordinal))
+    else:
+        doc_id_to_timestamp = dict(zip(docs.id, docs.timestamp))
+
     spike_values, spread_values = [], []
     for comm, contexts in comms_with_contexts:
-        ids = {c.doc_id for c in contexts}
-        spike_values.append(len(ids))
-        spread_values.append(max(ids) - min(ids) + 1)
+        timestamps = [doc_id_to_timestamp[c.doc_id] for c in contexts]
+        spike_values.append(len({c.doc_id for c in contexts}))
+        delta = max(timestamps) - min(timestamps)
+        spread = delta.days + 1 if hasattr(delta, "days") else int(delta) + 1
+        spread_values.append(spread)
     return spike_values, spread_values
 
 

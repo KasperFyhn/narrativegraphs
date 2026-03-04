@@ -26,6 +26,7 @@ class DocService(OrmAssociatedService):
                     DocumentOrm.str_id.label("str_id"),
                     DocumentOrm.text.label("text"),
                     DocumentOrm.timestamp.label("timestamp"),
+                    DocumentOrm.timestamp_ordinal.label("timestamp_ordinal"),
                 ),
                 engine,
             )
