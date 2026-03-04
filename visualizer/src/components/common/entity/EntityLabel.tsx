@@ -18,14 +18,14 @@ export const EntityLabel: React.FC<EntityLabelProps> = ({
     <Badge
       radius="sm"
       rightSection={rightSection}
+      tt="none"
+      fw={500}
       style={{
         backgroundColor: getEntityColor(id),
         color: 'black',
-        textTransform: 'none',
-        fontWeight: 500,
+        height: 'auto',
         paddingTop: 3,
         paddingBottom: 3,
-        height: 'auto',
       }}
     >
       {label}

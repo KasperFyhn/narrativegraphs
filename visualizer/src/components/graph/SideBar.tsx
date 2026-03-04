@@ -1,5 +1,5 @@
 import React from 'react';
-import { Paper, Title } from '@mantine/core';
+import { ActionIcon, Paper, Title } from '@mantine/core';
 import { GraphOptionsPanel } from './controls/GraphOptionsPanel';
 import { Filter, LucideIcon, Puzzle, Search, Settings } from 'lucide-react';
 import { GraphFilterPanel } from './controls/GraphFilterPanel';
@@ -55,12 +55,14 @@ const ToggleButton: React.FC<ToggleButtonProps> = ({
   toggled,
   children,
 }) => (
-  <button
+  <ActionIcon
     onClick={onToggle}
-    className={'toggle-button ' + (toggled ? 'toggle-button--toggled' : '')}
+    variant={toggled ? 'filled' : 'default'}
+    color="gray"
+    size="lg"
   >
     {children}
-  </button>
+  </ActionIcon>
 );
 
 export const SideBar: React.FC = () => {

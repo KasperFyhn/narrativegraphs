@@ -110,10 +110,7 @@ export const CommunitiesPanel: React.FC = () => {
                 : c2.score - c1.score,
             )
             .map((c, i) => (
-              <SubPanel
-                key={i}
-                style={{ fontSize: 'small', position: 'relative' }}
-              >
+              <SubPanel key={i} style={{ position: 'relative' }}>
                 <Button
                   size="xs"
                   style={{

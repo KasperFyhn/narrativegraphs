@@ -13,14 +13,7 @@ export interface FrequencySliderProps {
 const FrequencySlider: React.FC<FrequencySliderProps> = (
   props: FrequencySliderProps,
 ) => {
-  return (
-    <div style={{ minWidth: '150px' }}>
-      <LogarithmicRangeSlider
-        {...props}
-        style={{ border: 'none', boxShadow: 'none', padding: '15px 10px' }}
-      />
-    </div>
-  );
+  return <LogarithmicRangeSlider {...props} style={{ padding: '15px 10px' }} />;
 };
 
 export const NodeFrequencySlider: React.FC = () => {
