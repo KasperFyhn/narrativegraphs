@@ -1,9 +1,9 @@
 import React from 'react';
+import { ActionIcon, Paper, Title } from '@mantine/core';
 import { GraphOptionsPanel } from './controls/GraphOptionsPanel';
 import { Filter, LucideIcon, Puzzle, Search, Settings } from 'lucide-react';
 import { GraphFilterPanel } from './controls/GraphFilterPanel';
 import { CommunitiesPanel } from './controls/CommunitiesPanel';
-import { Panel } from '../common/Panel';
 import './SideBar.css';
 import { FocusPanel } from './controls/FocusPanel';
 
@@ -14,6 +14,7 @@ interface PanelConfig {
   icon: LucideIcon;
   title: string;
   component: React.FC;
+  overflowY?: 'auto' | 'visible';
 }
 
 const panels: PanelConfig[] = [
@@ -40,6 +41,7 @@ const panels: PanelConfig[] = [
     icon: Settings,
     title: 'Settings',
     component: GraphOptionsPanel,
+    overflowY: 'visible',
   },
 ];
 
@@ -53,16 +55,14 @@ const ToggleButton: React.FC<ToggleButtonProps> = ({
   toggled,
   children,
 }) => (
-  <button
+  <ActionIcon
     onClick={onToggle}
-    className={'toggle-button ' + (toggled ? 'toggle-button--toggled' : '')}
+    variant={toggled ? 'filled' : 'default'}
+    color="gray"
+    size="lg"
   >
     {children}
-  </button>
-);
-
-const ControlPanel: React.FC<React.PropsWithChildren> = ({ children }) => (
-  <Panel className="control-panel">{children}</Panel>
+  </ActionIcon>
 );
 
 export const SideBar: React.FC = () => {
@@ -76,22 +76,32 @@ export const SideBar: React.FC = () => {
 
   return (
     <div className="side-bar">
-      {panels.map(({ type, icon: Icon, title, component: Component }) => (
-        <div key={type}>
-          <ToggleButton
-            onToggle={() => togglePanel(type)}
-            toggled={activePanel === type}
-          >
-            <Icon />
-          </ToggleButton>
-          {activePanel === type && (
-            <ControlPanel>
-              <h2>{title}</h2>
-              <Component />
-            </ControlPanel>
-          )}
-        </div>
-      ))}
+      {panels.map(
+        ({ type, icon: Icon, title, component: Component, overflowY }) => (
+          <div key={type}>
+            <ToggleButton
+              onToggle={() => togglePanel(type)}
+              toggled={activePanel === type}
+            >
+              <Icon />
+            </ToggleButton>
+            {activePanel === type && (
+              <Paper
+                withBorder
+                radius="md"
+                p="sm"
+                className="control-panel"
+                style={{ overflowY: overflowY ?? 'auto' }}
+              >
+                <Title order={1} size="h2" mb="sm">
+                  {title}
+                </Title>
+                <Component />
+              </Paper>
+            )}
+          </div>
+        ),
+      )}
     </div>
   );
 };

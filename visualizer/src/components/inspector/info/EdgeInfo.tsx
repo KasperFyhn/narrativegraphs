@@ -4,6 +4,7 @@ import { Panel } from '../../common/Panel';
 import { useGraphQuery } from '../../../hooks/useGraphQuery';
 import { RelationInfo } from './RelationInfo';
 import { CooccurrenceInfo } from './CooccurrenceInfo';
+import { Title } from '@mantine/core';
 
 interface RelationHeaderProps {
   subjectLabel: string;
@@ -17,9 +18,9 @@ export const RelationHeader: React.FC<RelationHeaderProps> = ({
   objectLabel,
 }) => {
   return (
-    <h2>
+    <Title order={1} size="h2">
       <i>{subjectLabel}</i> <b>{predicateLabel}</b> <i>{objectLabel}</i>
-    </h2>
+    </Title>
   );
 };
 

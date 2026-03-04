@@ -7,5 +7,5 @@ cd visualizer
 npm run build
 cd ..
 rm -rf narrativegraphs/server/static
-cp -r visualizer/build narrativegraphs/server/static
+cp -r visualizer/dist narrativegraphs/server/static
 echo "✓ Frontend rebuilt and copied to narrativegraphs/server/static/"

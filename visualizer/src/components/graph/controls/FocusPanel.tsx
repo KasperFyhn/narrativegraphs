@@ -1,20 +1,20 @@
 import React, { useEffect, useState } from 'react';
+import { Stack, Text, ActionIcon, Group, Button } from '@mantine/core';
+import { Minus, Plus } from 'lucide-react';
 import { useGraphQuery } from '../../../hooks/useGraphQuery';
 import { useServiceContext } from '../../../contexts/ServiceContext';
-import { useSelectionContext } from '../../../contexts/SelectionContext';
 import { Identifiable } from '../../../types/graph';
-import { EntityLabel } from '../../common/entity/EntityLabel';
 import { SubmittedTextInput } from '../../common/userinput/SubmittedTextInput';
-import { SubPanel } from '../../common/Panel';
 import { ClipLoader } from 'react-spinners';
-import { FocusEntitiesControl } from './subcomponents/EntityListControl';
-import { FocusEntitiesPane } from '../../inspector/info/FocusEntitiesPane';
+import { FocusEntitiesInfo } from '../../inspector/info/FocusEntitiesInfo';
+import { EntityLabelList } from '../../common/entity/EntityLabelList';
+import { useSelectionContext } from '../../../contexts/SelectionContext';
 
 export const FocusPanel: React.FC = () => {
   const { entityService } = useServiceContext();
-  const { query, addFocusEntityId } = useGraphQuery();
+  const { query, addFocusEntityId, removeFocusEntityId, clearFocusEntities } =
+    useGraphQuery();
   const { hasSelection } = useSelectionContext();
-
   const [labelSearch, setLabelSearch] = useState<string>('');
   const [results, setResults] = useState<Identifiable[] | null>([]);
 
@@ -32,40 +32,86 @@ export const FocusPanel: React.FC = () => {
   }, [entityService, labelSearch]);
 
   return (
-    <div>
-      <FocusEntitiesControl />
-      {showContextsPane && <FocusEntitiesPane />}
+    <Stack gap="sm">
+      <Text size="sm">
+        <b>Double-click</b> a node in the graph to add or remove focus entities.
+      </Text>
+      {showContextsPane && <FocusEntitiesInfo />}
       <hr />
-      <span>
-        Search: <SubmittedTextInput onSubmit={setLabelSearch} />
-      </span>
-      <br />
-      {results == null && <ClipLoader loading={results == null} />}
-      {results != null &&
-        results.length > 0 &&
-        results.map((result: Identifiable) => {
-          return (
-            <SubPanel
-              key={result.id}
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
+
+      {query.focusEntities && query.focusEntities.length > 0 && (
+        <>
+          <EntityLabelList
+            ids={query.focusEntities}
+            maxVisible={10}
+            modalTitle="Focus entities"
+            getAction={(entity) => (
+              <ActionIcon
+                size="xs"
+                variant="filled"
+                color="red"
+                style={{ border: '1px solid rgba(255,255,255,0.5)' }}
+                onClick={() => removeFocusEntityId(String(entity.id))}
+              >
+                <Minus size={10} />
+              </ActionIcon>
+            )}
+          />
+          <Group gap="xs" mt="xs" mb="sm">
+            <Button
+              size="xs"
+              variant="subtle"
+              color="red"
+              onClick={clearFocusEntities}
             >
-              <EntityLabel {...result} />
-              <button onClick={() => addFocusEntityId(result.id.toString())}>
-                +
-              </button>
-            </SubPanel>
-          );
-        })}
+              Clear all
+            </Button>
+          </Group>
+        </>
+      )}
+
+      <Text size="sm">Search:</Text>
+      <SubmittedTextInput onSubmit={setLabelSearch} />
+
+      {results == null && <ClipLoader loading={true} />}
+
+      {results != null && results.length > 0 && (
+        <EntityLabelList
+          entities={results}
+          maxVisible={Infinity}
+          getAction={(entity) => {
+            const isFocused = query.focusEntities?.includes(
+              entity.id.toString(),
+            );
+            return (
+              <ActionIcon
+                size="xs"
+                variant="filled"
+                color={isFocused ? 'red' : 'green'}
+                style={{ border: '1px solid rgba(255,255,255,0.5)' }}
+                onClick={() =>
+                  isFocused
+                    ? removeFocusEntityId(entity.id.toString())
+                    : addFocusEntityId(entity.id.toString())
+                }
+              >
+                {isFocused ? <Minus size={10} /> : <Plus size={10} />}
+              </ActionIcon>
+            );
+          }}
+        />
+      )}
+
       {results != null && results.length === 0 && labelSearch !== '' && (
-        <p>No results</p>
+        <Text size="sm" c="dimmed">
+          No results
+        </Text>
       )}
       {results != null && results.length === 0 && labelSearch === '' && (
-        <p>Type your search string and hit Enter</p>
+        <Text size="sm" c="dimmed">
+          Type your search string and hit Enter
+        </Text>
       )}
-    </div>
+    </Stack>
   );
 };

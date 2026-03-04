@@ -45,7 +45,7 @@ export const DocInfo: React.FC<DocInfoProps> = ({
         </div>
       )}
 
-      {Object.entries(document.metadata).length > 0 && (
+      {document.metadata && Object.entries(document.metadata).length > 0 && (
         <div className="doc-info__categories">
           {Object.entries(document.metadata).map(([name, value]) => (
             <span key={name} className="doc-info__category">

@@ -294,11 +294,13 @@ class NarrativeGraph(BaseGraph):
         docs: list[str],
         doc_ids: list[int | str] = None,
         timestamps: list[datetime | date] = None,
+        timestamps_ordinal: list[int] = None,
         categories: (
             list[str | list[str]]
             | dict[str, list[str | list[str]]]
             | list[dict[str, str | list[str]]]
         ) = None,
+        metadata: list[str | list[str]] = None,
     ) -> "NarrativeGraph":
         """
         Fit a narrative graph from documents. The docs can be accompanied by lists with
@@ -308,9 +310,11 @@ class NarrativeGraph(BaseGraph):
             docs: Required argument, a list of documents as strings.
             doc_ids: Optional list of document ids. Same length as docs.
             timestamps: Optional list of document timestamps. Same length as docs.
+            timestamps_ordinal: Optional list of document timestamps as an int
             categories: Optional list of document categories. Supports single or
                 multiple categories. A document can have a single or multiple labels
-                per category. See further down for examples.
+                per category.
+            metadata: Optional list of document metadata. Same length as docs.
 
         Returns:
             A fitted NarrativeGraph instance.
@@ -320,7 +324,9 @@ class NarrativeGraph(BaseGraph):
             docs,
             doc_ids=doc_ids,
             timestamps=timestamps,
+            timestamps_ordinal=timestamps_ordinal,
             categories=categories,
+            metadata=metadata,
         )
         return self
 

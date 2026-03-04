@@ -1,41 +1,38 @@
 import React from 'react';
+import { SegmentedControl, Stack, Text } from '@mantine/core';
 
 interface RadioGroupProps {
-  name: string;
+  name?: string;
   options: readonly string[];
   value: string;
   onChange: (value: string) => void;
   formatLabel?: (option: string) => string;
-  direction?: 'row' | 'column';
+  label?: string;
 }
 
+const defaultFormatLabel = (option: string): string =>
+  option
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+
 export const RadioGroup: React.FC<RadioGroupProps> = ({
-  name,
   options,
   value,
   onChange,
-  formatLabel = (option) => option.charAt(0).toUpperCase() + option.slice(1),
-  direction = 'column',
-}: RadioGroupProps) => {
+  formatLabel = defaultFormatLabel,
+  label,
+}) => {
+  const data = options.map((o) => ({ value: o, label: formatLabel(o) }));
+
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: direction,
-        alignItems: 'flex-end',
-      }}
-    >
-      {options.map((option) => (
-        <label key={option}>
-          {formatLabel(option)}
-          <input
-            type="radio"
-            name={name}
-            checked={value === option}
-            onChange={() => onChange(option)}
-          />
-        </label>
-      ))}
-    </div>
+    <Stack gap={4}>
+      {label && (
+        <Text size="sm" fw={500}>
+          {label}
+        </Text>
+      )}
+      <SegmentedControl data={data} value={value} onChange={onChange} />
+    </Stack>
   );
 };

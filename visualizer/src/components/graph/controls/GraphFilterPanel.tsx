@@ -1,5 +1,6 @@
 import React from 'react';
 import '../graph.css';
+import { Stack, Group, Button, Text } from '@mantine/core';
 import { ClipLoader } from 'react-spinners';
 import { useGraphQuery } from '../../../hooks/useGraphQuery';
 import { SubmittedNumberInput } from '../../common/userinput/SubmittedNumberInput';
@@ -11,7 +12,6 @@ import {
 import { SubmittedDataRangeInput } from '../../common/userinput/SubmittedDateRangeInput';
 import { EntityBlacklistControl } from './subcomponents/EntityListControl';
 import { CategorySelector } from './subcomponents/CategorySelector';
-import { NamedInput } from '../../common/userinput/NamedInput';
 
 export const GraphFilterPanel: React.FC = () => {
   const {
@@ -25,67 +25,75 @@ export const GraphFilterPanel: React.FC = () => {
 
   if (!dataBounds) {
     return (
-      <div className={'flex-container'}>
+      <Group>
         <ClipLoader loading={true} />
-      </div>
+      </Group>
     );
   }
 
   return (
-    <div className={'flex-container flex-container--vertical'}>
-      <div className={'flex-container'}>
-        <button
+    <Stack gap="md">
+      <Group>
+        <Button
+          size="xs"
           onClick={historyControls.undo}
           disabled={!historyControls.canUndo}
         >
           Undo
-        </button>
-        <button
+        </Button>
+        <Button
+          size="xs"
           onClick={historyControls.redo}
           disabled={!historyControls.canRedo}
         >
           Redo
-        </button>
-      </div>
-      <NamedInput name={'Limit Nodes'}>
-        <SubmittedNumberInput
-          startValue={filter.limitNodes}
-          onSubmit={setNodeLimit}
-        />
-      </NamedInput>
-      <NamedInput name={'Limit edges'}>
-        <SubmittedNumberInput
-          startValue={filter.limitEdges}
-          onSubmit={setEdgeLimit}
-        />
-      </NamedInput>
-      <NamedInput name={'Node Frequency'}>
+        </Button>
+      </Group>
+
+      <SubmittedNumberInput
+        label="Limit Nodes"
+        startValue={filter.limitNodes}
+        onSubmit={setNodeLimit}
+      />
+      <SubmittedNumberInput
+        label="Limit Edges"
+        startValue={filter.limitEdges}
+        onSubmit={setEdgeLimit}
+      />
+
+      <Stack gap={4}>
+        <Text size="sm">Node Frequency</Text>
         <NodeFrequencySlider />
-      </NamedInput>
-      <NamedInput name={'Edge Frequency'}>
+      </Stack>
+      <Stack gap={4}>
+        <Text size="sm">Edge Frequency</Text>
         <EdgeFrequencySlider />
-      </NamedInput>
+      </Stack>
+
       {dataBounds.categories && (
-        <NamedInput name={'Categories'}>
+        <Stack gap={4}>
+          <Text size="sm">Categories</Text>
           <CategorySelector />
-        </NamedInput>
+        </Stack>
       )}
+
       {dataBounds.earliestDate && dataBounds.latestDate && (
-        <NamedInput name={'Date Range'}>
-          <SubmittedDataRangeInput
-            min={dataBounds.earliestDate}
-            max={dataBounds.latestDate}
-            onSubmit={setDateRange}
-          />
-        </NamedInput>
+        <SubmittedDataRangeInput
+          label="Date Range"
+          min={dataBounds.earliestDate}
+          max={dataBounds.latestDate}
+          onSubmit={setDateRange}
+        />
       )}
       {dataBounds.earliestOrdinalTime !== undefined &&
         dataBounds.latestOrdinalTime && (
-          <NamedInput name={'Time Range'}>
+          <Stack gap={4}>
+            <Text size="sm">Time Range</Text>
             <OrdinalTimeFrequencySlider />
-          </NamedInput>
+          </Stack>
         )}
+
       <EntityBlacklistControl />
-    </div>
+    </Stack>
   );
 };

@@ -1,107 +1,103 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import {
+  Alert,
+  Button,
+  Group,
+  Slider,
+  Stack,
+  Switch,
+  Table,
+  Text,
+} from '@mantine/core';
 import { useGraphQuery } from '../../../hooks/useGraphQuery';
 import { useServiceContext } from '../../../contexts/ServiceContext';
-import { Community } from '../../../types/graph';
-import { EntityLabel } from '../../common/entity/EntityLabel';
+import { EntityLabelList } from '../../common/entity/EntityLabelList';
 import { ClipLoader } from 'react-spinners';
 import {
-  CommunitiesRequest,
   CommunityDetectionMethod,
   WeightMeasure,
 } from '../../../types/graphQuery';
-import { NamedInput } from '../../common/userinput/NamedInput';
 import { RadioGroup } from '../../common/userinput/RadioGroup';
-import { FocusEntitiesPane } from '../../inspector/info/FocusEntitiesPane';
+import { FocusEntitiesInfo } from '../../inspector/info/FocusEntitiesInfo';
 import { useSelectionContext } from '../../../contexts/SelectionContext';
+import { useCommunitiesContext } from '../../../contexts/CommunitiesContext';
+import { SubPanel } from '../../common/Panel';
 
 export const CommunitiesPanel: React.FC = () => {
   const { graphService } = useServiceContext();
   const { query, setConnectionType, filter, setFocusEntities } =
     useGraphQuery();
   const { hasSelection } = useSelectionContext();
-
-  const [communities, setCommunities] = useState<Community[] | null>([]);
-
-  const [showIsolated, setShowIsolated] = useState(true);
+  const {
+    communities,
+    setCommunities,
+    commRequest,
+    setCommRequest,
+    showIsolated,
+    setShowIsolated,
+  } = useCommunitiesContext();
 
   const hasFocusEntities =
     query.focusEntities && query.focusEntities.length > 0;
   const showContextsPane = hasFocusEntities && !hasSelection;
 
-  const [commRequest, setCommRequest] = useState<CommunitiesRequest>({
-    weightMeasure: 'pmi',
-    minWeight: 0.0,
-    communityDetectionMethod: 'louvain',
-    communityDetectionMethodArgs: {},
-  });
-
-  useEffect(() => {
-    setCommunities([]);
-  }, [commRequest]);
-
   return (
-    <div>
-      {showContextsPane && <FocusEntitiesPane />}
-      <div className={'flex-container flex-container--vertical'}>
-        <NamedInput name={'Weight Measure'}>
-          <RadioGroup
-            name="weightMeasure"
-            options={['pmi', 'frequency'] as const}
-            value={commRequest.weightMeasure}
-            onChange={(wm) =>
-              setCommRequest({
-                ...commRequest,
-                weightMeasure: wm as WeightMeasure,
-              })
-            }
-          />
-        </NamedInput>
-        <NamedInput name={'Min weight'}>
-          <input
-            type={'range'}
-            min={-2}
-            max={5}
-            step={0.05}
-            value={commRequest.minWeight}
-            onChange={(e) =>
-              setCommRequest({
-                ...commRequest,
-                minWeight: Number(e.target.value),
-              })
-            }
-          />
-          <div>{commRequest.minWeight.toPrecision(2)} </div>
-        </NamedInput>
-        <NamedInput name={'Algorithm'}>
-          <RadioGroup
-            name={'commDetectionMethod'}
-            options={['louvain', 'k_clique', 'connected_components'] as const}
-            value={commRequest.communityDetectionMethod}
-            onChange={(choice) =>
-              setCommRequest({
-                ...commRequest,
-                communityDetectionMethod: choice as CommunityDetectionMethod,
-              })
-            }
-          />
-        </NamedInput>
-        <NamedInput name={'Show isolated'}>
-          <input
-            type={'checkbox'}
-            checked={showIsolated}
-            onChange={() => setShowIsolated(!showIsolated)}
-          />
-        </NamedInput>
-      </div>
-      <button
-        style={{ marginTop: '10px', marginBottom: '3px' }}
+    <Stack gap="md">
+      {showContextsPane && <FocusEntitiesInfo />}
+
+      <RadioGroup
+        name="weightMeasure"
+        label="Weight Measure"
+        options={['pmi', 'frequency'] as const}
+        value={commRequest.weightMeasure}
+        onChange={(wm) =>
+          setCommRequest({ ...commRequest, weightMeasure: wm as WeightMeasure })
+        }
+      />
+
+      <Stack gap={4}>
+        <Text size="sm">
+          Min weight: {commRequest.minWeight.toPrecision(2)}
+        </Text>
+        <Slider
+          min={-2}
+          max={5}
+          step={0.05}
+          value={commRequest.minWeight}
+          label={(v) => v.toPrecision(2)}
+          onChange={(v) => setCommRequest({ ...commRequest, minWeight: v })}
+        />
+      </Stack>
+
+      <RadioGroup
+        name="commDetectionMethod"
+        label="Algorithm"
+        options={['louvain', 'k_clique'] as const}
+        value={commRequest.communityDetectionMethod}
+        onChange={(choice) =>
+          setCommRequest({
+            ...commRequest,
+            communityDetectionMethod: choice as CommunityDetectionMethod,
+          })
+        }
+      />
+
+      <Switch
+        label="Show isolated"
+        checked={showIsolated}
+        onChange={() => setShowIsolated(!showIsolated)}
+      />
+
+      {query.connectionType !== 'cooccurrence' && (
+        <Alert variant="light" color="blue">
+          Running community detection will switch edges to co-occurrences.
+        </Alert>
+      )}
+
+      <Button
         onClick={() => {
           if (query.connectionType !== 'cooccurrence') {
             setConnectionType('cooccurrence');
-            alert(
-              'Edges were set to cooccurrences.' +
-                'To switch back, look under settings.',
-            );
           }
           setCommunities(null);
           graphService
@@ -110,9 +106,9 @@ export const CommunitiesPanel: React.FC = () => {
         }}
       >
         Find communities
-      </button>
-      <hr />
-      <div>
+      </Button>
+
+      <Stack gap="xs">
         {communities === null && <ClipLoader loading={true} />}
         {communities !== null &&
           communities
@@ -123,39 +119,44 @@ export const CommunitiesPanel: React.FC = () => {
                 : c2.score - c1.score,
             )
             .map((c, i) => (
-              <div
-                key={i}
-                className={'panel__sub-panel'}
-                style={{
-                  fontSize: 'small',
-                  position: 'relative',
-                }}
-              >
-                <button
-                  style={{
-                    position: 'absolute',
-                    top: '10px',
-                    right: '10px',
-                    zIndex: 10,
-                  }}
+              <SubPanel key={i}>
+                <Table withRowBorders={false} fz="sm">
+                  <Table.Tbody>
+                    <Table.Tr>
+                      <Table.Td fw={500}>Score</Table.Td>
+                      <Table.Td>{c.score.toPrecision(3)}</Table.Td>
+                    </Table.Tr>
+                    <Table.Tr>
+                      <Table.Td fw={500}>Density</Table.Td>
+                      <Table.Td>{c.density.toPrecision(3)}</Table.Td>
+                    </Table.Tr>
+                    <Table.Tr>
+                      <Table.Td fw={500}>Conductance</Table.Td>
+                      <Table.Td>{c.conductance.toPrecision(3)}</Table.Td>
+                    </Table.Tr>
+                    <Table.Tr>
+                      <Table.Td fw={500}>Avg. PMI</Table.Td>
+                      <Table.Td>{c.avgPmi.toPrecision(3)}</Table.Td>
+                    </Table.Tr>
+                  </Table.Tbody>
+                </Table>
+                <EntityLabelList
+                  entities={c.members}
+                  maxVisible={8}
+                  modalTitle="Community members"
+                />
+                <Button
+                  size="xs"
+                  mt={10}
                   onClick={() =>
                     setFocusEntities(c.members.map((m) => m.id.toString()))
                   }
                 >
                   Select
-                </button>
-                <p>Score: {c.score.toPrecision(3)}</p>
-                <p>Density: {c.density.toPrecision(3)}</p>
-                <p>Conductance: {c.conductance.toPrecision(3)}</p>
-                <p>Avg. PMI: {c.avgPmi.toPrecision(3)}</p>
-                <div className={'flex-container'}>
-                  {c.members.map((m) => (
-                    <EntityLabel key={m.id} id={m.id} label={m.label} />
-                  ))}
-                </div>
-              </div>
+                </Button>
+              </SubPanel>
             ))}
-      </div>
-    </div>
+      </Stack>
+    </Stack>
   );
 };

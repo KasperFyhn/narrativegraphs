@@ -1,32 +1,40 @@
 import React, { useState } from 'react';
+import { Box, NumberInput } from '@mantine/core';
 
 export interface SubmittedNumberInputProps {
   startValue: number;
   onSubmit: (value: number) => void;
+  label?: string;
 }
 
 export const SubmittedNumberInput: React.FC<SubmittedNumberInputProps> = ({
   startValue,
   onSubmit,
+  label,
 }: SubmittedNumberInputProps) => {
-  const [value, setValue] = useState(startValue);
+  const [value, setValue] = useState<number | string>(startValue);
+
+  const submit = (): void => {
+    if (typeof value === 'number') onSubmit(value);
+  };
 
   return (
-    <form
-      onSubmit={(event) => {
-        event.preventDefault();
-        onSubmit(value);
+    <Box
+      component="form"
+      onSubmit={(e: React.FormEvent) => {
+        e.preventDefault();
+        submit();
       }}
     >
-      <input
+      <NumberInput
+        label={label}
         min={1}
         max={999}
-        type={'number'}
         value={value}
-        onChange={(event) => {
-          setValue(Number(event.target.value));
-        }}
+        onChange={setValue}
+        onBlur={submit}
+        w={80}
       />
-    </form>
+    </Box>
   );
 };
