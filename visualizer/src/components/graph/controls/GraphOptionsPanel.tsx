@@ -1,78 +1,105 @@
 import React from 'react';
 import '../graph.css';
+import { Stack, Switch, Slider, Text } from '@mantine/core';
 import {
   isSmoothEnabled,
+  layoutPrecisionToParams,
   useGraphOptionsContext,
 } from '../../../contexts/GraphOptionsContext';
-import { NamedInput } from '../../common/userinput/NamedInput';
 import { ConnectionType, useGraphQuery } from '../../../hooks/useGraphQuery';
 import { RadioGroup } from '../../common/userinput/RadioGroup';
 
-export const GraphOptionsPanel: React.FC = () => {
-  const { options, setOptions } = useGraphOptionsContext();
-  const { query, setConnectionType, connectionTypes } = useGraphQuery();
-  return (
-    <div className={'flex-container flex-container--vertical'}>
-      <h3>Graph creation</h3>
-      <NamedInput name={'Connection Type'}>
-        <RadioGroup
-          name={'connectionType'}
-          options={connectionTypes}
-          value={query.connectionType}
-          onChange={(choice) => setConnectionType(choice as ConnectionType)}
-        />
-      </NamedInput>
+const SOLVERS = ['barnesHut', 'forceAtlas2Based'] as const;
+type Solver = (typeof SOLVERS)[number];
 
-      <h3>Visuals</h3>
-      <NamedInput name={'Physics'}>
-        <input
-          type={'checkbox'}
-          checked={options.physics.enabled}
-          onChange={(event) =>
+export const GraphOptionsPanel: React.FC = () => {
+  const { options, setOptions, layoutPrecision, setLayoutPrecision } =
+    useGraphOptionsContext();
+  const { query, setConnectionType, connectionTypes } = useGraphQuery();
+
+  const currentSolver = (options.physics.solver ?? 'barnesHut') as Solver;
+  const springLength = (options.physics[currentSolver]?.springLength ??
+    300) as number;
+
+  return (
+    <Stack gap="md">
+      <Text fw={600} size="sm">
+        Graph creation
+      </Text>
+      <RadioGroup
+        name="connectionType"
+        label="Connection Type"
+        options={connectionTypes}
+        value={query.connectionType}
+        onChange={(choice) => setConnectionType(choice as ConnectionType)}
+      />
+
+      <Text fw={600} size="sm">
+        Visuals
+      </Text>
+      <Switch
+        label="Physics"
+        checked={options.physics.enabled}
+        onChange={(e) =>
+          setOptions({
+            ...options,
+            physics: { ...options.physics, enabled: e.currentTarget.checked },
+          })
+        }
+      />
+      <RadioGroup
+        name="solver"
+        label="Layout solver"
+        options={SOLVERS}
+        value={currentSolver}
+        onChange={(s) =>
+          setOptions({
+            ...options,
+            physics: { ...options.physics, solver: s },
+          })
+        }
+      />
+      <Switch
+        label="Rounded Edges"
+        checked={isSmoothEnabled(options)}
+        onChange={() =>
+          setOptions({
+            ...options,
+            edges: { ...options.edges, smooth: !options.edges?.smooth },
+          })
+        }
+      />
+      <Stack gap={4}>
+        <Text size="sm">Edge Length</Text>
+        <Slider
+          min={50}
+          max={1000}
+          value={springLength}
+          label={(v) => String(v)}
+          onChange={(v) =>
             setOptions({
               ...options,
               physics: {
                 ...options.physics,
-                enabled: event.target.checked,
+                [currentSolver]: { springLength: v },
               },
             })
           }
         />
-      </NamedInput>
-      <NamedInput name={'Rounded Edges'}>
-        <input
-          type={'checkbox'}
-          checked={isSmoothEnabled(options)}
-          onChange={() =>
-            setOptions({
-              ...options,
-              edges: {
-                ...options.edges,
-                smooth: !options.edges?.smooth,
-              },
-            })
-          }
+      </Stack>
+      <Stack gap={4}>
+        <Text size="sm">Layout Precision </Text>
+        <Slider
+          min={0}
+          max={100}
+          value={layoutPrecision}
+          label={(v) => {
+            const { iterations, minVelocity } = layoutPrecisionToParams(v);
+            return `${iterations} iter / v<${minVelocity.toFixed(1)}`;
+          }}
+          onChange={setLayoutPrecision}
         />
-      </NamedInput>
-      <NamedInput name={'Edge Length'}>
-        <input
-          type="range"
-          min="50"
-          max="1000"
-          value={options.physics.barnesHut.springLength}
-          onChange={(event) =>
-            setOptions({
-              ...options,
-              physics: {
-                ...options.physics,
-                barnesHut: {
-                  springLength: Number(event.target.value),
-                },
-              },
-            })
-          }
-        />
-      </NamedInput>
-    </div>
+      </Stack>
+    </Stack>
   );
 };

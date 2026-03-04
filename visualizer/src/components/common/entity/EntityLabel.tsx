@@ -1,28 +1,34 @@
 import React from 'react';
+import { Badge } from '@mantine/core';
 import { useSelectionContext } from '../../../contexts/SelectionContext';
 
 export interface EntityLabelProps {
   id: string | number;
   label: string;
+  rightSection?: React.ReactNode;
 }
 
 export const EntityLabel: React.FC<EntityLabelProps> = ({
   id,
   label,
-}: EntityLabelProps) => {
+  rightSection,
+}) => {
   const { getEntityColor } = useSelectionContext();
   return (
-    <span
-      key={id}
+    <Badge
+      radius="sm"
+      rightSection={rightSection}
+      tt="none"
+      fw={500}
       style={{
         backgroundColor: getEntityColor(id),
-        padding: '4px 8px',
-        borderRadius: '4px',
-        fontSize: '0.9em',
-        fontWeight: 500,
+        color: 'black',
+        height: 'auto',
+        paddingTop: 3,
+        paddingBottom: 3,
       }}
     >
       {label}
-    </span>
+    </Badge>
   );
 };

@@ -12,7 +12,7 @@ CI=true npm run build
 echo "Copying static files to package..."
 cd ..
 rm -rf narrativegraphs/server/static
-cp -r visualizer/build narrativegraphs/server/static
+cp -r visualizer/dist narrativegraphs/server/static
 
 echo "Building Python package..."
 rm -rf dist/

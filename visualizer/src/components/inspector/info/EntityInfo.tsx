@@ -4,8 +4,6 @@ import { useServiceContext } from '../../../contexts/ServiceContext';
 import { StatsDisplay } from './StatsDisplay';
 import { DocsSection } from '../docs/DocsSection';
 import { Details } from '../../../types/graph';
-import { CategoriesDisplay } from './CategoriesDisplay';
-import { AltLabelsDisplay } from './AltLabelsDisplay';
 
 interface EntityInfoProps {
   id: string | number;
@@ -43,11 +41,26 @@ export const EntityInfo: React.FC<EntityInfoProps> = ({ id }) => {
     return <p>Failed to load entity details.</p>;
   }
 
+  const extra = [
+    ...Object.entries(details.categories).map(([name, values]) => ({
+      name: name.charAt(0).toUpperCase() + name.slice(1),
+      value: values.join(', '),
+    })),
+    ...(details.altLabels && details.altLabels.length > 0
+      ? [
+          {
+            name: 'Alternative Labels',
+            value:
+              details.altLabels.slice(0, 10).join(', ') +
+              (details.altLabels.length > 10 ? '...' : ''),
+          },
+        ]
+      : []),
+  ];
+
   return (
     <>
-      <StatsDisplay stats={details.stats} />
-      <CategoriesDisplay categories={details.categories} />
-      <AltLabelsDisplay altLabels={details.altLabels} />
+      <StatsDisplay stats={details.stats} extra={extra} />
       <DocsSection loadDocs={loadDocs} highlightContext={highlightContext} />
     </>
   );

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Table } from '@mantine/core';
 import { TextStats } from '../../../types/graph';
 
 export interface Stat {
@@ -6,29 +7,34 @@ export interface Stat {
   value: string;
 }
 
-interface StatsDisplayProps extends React.PropsWithChildren {
+interface StatsDisplayProps {
   stats: TextStats;
   extra?: Stat[];
 }
 
 export const StatsDisplay: React.FC<StatsDisplayProps> = ({ stats, extra }) => {
+  const rows: Stat[] = [
+    { name: 'Frequency', value: String(stats.frequency) },
+    { name: 'Document hits', value: String(stats.docFrequency) },
+    ...(stats.firstOccurrence
+      ? [{ name: 'Earliest date', value: stats.firstOccurrence.toString() }]
+      : []),
+    ...(stats.lastOccurrence
+      ? [{ name: 'Latest date', value: stats.lastOccurrence.toString() }]
+      : []),
+    ...(extra ?? []),
+  ];
+
   return (
-    <>
-      <p>Frequency: {stats.frequency}</p>
-      <p>Document hits: {stats.docFrequency}</p>
-      {stats.firstOccurrence && (
-        <p>Earliest date: {stats.firstOccurrence.toString()}</p>
-      )}
-      {stats.lastOccurrence && (
-        <p>Latest date: {stats.lastOccurrence.toString()}</p>
-      )}
-      {extra &&
-        extra.length > 0 &&
-        extra?.map((stat) => (
-          <p key={stat.name}>
-            {stat.name}: {stat.value}
-          </p>
+    <Table withRowBorders={false} fz="sm">
+      <Table.Tbody>
+        {rows.map((row) => (
+          <Table.Tr key={row.name}>
+            <Table.Td fw={500}>{row.name}</Table.Td>
+            <Table.Td>{row.value}</Table.Td>
+          </Table.Tr>
         ))}
-    </>
+      </Table.Tbody>
+    </Table>
   );
 };
