@@ -1,44 +1,126 @@
+import functools
 import logging
-from collections import defaultdict
-from typing import Callable, Counter, Literal
+from collections import Counter, defaultdict
+from typing import Callable, Literal, Sequence
 
 import nltk
 from nltk import SnowballStemmer, pos_tag, word_tokenize
 
+from narrativegraphs.nlp.common.spacy import ensure_spacy_model
 from narrativegraphs.nlp.mapping.common import Mapper
 
 _logger = logging.getLogger("narrativegraphs.nlp.mapping.linguistic")
+
+NormalizerFn = Callable[[str], str]
 
 
 def _ensure_nltk_model(name: str):
     nltk.download(name, quiet=True)
 
 
-class StemmingMapper(Mapper):
+@functools.lru_cache(maxsize=4096)
+def _pos_tagged_tokens(label: str):
+    return pos_tag(word_tokenize(label))
+
+
+def snowball_normalizer(language: str = "english") -> NormalizerFn:
+    """Returns a normalizer using NLTK's SnowballStemmer."""
+    stemmer = SnowballStemmer(language)
+    return stemmer.stem
+
+
+def _nltk_tag_to_wordnet_pos(tag: str) -> str:
+    if tag.startswith("V"):
+        return "v"
+    elif tag.startswith("J"):
+        return "a"
+    elif tag.startswith("R"):
+        return "r"
+    else:
+        return "n"
+
+
+def lemmatizer_normalizer() -> NormalizerFn:
+    """Returns a normalizer using NLTK's WordNetLemmatizer with POS-aware
+    lemmatization."""
+    _ensure_nltk_model("wordnet")
+    _ensure_nltk_model("punkt_tab")
+    _ensure_nltk_model("averaged_perceptron_tagger_eng")
+    from nltk.stem import WordNetLemmatizer
+
+    lemmatizer = WordNetLemmatizer()
+
+    def normalize(text: str) -> str:
+        return " ".join(
+            lemmatizer.lemmatize(word, pos=_nltk_tag_to_wordnet_pos(tag))
+            for word, tag in _pos_tagged_tokens(text)
+        )
+
+    return normalize
+
+
+def spacy_normalizer(model_name: str = "en_core_web_sm") -> NormalizerFn:
+    """Returns a normalizer using spaCy's lemmatizer.
+
+    Only the tokenizer, tagger, and lemmatizer components are enabled.
+    """
+    nlp = ensure_spacy_model(model_name)
+    for pipe in ["parser", "ner", "senter"]:
+        if nlp.has_pipe(pipe):
+            nlp.disable_pipe(pipe)
+
+    def normalize(text: str) -> str:
+        return " ".join(token.lemma_ for token in nlp(text))
+
+    return normalize
+
+
+def _make_fallback_normalizer(normalizers: Sequence[NormalizerFn]) -> NormalizerFn:
+    def normalize(text: str) -> str:
+        last_exc: Exception | None = None
+        for norm in normalizers:
+            try:
+                return norm(text)
+            except Exception as e:
+                last_exc = e
+        raise RuntimeError("All normalizers failed") from last_exc
+
+    return normalize
+
+
+class NormalizationMapper(Mapper):
     def __init__(
         self,
+        normalizer: NormalizerFn | Sequence[NormalizerFn] | None = None,
         ignore_determiners: bool = True,
         ranking: Literal["shortest", "most_frequent"] = "shortest",
     ):
         super().__init__()
         self._ignore_determiners = ignore_determiners
         self._ranking = ranking
+        self._normalize_cache: dict[str, str] = {}
+
+        if normalizer is None:
+            self._normalizer = snowball_normalizer()
+        elif callable(normalizer):
+            self._normalizer = normalizer
+        else:
+            self._normalizer = _make_fallback_normalizer(normalizer)
 
         _ensure_nltk_model("punkt_tab")
-        _ensure_nltk_model("averaged_perceptron_tagger_eng")
-        self._pos_tag = nltk.pos_tag
-        self._stemmer = SnowballStemmer("english")
-
-    @staticmethod
-    def _pos_tagged_tokens(label: str):
-        return pos_tag(word_tokenize(label))
+        if ignore_determiners:
+            _ensure_nltk_model("averaged_perceptron_tagger_eng")
 
     def _normalize(self, label: str) -> str:
+        if label in self._normalize_cache:
+            return self._normalize_cache[label]
+
+        text = label
         if self._ignore_determiners:
-            label = " ".join(
-                w[0] for w in self._pos_tagged_tokens(label) if w[1] != "DT"
-            )
-        return self._stemmer.stem(label)
+            text = " ".join(w for w, tag in _pos_tagged_tokens(label) if tag != "DT")
+        result = self._normalizer(text)
+        self._normalize_cache[label] = result
+        return result
 
     @staticmethod
     def _negative_length(label: str) -> int:
@@ -53,7 +135,7 @@ class StemmingMapper(Mapper):
         else:
             raise NotImplementedError("Unknown ranking")
 
-        clusters = defaultdict(list)
+        clusters: dict[str, list[str]] = defaultdict(list)
         for label in set(labels):
             clusters[self._normalize(label)].append(label)
 
@@ -63,17 +145,22 @@ class StemmingMapper(Mapper):
         return {label: cluster[0] for cluster in clusters.values() for label in cluster}
 
 
-class SubgramStemmingMapper(StemmingMapper):
+class SubgramNormalizationMapper(NormalizationMapper):
     def __init__(
         self,
         head_word_type: Literal["noun", "verb"],
+        normalizer: NormalizerFn | Sequence[NormalizerFn] | None = None,
         ignore_determiners: bool = True,
         min_subgram_length: int = 2,
         min_subgram_frequency: int = 10,
         min_subgram_frequency_ratio: float = 2.0,
         ranking: Literal["shortest", "most_frequent"] = "shortest",
     ):
-        super().__init__(ignore_determiners=ignore_determiners, ranking=ranking)
+        super().__init__(
+            normalizer=normalizer,
+            ignore_determiners=ignore_determiners,
+            ranking=ranking,
+        )
         self._head_word_subtag = "NN" if head_word_type == "noun" else "VB"
         self._min_subgram_length = min_subgram_length
         self._min_subgram_frequency = min_subgram_frequency
@@ -89,10 +176,9 @@ class SubgramStemmingMapper(StemmingMapper):
             raise NotImplementedError("Unknown ranking")
 
     def _matches_head_word_subtag(self, label: str) -> bool:
-        for word, tag in self._pos_tagged_tokens(label):
-            if self._head_word_subtag in tag:
-                return True
-        return False
+        return any(
+            self._head_word_subtag in tag for _, tag in _pos_tagged_tokens(label)
+        )
 
     def _subgram_mapping(self, labels: list[str]) -> dict[str, str]:
         labels_set = set(labels)
@@ -103,7 +189,7 @@ class SubgramStemmingMapper(StemmingMapper):
             + " "  # surrounding spaces avoids matches like evil <-> devil
             for label in labels_set
         }
-        cluster_map = defaultdict(list)
+        cluster_map: dict[str, list[str]] = defaultdict(list)
         ranker = self._ranker(labels)
 
         counter = Counter(labels)
@@ -128,10 +214,7 @@ class SubgramStemmingMapper(StemmingMapper):
             if not matches:
                 continue
 
-            best_match = max(
-                matches,
-                key=ranker,
-            )
+            best_match = max(matches, key=ranker)
             if best_match != label:
                 cluster_map[best_match].append(label)
 
@@ -149,8 +232,75 @@ class SubgramStemmingMapper(StemmingMapper):
         result = {}
         for label in labels:
             stemmed = stem_mapping[label]
-            if stemmed in subgram_mapping:
-                result[label] = subgram_mapping[stemmed]
-            else:
-                result[label] = stemmed
+            result[label] = subgram_mapping.get(stemmed, stemmed)
         return result
+
+
+class StemmingMapper(NormalizationMapper):
+    def __init__(
+        self,
+        ignore_determiners: bool = True,
+        ranking: Literal["shortest", "most_frequent"] = "shortest",
+    ):
+        super().__init__(
+            normalizer=snowball_normalizer(),
+            ignore_determiners=ignore_determiners,
+            ranking=ranking,
+        )
+
+
+class SubgramStemmingMapper(SubgramNormalizationMapper):
+    def __init__(
+        self,
+        head_word_type: Literal["noun", "verb"],
+        ignore_determiners: bool = True,
+        min_subgram_length: int = 2,
+        min_subgram_frequency: int = 10,
+        min_subgram_frequency_ratio: float = 2.0,
+        ranking: Literal["shortest", "most_frequent"] = "shortest",
+    ):
+        super().__init__(
+            head_word_type=head_word_type,
+            normalizer=snowball_normalizer(),
+            ignore_determiners=ignore_determiners,
+            min_subgram_length=min_subgram_length,
+            min_subgram_frequency=min_subgram_frequency,
+            min_subgram_frequency_ratio=min_subgram_frequency_ratio,
+            ranking=ranking,
+        )
+
+
+class LemmatizationMapper(NormalizationMapper):
+    def __init__(
+        self,
+        model_name: str = "en_core_web_sm",
+        ignore_determiners: bool = True,
+        ranking: Literal["shortest", "most_frequent"] = "shortest",
+    ):
+        super().__init__(
+            normalizer=spacy_normalizer(model_name),
+            ignore_determiners=ignore_determiners,
+            ranking=ranking,
+        )
+
+
+class SubgramLemmatizationMapper(SubgramNormalizationMapper):
+    def __init__(
+        self,
+        head_word_type: Literal["noun", "verb"],
+        model_name: str = "en_core_web_sm",
+        ignore_determiners: bool = True,
+        min_subgram_length: int = 2,
+        min_subgram_frequency: int = 10,
+        min_subgram_frequency_ratio: float = 2.0,
+        ranking: Literal["shortest", "most_frequent"] = "shortest",
+    ):
+        super().__init__(
+            head_word_type=head_word_type,
+            normalizer=spacy_normalizer(model_name),
+            ignore_determiners=ignore_determiners,
+            min_subgram_length=min_subgram_length,
+            min_subgram_frequency=min_subgram_frequency,
+            min_subgram_frequency_ratio=min_subgram_frequency_ratio,
+            ranking=ranking,
+        )
