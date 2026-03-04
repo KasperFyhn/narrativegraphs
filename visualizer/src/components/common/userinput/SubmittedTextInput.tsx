@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TextInput, ActionIcon } from '@mantine/core';
+import { Box, TextInput, ActionIcon } from '@mantine/core';
 import { Search } from 'lucide-react';
 
 export interface SubmittedTextInputProps {
@@ -14,9 +14,10 @@ export const SubmittedTextInput: React.FC<SubmittedTextInputProps> = ({
   const [value, setValue] = useState(startValue ?? '');
 
   return (
-    <form
-      style={{ margin: 0 }}
-      onSubmit={(e) => {
+    <Box
+      component="form"
+      m={0}
+      onSubmit={(e: React.FormEvent) => {
         e.preventDefault();
         onSubmit(value);
       }}
@@ -35,6 +36,6 @@ export const SubmittedTextInput: React.FC<SubmittedTextInputProps> = ({
           if (newValue === '') onSubmit('');
         }}
       />
-    </form>
+    </Box>
   );
 };

@@ -46,17 +46,15 @@ export const FocusPanel: React.FC = () => {
             maxVisible={10}
             modalTitle="Focus entities"
             getAction={(entity) => (
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                <ActionIcon
-                  size="xs"
-                  variant="filled"
-                  color="red"
-                  style={{ border: '1px solid rgba(255,255,255,0.5)' }}
-                  onClick={() => removeFocusEntityId(String(entity.id))}
-                >
-                  <Minus size={10} />
-                </ActionIcon>
-              </div>
+              <ActionIcon
+                size="xs"
+                variant="filled"
+                color="red"
+                style={{ border: '1px solid rgba(255,255,255,0.5)' }}
+                onClick={() => removeFocusEntityId(String(entity.id))}
+              >
+                <Minus size={10} />
+              </ActionIcon>
             )}
           />
           <Group gap="xs" mt="xs" mb="sm">
@@ -86,21 +84,19 @@ export const FocusPanel: React.FC = () => {
               entity.id.toString(),
             );
             return (
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                <ActionIcon
-                  size="xs"
-                  variant="filled"
-                  color={isFocused ? 'red' : 'green'}
-                  style={{ border: '1px solid rgba(255,255,255,0.5)' }}
-                  onClick={() =>
-                    isFocused
-                      ? removeFocusEntityId(entity.id.toString())
-                      : addFocusEntityId(entity.id.toString())
-                  }
-                >
-                  {isFocused ? <Minus size={10} /> : <Plus size={10} />}
-                </ActionIcon>
-              </div>
+              <ActionIcon
+                size="xs"
+                variant="filled"
+                color={isFocused ? 'red' : 'green'}
+                style={{ border: '1px solid rgba(255,255,255,0.5)' }}
+                onClick={() =>
+                  isFocused
+                    ? removeFocusEntityId(entity.id.toString())
+                    : addFocusEntityId(entity.id.toString())
+                }
+              >
+                {isFocused ? <Minus size={10} /> : <Plus size={10} />}
+              </ActionIcon>
             );
           }}
         />

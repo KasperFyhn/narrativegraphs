@@ -1,5 +1,14 @@
 import React from 'react';
-import { Alert, Button, Slider, Stack, Switch, Text } from '@mantine/core';
+import {
+  Alert,
+  Button,
+  Group,
+  Slider,
+  Stack,
+  Switch,
+  Table,
+  Text,
+} from '@mantine/core';
 import { useGraphQuery } from '../../../hooks/useGraphQuery';
 import { useServiceContext } from '../../../contexts/ServiceContext';
 import { EntityLabelList } from '../../common/entity/EntityLabelList';
@@ -110,32 +119,41 @@ export const CommunitiesPanel: React.FC = () => {
                 : c2.score - c1.score,
             )
             .map((c, i) => (
-              <SubPanel key={i} style={{ position: 'relative' }}>
+              <SubPanel key={i}>
+                <Table withRowBorders={false} fz="sm">
+                  <Table.Tbody>
+                    <Table.Tr>
+                      <Table.Td fw={500}>Score</Table.Td>
+                      <Table.Td>{c.score.toPrecision(3)}</Table.Td>
+                    </Table.Tr>
+                    <Table.Tr>
+                      <Table.Td fw={500}>Density</Table.Td>
+                      <Table.Td>{c.density.toPrecision(3)}</Table.Td>
+                    </Table.Tr>
+                    <Table.Tr>
+                      <Table.Td fw={500}>Conductance</Table.Td>
+                      <Table.Td>{c.conductance.toPrecision(3)}</Table.Td>
+                    </Table.Tr>
+                    <Table.Tr>
+                      <Table.Td fw={500}>Avg. PMI</Table.Td>
+                      <Table.Td>{c.avgPmi.toPrecision(3)}</Table.Td>
+                    </Table.Tr>
+                  </Table.Tbody>
+                </Table>
+                <EntityLabelList
+                  entities={c.members}
+                  maxVisible={8}
+                  modalTitle="Community members"
+                />
                 <Button
                   size="xs"
-                  style={{
-                    position: 'absolute',
-                    top: 8,
-                    right: 8,
-                    zIndex: 10,
-                  }}
+                  mt={10}
                   onClick={() =>
                     setFocusEntities(c.members.map((m) => m.id.toString()))
                   }
                 >
                   Select
                 </Button>
-                <Text size="xs">Score: {c.score.toPrecision(3)}</Text>
-                <Text size="xs">Density: {c.density.toPrecision(3)}</Text>
-                <Text size="xs">
-                  Conductance: {c.conductance.toPrecision(3)}
-                </Text>
-                <Text size="xs">Avg. PMI: {c.avgPmi.toPrecision(3)}</Text>
-                <EntityLabelList
-                  entities={c.members}
-                  maxVisible={8}
-                  modalTitle="Community members"
-                />
               </SubPanel>
             ))}
       </Stack>

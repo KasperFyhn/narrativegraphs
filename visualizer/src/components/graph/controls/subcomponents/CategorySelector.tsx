@@ -35,7 +35,7 @@ const CategorySelectorInner: React.FC<CategorySelectorInnerProps> = ({
   }, [selected]);
 
   return (
-    <SubPanel style={{ width: '100%' }}>
+    <SubPanel w="100%">
       <Stack gap="xs">
         {showHeader && (
           <Text size="sm" fw={500}>
@@ -106,7 +106,7 @@ export const CategorySelector: React.FC = () => {
   const { dataBounds } = useGraphQuery();
 
   return (
-    <Group gap="xs" style={{ maxWidth: '175px' }}>
+    <Group gap="xs" maw={175}>
       {dataBounds.categories &&
         Object.entries(dataBounds.categories).map(([name, values]) => (
           <CategorySelectorInner

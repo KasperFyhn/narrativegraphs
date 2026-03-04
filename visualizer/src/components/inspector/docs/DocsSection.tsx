@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Button, Stack } from '@mantine/core';
 import { ClipLoader } from 'react-spinners';
 import { Doc } from '../../../types/doc';
 import { DocInfo } from './DocInfo';
@@ -51,7 +52,11 @@ export const DocsSection: React.FC<DocsSectionProps> = ({
   }, []);
 
   if (loadingState === 'idle') {
-    return <button onClick={handleLoad}>Load docs</button>;
+    return (
+      <Button size="xs" variant="subtle" onClick={handleLoad}>
+        Load docs
+      </Button>
+    );
   }
 
   if (loadingState === 'loading') {
@@ -59,10 +64,10 @@ export const DocsSection: React.FC<DocsSectionProps> = ({
   }
 
   return (
-    <div>
-      <button style={{ marginBottom: '8px' }} onClick={handleHide}>
+    <Stack gap="xs" align="flex-start">
+      <Button size="xs" variant="subtle" onClick={handleHide}>
         Hide docs
-      </button>
+      </Button>
       {docs.slice(0, visibleCount).map((doc) => (
         <DocInfo
           key={doc.id}
@@ -71,10 +76,10 @@ export const DocsSection: React.FC<DocsSectionProps> = ({
         />
       ))}
       {visibleCount < docs.length && (
-        <button onClick={handleLoadMore}>
+        <Button size="xs" variant="subtle" onClick={handleLoadMore}>
           Load More ({docs.length - visibleCount} remaining)
-        </button>
+        </Button>
       )}
-    </div>
+    </Stack>
   );
 };

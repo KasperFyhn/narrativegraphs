@@ -18,7 +18,7 @@ import {
 } from '../../contexts/GraphOptionsContext';
 import { useSelectionContext } from '../../contexts/SelectionContext';
 import { SideBar } from './SideBar';
-import { Progress, Text } from '@mantine/core';
+import { Box, Progress, Stack, Text } from '@mantine/core';
 
 export const GraphViewer: React.FC = () => {
   const { graphService } = useServiceContext();
@@ -167,12 +167,13 @@ export const GraphViewer: React.FC = () => {
   };
 
   return (
-    <div>
-      <div style={{ height: '100vh', position: 'relative' }}>
+    <>
+      <Box h="100vh" pos="relative">
         {selectedNode && <NodeInfo node={selectedNode} />}
         {selectedEdge && <EdgeInfo edge={selectedEdge} />}
         {isStabilizing && (
-          <div
+          <Stack
+            gap={4}
             style={{
               position: 'absolute',
               top: 0,
@@ -181,16 +182,13 @@ export const GraphViewer: React.FC = () => {
               zIndex: 1000,
               padding: '6px 12px',
               background: 'rgba(0,0,0,0.75)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 4,
             }}
           >
             <Text size="xs" c="white">
               Calculating layout...
             </Text>
             <Progress value={stabilizationProgress} animated size="sm" />
-          </div>
+          </Stack>
         )}
         <Graph
           graph={coloredGraphData}
@@ -198,8 +196,8 @@ export const GraphViewer: React.FC = () => {
           options={effectiveOptions}
           getNetwork={handleGetNetwork}
         />
-      </div>
+      </Box>
       <SideBar />
-    </div>
+    </>
   );
 };
