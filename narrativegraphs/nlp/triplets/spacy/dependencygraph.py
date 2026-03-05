@@ -2,10 +2,11 @@ from abc import ABC
 from dataclasses import dataclass
 from typing import Literal, Optional
 
-from spacy.tokens import Span, Token
+from spacy.tokens import Doc, Span, Token
 
 from narrativegraphs.nlp.common.annotation import AnnotationContext, SpanAnnotation
 from narrativegraphs.nlp.common.spacy import fits_in_range
+from narrativegraphs.nlp.coref.common import CoreferenceResolver
 from narrativegraphs.nlp.triplets.common import Triplet
 from narrativegraphs.nlp.triplets.spacy.common import SpacyTripletExtractor
 
@@ -107,6 +108,7 @@ class _SpacyDepBase(SpacyTripletExtractor, ABC):
         noun_chunks: bool | tuple[int, int | None] = (2, None),
         remove_pronoun_entities: bool = True,
         split_sentence_on_double_line_break: bool = True,
+        coref_resolver: CoreferenceResolver | None = None,
     ):
         super().__init__(
             model_name=model_name,
@@ -115,6 +117,10 @@ class _SpacyDepBase(SpacyTripletExtractor, ABC):
         self.ner = named_entities
         self.noun_chunks = noun_chunks
         self.remove_pronoun_entities = remove_pronoun_entities
+        self.coref_resolver = coref_resolver
+        self._coref_map: dict[tuple[int, int], str] = {}
+        if coref_resolver is not None:
+            coref_resolver.add_to_pipeline(self.nlp)
 
     def _is_allowed_entity(self, span: Span) -> bool:
         if all(t.ent_type_ for t in span):
@@ -132,12 +138,38 @@ class _SpacyDepBase(SpacyTripletExtractor, ABC):
     def _is_pronoun_span(span: Span) -> bool:
         return all(t.pos_ == "PRON" for t in span)
 
+    def _is_unresolved_pronoun(self, span: Span) -> bool:
+        return (
+            self._is_pronoun_span(span)
+            and (span.start_char, span.end_char) not in self._coref_map
+        )
+
+    def _annotate(self, span: Span) -> SpanAnnotation:
+        key = (span.start_char, span.end_char)
+        resolved = self._coref_map.get(key)
+        if resolved:
+            return SpanAnnotation(
+                text=resolved,
+                start_char=span.start_char,
+                end_char=span.end_char,
+                normalized_text=resolved.lower(),
+            )
+        return SpanAnnotation.from_span(span)
+
+    def extract_triplets_from_doc(self, doc: Doc) -> list[Triplet]:
+        self._coref_map = (
+            self.coref_resolver.resolve_doc(doc) if self.coref_resolver else {}
+        )
+        return super().extract_triplets_from_doc(doc)
+
     def _collect_entities(self, sent: Span) -> list[Span]:
         return [
             chunk
             for chunk in sent.noun_chunks
             if self._is_allowed_entity(chunk)
-            and not (self.remove_pronoun_entities and self._is_pronoun_span(chunk))
+            and not (
+                self.remove_pronoun_entities and self._is_unresolved_pronoun(chunk)
+            )
         ]
 
 
@@ -161,6 +193,7 @@ class DependencyGraphExtractor(_SpacyDepBase):
         prepositional_relations: bool = True,
         relation_prepositions: frozenset[str] | None = None,
         split_sentence_on_double_line_break: bool = True,
+        coref_resolver: CoreferenceResolver | None = None,
     ):
         super().__init__(
             model_name=model_name,
@@ -168,6 +201,7 @@ class DependencyGraphExtractor(_SpacyDepBase):
             noun_chunks=noun_chunks,
             remove_pronoun_entities=remove_pronoun_entities,
             split_sentence_on_double_line_break=split_sentence_on_double_line_break,
+            coref_resolver=coref_resolver,
         )
 
         self.direct_objects = direct_objects
@@ -317,13 +351,14 @@ class DependencyGraphExtractor(_SpacyDepBase):
                 continue
 
             if self.remove_pronoun_entities and (
-                self._is_pronoun_span(subject_span) or self._is_pronoun_span(obj_span)
+                self._is_unresolved_pronoun(subject_span)
+                or self._is_unresolved_pronoun(obj_span)
             ):
                 continue
 
-            subject_part = SpanAnnotation.from_span(subject_span)
+            subject_part = self._annotate(subject_span)
             predicate_part = SpanAnnotation.from_span(verb_token)
-            obj_part = SpanAnnotation.from_span(obj_span)
+            obj_part = self._annotate(obj_span)
 
             if is_passive:
                 subject_part, obj_part = obj_part, subject_part
@@ -346,7 +381,7 @@ class DependencyGraphExtractor(_SpacyDepBase):
         for chunk in sent.noun_chunks:
             if not self._is_allowed_entity(chunk):
                 continue
-            if self.remove_pronoun_entities and self._is_pronoun_span(chunk):
+            if self.remove_pronoun_entities and self._is_unresolved_pronoun(chunk):
                 continue
 
             head = chunk.root
@@ -361,7 +396,7 @@ class DependencyGraphExtractor(_SpacyDepBase):
                                     and self._is_allowed_entity(pobj_chunk)
                                     and not (
                                         self.remove_pronoun_entities
-                                        and self._is_pronoun_span(pobj_chunk)
+                                        and self._is_unresolved_pronoun(pobj_chunk)
                                     )
                                     and not (
                                         chunk.start == pobj_chunk.start
@@ -376,9 +411,9 @@ class DependencyGraphExtractor(_SpacyDepBase):
                                     )
                                     triplets.append(
                                         Triplet(
-                                            subj=SpanAnnotation.from_span(chunk),
+                                            subj=self._annotate(chunk),
                                             pred=pred,
-                                            obj=SpanAnnotation.from_span(pobj_chunk),
+                                            obj=self._annotate(pobj_chunk),
                                             context=AnnotationContext.from_span(sent),
                                         )
                                     )

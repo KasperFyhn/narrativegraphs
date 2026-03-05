@@ -11,6 +11,7 @@ from narrativegraphs.nlp.common.spacy import (
     fits_in_range,
     spans_overlap,
 )
+from narrativegraphs.nlp.coref.common import CoreferenceResolver
 from narrativegraphs.nlp.entities.common import EntityExtractor
 
 _logger = logging.getLogger("narrativegraphs.nlp.extraction")
@@ -31,6 +32,7 @@ class SpacyEntityExtractor(EntityExtractor):
         noun_chunks: bool | tuple[int, int | None] = (2, None),
         remove_pronouns: bool = True,
         split_sentence_on_double_line_break: bool = True,
+        coref_resolver: CoreferenceResolver | None = None,
     ):
         """
         Args:
@@ -42,6 +44,8 @@ class SpacyEntityExtractor(EntityExtractor):
             remove_pronouns: whether to filter out pronoun-only spans
             split_sentence_on_double_line_break: adds extra sentence boundaries on
                 double line breaks ("\\n\\n")
+            coref_resolver: optional coreference resolver; when set, pronouns that
+                resolve to a named antecedent are emitted with the resolved text
         """
         if model_name is None:
             model_name = "en_core_web_sm"
@@ -58,6 +62,9 @@ class SpacyEntityExtractor(EntityExtractor):
         self.ner = named_entities
         self.noun_chunks = noun_chunks
         self.remove_pronouns = remove_pronouns
+        self.coref_resolver = coref_resolver
+        if coref_resolver is not None:
+            coref_resolver.add_to_pipeline(self.nlp)
 
     def _is_allowed_entity(self, span: Span) -> bool:
         """Check if span is allowed based on NER/noun_chunks settings."""
@@ -118,11 +125,30 @@ class SpacyEntityExtractor(EntityExtractor):
         # Sort by position
         entities.sort(key=lambda x: x.start_char)
 
-        # Filter pronouns if requested
-        if self.remove_pronouns:
-            entities = [e for e in entities if not self._is_pronoun_only(e)]
+        # Resolve coreferences and build result
+        coref_map = self.coref_resolver.resolve_doc(doc) if self.coref_resolver else {}
 
-        return [SpanAnnotation.from_span(e) for e in entities]
+        result = []
+        for span in entities:
+            is_pronoun = self._is_pronoun_only(span)
+            key = (span.start_char, span.end_char)
+            if is_pronoun:
+                if key in coref_map:
+                    resolved = coref_map[key]
+                    result.append(
+                        SpanAnnotation(
+                            text=resolved,
+                            start_char=span.start_char,
+                            end_char=span.end_char,
+                            normalized_text=resolved.lower(),
+                        )
+                    )
+                elif not self.remove_pronouns:
+                    result.append(SpanAnnotation.from_span(span))
+                # else: unresolved pronoun + remove_pronouns=True → skip
+            else:
+                result.append(SpanAnnotation.from_span(span))
+        return result
 
     def extract(self, text: str) -> list[SpanAnnotation]:
         """Extract entities from a text string.
