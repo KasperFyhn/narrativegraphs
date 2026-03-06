@@ -10,6 +10,7 @@ class CoreferenceResolver(ABC):
         pass
 
     @abstractmethod
-    def resolve_doc(self, doc: Doc) -> dict[tuple[int, int], str]:
-        """Return {(start_char, end_char): antecedent_text} for all coreferent
-        mentions."""
+    def resolve_doc(self, doc: Doc) -> dict[tuple[int, int], tuple[str, int, int]]:
+        """Return `{(start_char, end_char):
+        (antecedent_text, head_start_char, head_end_char)}`
+        for all coreferent mentions."""

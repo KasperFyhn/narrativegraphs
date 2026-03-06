@@ -4,6 +4,7 @@ from typing import Generator
 
 from spacy.tokens import Doc, Span
 
+from narrativegraphs.nlp.common.entity_collector import CorefMap
 from narrativegraphs.nlp.common.spacy import (
     calculate_batch_size,
     ensure_spacy_model,
@@ -40,10 +41,13 @@ class SpacyTripletExtractor(TripletExtractor):
             self.nlp.add_pipe("custom_sentencizer", before="parser")
 
     @abstractmethod
-    def extract_triplets_from_sent(self, sent: Span) -> list[Triplet]:
+    def extract_triplets_from_sent(
+        self, sent: Span, coref_map: CorefMap | None = None
+    ) -> list[Triplet]:
         """Extract triplets from a SpaCy sentence.
         Args:
             sent: A SpaCy Span object representing the whole sentence
+            coref_map: A map from (start, end) pairs to antecedent_text
 
         Returns:
             extracted triplets

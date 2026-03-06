@@ -5,7 +5,7 @@ from typing import Literal, Optional
 from spacy.tokens import Doc, Span, Token
 
 from narrativegraphs.nlp.common.annotation import AnnotationContext, SpanAnnotation
-from narrativegraphs.nlp.common.spacy import fits_in_range
+from narrativegraphs.nlp.common.entity_collector import CorefMap, SpanEntityCollector
 from narrativegraphs.nlp.coref.common import CoreferenceResolver
 from narrativegraphs.nlp.triplets.common import Triplet
 from narrativegraphs.nlp.triplets.spacy.common import SpacyTripletExtractor
@@ -98,7 +98,7 @@ DEFAULT_PATH_PATTERNS: tuple[PathPattern, ...] = (
 # ----------------------------------------------------------------------
 
 
-class _SpacyDepBase(SpacyTripletExtractor, ABC):
+class _SpacyDepBase(SpacyTripletExtractor, SpanEntityCollector, ABC):
     """Shared entity-filtering logic for dependency-based extractors."""
 
     def __init__(
@@ -114,61 +114,29 @@ class _SpacyDepBase(SpacyTripletExtractor, ABC):
             model_name=model_name,
             split_sentence_on_double_line_break=split_sentence_on_double_line_break,
         )
-        self.ner = named_entities
-        self.noun_chunks = noun_chunks
         self.remove_pronoun_entities = remove_pronoun_entities
-        self.coref_resolver = coref_resolver
-        self._coref_map: dict[tuple[int, int], str] = {}
+        SpanEntityCollector._init_collector(
+            self, named_entities, noun_chunks, coref_resolver
+        )
         if coref_resolver is not None:
             coref_resolver.add_to_pipeline(self.nlp)
 
-    def _is_allowed_entity(self, span: Span) -> bool:
-        if all(t.ent_type_ for t in span):
-            if isinstance(self.ner, tuple):
-                return fits_in_range(span, self.ner)
-            else:
-                return self.ner
-        else:
-            if isinstance(self.noun_chunks, tuple):
-                return fits_in_range(span, self.noun_chunks)
-            else:
-                return self.noun_chunks
-
-    @staticmethod
-    def _is_pronoun_span(span: Span) -> bool:
-        return all(t.pos_ == "PRON" for t in span)
-
-    def _is_unresolved_pronoun(self, span: Span) -> bool:
-        return (
-            self._is_pronoun_span(span)
-            and (span.start_char, span.end_char) not in self._coref_map
-        )
-
-    def _annotate(self, span: Span) -> SpanAnnotation:
-        key = (span.start_char, span.end_char)
-        resolved = self._coref_map.get(key)
-        if resolved:
-            return SpanAnnotation(
-                text=resolved,
-                start_char=span.start_char,
-                end_char=span.end_char,
-                normalized_text=resolved.lower(),
-            )
-        return SpanAnnotation.from_span(span)
-
     def extract_triplets_from_doc(self, doc: Doc) -> list[Triplet]:
-        self._coref_map = (
-            self.coref_resolver.resolve_doc(doc) if self.coref_resolver else {}
-        )
-        return super().extract_triplets_from_doc(doc)
+        coref_map = self._build_coref_map(doc)
+        triplets = []
+        for sent in doc.sents:
+            sent_triplets = self.extract_triplets_from_sent(sent, coref_map)
+            if sent_triplets:
+                triplets.extend(sent_triplets)
+        return triplets
 
-    def _collect_entities(self, sent: Span) -> list[Span]:
+    def _collect_entities(self, sent: Span, coref_map: CorefMap) -> list[Span]:
         return [
-            chunk
-            for chunk in sent.noun_chunks
-            if self._is_allowed_entity(chunk)
-            and not (
-                self.remove_pronoun_entities and self._is_unresolved_pronoun(chunk)
+            s
+            for s in self._collect_spans(sent, coref_map)
+            if not (
+                self.remove_pronoun_entities
+                and self._is_unresolved_pronoun(s, coref_map)
             )
         ]
 
@@ -334,7 +302,9 @@ class DependencyGraphExtractor(_SpacyDepBase):
     # Triplet extraction
     # ------------------------------------------------------------------
 
-    def _extract_verbal_triplets(self, sent: Span) -> list[Triplet]:
+    def _extract_verbal_triplets(
+        self, sent: Span, coref_map: CorefMap
+    ) -> list[Triplet]:
         """Extract verb-predicate triplets for ROOT and conjunct verbs."""
         triplets = []
         verbs = self._find_verbs(sent)
@@ -351,14 +321,14 @@ class DependencyGraphExtractor(_SpacyDepBase):
                 continue
 
             if self.remove_pronoun_entities and (
-                self._is_unresolved_pronoun(subject_span)
-                or self._is_unresolved_pronoun(obj_span)
+                self._is_unresolved_pronoun(subject_span, coref_map)
+                or self._is_unresolved_pronoun(obj_span, coref_map)
             ):
                 continue
 
-            subject_part = self._annotate(subject_span)
+            subject_part = self._annotate(subject_span, coref_map)
             predicate_part = SpanAnnotation.from_span(verb_token)
-            obj_part = self._annotate(obj_span)
+            obj_part = self._annotate(obj_span, coref_map)
 
             if is_passive:
                 subject_part, obj_part = obj_part, subject_part
@@ -374,14 +344,16 @@ class DependencyGraphExtractor(_SpacyDepBase):
 
         return triplets
 
-    def _extract_np_relations(self, sent: Span) -> list[Triplet]:
+    def _extract_np_relations(self, sent: Span, coref_map: CorefMap) -> list[Triplet]:
         """Extract NP-level prepositional relations: "Alice from Paris"."""
         triplets = []
 
         for chunk in sent.noun_chunks:
             if not self._is_allowed_entity(chunk):
                 continue
-            if self.remove_pronoun_entities and self._is_unresolved_pronoun(chunk):
+            if self.remove_pronoun_entities and self._is_unresolved_pronoun(
+                chunk, coref_map
+            ):
                 continue
 
             head = chunk.root
@@ -396,7 +368,9 @@ class DependencyGraphExtractor(_SpacyDepBase):
                                     and self._is_allowed_entity(pobj_chunk)
                                     and not (
                                         self.remove_pronoun_entities
-                                        and self._is_unresolved_pronoun(pobj_chunk)
+                                        and self._is_unresolved_pronoun(
+                                            pobj_chunk, coref_map
+                                        )
                                     )
                                     and not (
                                         chunk.start == pobj_chunk.start
@@ -411,9 +385,9 @@ class DependencyGraphExtractor(_SpacyDepBase):
                                     )
                                     triplets.append(
                                         Triplet(
-                                            subj=self._annotate(chunk),
+                                            subj=self._annotate(chunk, coref_map),
                                             pred=pred,
-                                            obj=self._annotate(pobj_chunk),
+                                            obj=self._annotate(pobj_chunk, coref_map),
                                             context=AnnotationContext.from_span(sent),
                                         )
                                     )
@@ -422,11 +396,15 @@ class DependencyGraphExtractor(_SpacyDepBase):
 
         return triplets
 
-    def extract_triplets_from_sent(self, sent: Span) -> list[Triplet]:
-        triplets = self._extract_verbal_triplets(sent)
+    def extract_triplets_from_sent(
+        self, sent: Span, coref_map: CorefMap | None = None
+    ) -> list[Triplet]:
+        if coref_map is None:
+            coref_map = {}
+        triplets = self._extract_verbal_triplets(sent, coref_map)
 
         if self.prepositional_relations:
-            triplets.extend(self._extract_np_relations(sent))
+            triplets.extend(self._extract_np_relations(sent, coref_map))
 
         return triplets
 
@@ -570,11 +548,15 @@ class EntityPairDependencyExtractor(_SpacyDepBase):
     # Triplet extraction
     # ------------------------------------------------------------------
 
-    def extract_triplets_from_sent(self, sent: Span) -> list[Triplet]:
+    def extract_triplets_from_sent(
+        self, sent: Span, coref_map: CorefMap | None = None
+    ) -> list[Triplet]:
+        if coref_map is None:
+            coref_map = {}
         if len(sent) > self.max_sentence_length:
             return []
 
-        entities = self._collect_entities(sent)
+        entities = self._collect_entities(sent, coref_map)
         if len(entities) < 2:
             return []
 

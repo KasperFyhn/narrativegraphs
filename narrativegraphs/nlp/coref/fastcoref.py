@@ -1,3 +1,5 @@
+import logging
+
 from spacy.language import Language
 from spacy.tokens import Doc
 
@@ -27,6 +29,7 @@ class FastCorefResolver(CoreferenceResolver):
             )
 
             datasets.disable_progress_bars()
+            logging.getLogger("fastcoref.modeling").setLevel(logging.WARNING)
         except ImportError:
             raise ImportError(
                 "fastcoref is required for FastCorefResolver. "
@@ -53,8 +56,8 @@ class FastCorefResolver(CoreferenceResolver):
         span = doc.char_span(start, end)
         return span is not None and all(t.pos_ == "PRON" for t in span)
 
-    def resolve_doc(self, doc: Doc) -> dict[tuple[int, int], str]:
-        coref_map: dict[tuple[int, int], str] = {}
+    def resolve_doc(self, doc: Doc) -> dict[tuple[int, int], tuple[str, int, int]]:
+        coref_map: dict[tuple[int, int], tuple[str, int, int]] = {}
         for cluster in doc._.coref_clusters:
             if not cluster:
                 continue
@@ -70,5 +73,5 @@ class FastCorefResolver(CoreferenceResolver):
             antecedent_text = doc.text[head_start:head_end]
             for start, end in cluster:
                 if (start, end) != (head_start, head_end):
-                    coref_map[(start, end)] = antecedent_text
+                    coref_map[(start, end)] = (antecedent_text, head_start, head_end)
         return coref_map

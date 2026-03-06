@@ -12,10 +12,10 @@ from narrativegraphs.nlp.triplets.spacy.dependencygraph import DependencyGraphEx
 class MockCorefResolver(CoreferenceResolver):
     """Lightweight mock resolver for tests — no model required."""
 
-    def __init__(self, mapping: dict[tuple[int, int], str]):
+    def __init__(self, mapping: dict[tuple[int, int], tuple[str, int, int]]):
         self._mapping = mapping
 
-    def resolve_doc(self, doc: Doc) -> dict[tuple[int, int], str]:
+    def resolve_doc(self, doc: Doc) -> dict[tuple[int, int], tuple[str, int, int]]:
         return self._mapping
 
 
@@ -39,17 +39,22 @@ class TestCorefEntityExtractor(unittest.TestCase):
     def test_resolved_pronoun_emitted_with_antecedent_text(self):
         """Pronoun with a coref mapping → emitted with resolved text, original
         positions."""
-        # "He visited Paris." — "He" is at 0:2
-        text = "He visited Paris."
-        he_start, he_end = 0, 2
-        extractor = self._make_extractor({(he_start, he_end): "Frodo"})
+        # "Frodo left. He visited Paris." — "Frodo" at 0:5, "He" at 12:14
+        text = "Frodo left. He visited Paris."
+        he_start, he_end = 12, 14
+        frodo_start, frodo_end = 0, 5
+        extractor = self._make_extractor(
+            {(he_start, he_end): ("Frodo", frodo_start, frodo_end)}
+        )
         entities = extractor.extract(text)
 
         texts = [e.text for e in entities]
         self.assertIn("Frodo", texts)
         self.assertIn("Paris", texts)
 
-        resolved = next(e for e in entities if e.text == "Frodo")
+        resolved = next(
+            e for e in entities if e.text == "Frodo" and e.start_char == he_start
+        )
         self.assertEqual(resolved.start_char, he_start)
         self.assertEqual(resolved.end_char, he_end)
 
@@ -107,10 +112,13 @@ class TestCorefTripletExtractor(unittest.TestCase):
 
     def test_resolved_pronoun_subject_appears_in_triplet(self):
         """Pronoun subject resolved via coref → triplet subject has resolved text."""
-        # "He visited Paris." — "He" at 0:2
-        text = "He visited Paris."
-        he_start, he_end = 0, 2
-        extractor = self._make_extractor({(he_start, he_end): "Frodo"})
+        # "Frodo left. He visited Paris." — "Frodo" at 0:5, "He" at 12:14
+        text = "Frodo left. He visited Paris."
+        he_start, he_end = 12, 14
+        frodo_start, frodo_end = 0, 5
+        extractor = self._make_extractor(
+            {(he_start, he_end): ("Frodo", frodo_start, frodo_end)}
+        )
         triplets = extractor.extract(text)
 
         self.assertTrue(len(triplets) > 0, "Expected at least one triplet")
@@ -178,7 +186,8 @@ class TestFastCorefResolverLogic(unittest.TestCase):
         coref_map = self.resolver.resolve_doc(doc)
 
         self.assertIn(he, coref_map)
-        self.assertEqual(coref_map[he], "Frodo")
+        ant_text, _, _ = coref_map[he]
+        self.assertEqual(ant_text, "Frodo")
         self.assertNotIn(frodo, coref_map)
 
     def test_all_pronouns_cluster_produces_no_mappings(self):
