@@ -143,5 +143,6 @@ class SpanEntityCollector:
                 start_char=span.start_char,
                 end_char=span.end_char,
                 normalized_text=resolved.lower(),
+                is_coref_resolved=True,
             )
         return SpanAnnotation.from_span(span)

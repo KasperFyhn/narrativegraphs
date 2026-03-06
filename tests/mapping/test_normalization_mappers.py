@@ -64,6 +64,20 @@ class TestNormalizationMapper(unittest.TestCase):
         self.assertEqual(mapping["the cat"], "cat")
         self.assertEqual(mapping["cat"], "cat")
 
+    def test_ranking_shortest_tiebreak_alphabetical(self):
+        """When cluster members have equal length and frequency, alphabetically first
+        wins."""
+        mapper = NormalizationMapper(
+            normalizer=lambda x: x.lower(),
+            ignore_determiners=False,
+            ranking="shortest",
+        )
+        # "Natural Language" and "natural language" are both 2 tokens, freq=1.
+        # 'N' (ASCII 78) < 'n' (ASCII 110) → "Natural Language" is alphabetically first.
+        mapping = mapper.create_mapping(["natural language", "Natural Language"])
+        self.assertEqual(mapping["natural language"], "Natural Language")
+        self.assertEqual(mapping["Natural Language"], "Natural Language")
+
     def test_ranking_most_frequent(self):
         """The most frequent label in a cluster is chosen as the canonical form."""
         mapper = NormalizationMapper(
@@ -112,6 +126,31 @@ class TestSubgramNormalizationMapper(unittest.TestCase):
         # and is a subgram of it — so "the dark lord" should map to "dark lord"
         mapping = mapper.create_mapping(["dark lord", "dark lord", "the dark lord"])
         self.assertEqual(mapping["the dark lord"], "dark lord")
+
+    def test_subgram_tiebreak_alphabetical(self):
+        """When two subgram candidates tie on length and frequency, alphabetically
+        first wins.
+
+        "natural language processing" contains both "natural language" and
+        "language processing" as subgrams. Both are length-2 and appear twice.
+        "language processing" is alphabetically first (l < n) and must win.
+        """
+        mapper = SubgramNormalizationMapper(
+            head_word_type="noun",
+            normalizer=lambda x: x,
+            ignore_determiners=False,
+            min_subgram_frequency=2,
+            min_subgram_frequency_ratio=1.0,
+        )
+        labels = [
+            "natural language",
+            "natural language",
+            "language processing",
+            "language processing",
+            "natural language processing",
+        ]
+        mapping = mapper.create_mapping(labels)
+        self.assertEqual(mapping["natural language processing"], "language processing")
 
 
 class TestSnowballNormalizer(unittest.TestCase):

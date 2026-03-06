@@ -1,4 +1,4 @@
-from sqlalchemy import Column, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, relationship
 
 from narrativegraphs.db.documents import AnnotationMixin, DocumentOrm
@@ -13,6 +13,9 @@ class EntityOccurrenceOrm(Base, AnnotationMixin):
     span_start = Column(Integer, nullable=False)
     span_end = Column(Integer, nullable=False)
     span_text = Column(String, nullable=False, index=True)
+    is_coref_resolved = Column(
+        Boolean, nullable=False, default=False, server_default="0"
+    )
 
     # Relationships
     entity = relationship(

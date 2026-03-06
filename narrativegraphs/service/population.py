@@ -156,6 +156,7 @@ class PopulationService(DbService):
                         span_start=entity.start_char,
                         span_end=entity.end_char,
                         span_text=entity.text,
+                        is_coref_resolved=entity.is_coref_resolved,
                     )
 
             sc.add_all(lookup.values())

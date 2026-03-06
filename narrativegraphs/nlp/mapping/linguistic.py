@@ -70,7 +70,7 @@ def spacy_normalizer(model_name: str = "en_core_web_sm") -> NormalizerFn:
             nlp.disable_pipe(pipe)
 
     def normalize(text: str) -> str:
-        return " ".join(token.lemma_ for token in nlp(text))
+        return " ".join(token.lemma_.lower() for token in nlp(text))
 
     return normalize
 
@@ -126,30 +126,32 @@ class NormalizationMapper(Mapper):
     def _negative_length(label: str) -> int:
         return -len(word_tokenize(label))
 
-    def create_mapping(self, labels: list[str]) -> dict[str, str]:
+    def _ranker(self, labels: list[str]) -> Callable[[str], tuple]:
+        counter = Counter(labels)
         if self._ranking == "shortest":
-            # Primary: fewest words (ascending). Secondary: alphabetical (ascending).
-            # Both criteria are corpus-frequency-independent, so the canonical label
-            # is stable across runs and corpus variants.
-            sort_key = lambda x: (len(word_tokenize(x)), x)  # noqa: E731
-            reverse = False
+            return lambda x: (
+                self._negative_length(x), counter.__getitem__(x), [-ord(c) for c in x]
+            )
         elif self._ranking == "most_frequent":
-            counter = Counter(labels)
-            # Primary: most frequent (descending). Secondary: alphabetical (ascending)
-            # as a deterministic tiebreaker.
-            sort_key = lambda x: (-counter[x], x)  # noqa: E731
-            reverse = False
+            return lambda x: (
+                counter.__getitem__(x), self._negative_length(x), [-ord(c) for c in x]
+            )
         else:
             raise NotImplementedError("Unknown ranking")
+
+    def create_mapping(self, labels: list[str]) -> dict[str, str]:
+        ranker = self._ranker(labels)
 
         clusters: dict[str, list[str]] = defaultdict(list)
         for label in set(labels):
             clusters[self._normalize(label)].append(label)
 
+        result = {}
         for cluster in clusters.values():
-            cluster.sort(key=sort_key, reverse=reverse)
-
-        return {label: cluster[0] for cluster in clusters.values() for label in cluster}
+            canonical = max(cluster, key=ranker)
+            for label in cluster:
+                result[label] = canonical
+        return result
 
 
 class SubgramNormalizationMapper(NormalizationMapper):
@@ -172,15 +174,6 @@ class SubgramNormalizationMapper(NormalizationMapper):
         self._min_subgram_length = min_subgram_length
         self._min_subgram_frequency = min_subgram_frequency
         self._min_subgram_frequency_ratio = min_subgram_frequency_ratio
-
-    def _ranker(self, labels: list[str]) -> Callable[[str], tuple[int, int]]:
-        counter = Counter(labels)
-        if self._ranking == "shortest":
-            return lambda x: (self._negative_length(x), counter.__getitem__(x))
-        elif self._ranking == "most_frequent":
-            return lambda x: (counter.__getitem__(x), self._negative_length(x))
-        else:
-            raise NotImplementedError("Unknown ranking")
 
     def _matches_head_word_subtag(self, label: str) -> bool:
         return any(

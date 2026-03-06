@@ -145,7 +145,8 @@ class Pipeline(_AbstractPipeline):
                 self._populator.add_tuplets(doc, doc_tuplets, occ_lookup)
 
             _logger.info("Resolving entities and predicates")
-            entities = [e.span_text for e in self._populator.get_entity_occurrences()]
+            occurrences = self._populator.get_entity_occurrences()
+            entities = [e.span_text for e in occurrences if not e.is_coref_resolved]
             entity_mapping = self._entity_mapper.create_mapping(entities)
 
             predicates = [
@@ -217,7 +218,8 @@ class CooccurrencePipeline(_AbstractPipeline):
                 self._populator.add_tuplets(doc, doc_tuplets, occ_lookup)
 
             _logger.info("Resolving entities")
-            entities = [e.span_text for e in self._populator.get_entity_occurrences()]
+            occurrences = self._populator.get_entity_occurrences()
+            entities = [e.span_text for e in occurrences if not e.is_coref_resolved]
             entity_mapping = self._entity_mapper.create_mapping(entities)
 
             _logger.info("Mapping tuplets")
