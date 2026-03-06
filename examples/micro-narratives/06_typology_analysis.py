@@ -35,15 +35,11 @@ multi_spike_heatmap(
 
 
 # --- Single-spike samples ---
-def single_spike_sample(comms_with_contexts, spike_values, n_print=5):
-    printed = 0
+def single_spike_sample(comms_with_contexts, spike_values):
     for (comm, contexts), sv in zip(comms_with_contexts, spike_values):
         if sv > 1:
             continue
         print_comm_with_contexts(comm, contexts)
-        printed += 1
-        if printed >= n_print:
-            break
 
 
 with open(output_path("06_typology_single_spike.txt"), "w") as f, redirect_stdout(f):
@@ -51,12 +47,13 @@ with open(output_path("06_typology_single_spike.txt"), "w") as f, redirect_stdou
         "K-clique single-spike communities:",
         sum(1 for sv in k_clique_spikes if sv == 1),
     )
-    print(
-        "Louvain single-spike communities:", sum(1 for sv in louvain_spikes if sv == 1)
-    )
+    # print(
+    #     "Louvain single-spike communities:",
+    #     sum(1 for sv in louvain_spikes if sv == 1)
+    # )
 
     print("\n--- K-clique single-spike sample ---\n")
     single_spike_sample(k_clique_comms_with_contexts, k_clique_spikes)
-
-    print("\n--- Louvain single-spike sample ---\n")
-    single_spike_sample(louvain_comms_with_contexts, louvain_spikes)
+    #
+    # print("\n--- Louvain single-spike sample ---\n")
+    # single_spike_sample(louvain_comms_with_contexts, louvain_spikes)

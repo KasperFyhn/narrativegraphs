@@ -6,6 +6,7 @@ from narrativegraphs.nlp.common.spacy import (
     fits_in_range,
     spans_overlap,
 )
+from narrativegraphs.nlp.coref import CoreferenceResolver
 
 CorefMap = dict[tuple[int, int], str]
 
@@ -27,7 +28,7 @@ class SpanEntityCollector:
         self,
         named_entities: bool | tuple[int, int | None],
         noun_chunks: bool | tuple[int, int | None],
-        coref_resolver=None,
+        coref_resolver: CoreferenceResolver | None = None,
     ) -> None:
         self.ner = named_entities
         self.noun_chunks = noun_chunks

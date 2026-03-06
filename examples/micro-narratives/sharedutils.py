@@ -54,7 +54,7 @@ def compute_communities(model):
         size = len(comm.members)
         if size < 2:
             continue
-        if last_size and size > 2 * last_size:
+        if last_size and size > 2 * last_size or size > 100:
             k_clique_big_comms.append(comm)
             continue
         contexts = model.tuplets.get_contexts_by_entity_ids(comm.member_ids)

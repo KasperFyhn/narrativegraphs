@@ -1,6 +1,9 @@
 from narrativegraphs.dto.filter import GraphFilter
 from narrativegraphs.nlp.entities.spacy import SpacyEntityExtractor
-from narrativegraphs.nlp.mapping.linguistic import SubgramStemmingMapper
+from narrativegraphs.nlp.mapping.linguistic import (
+    SubgramLemmatizationMapper,
+    SubgramStemmingMapper,
+)
 from narrativegraphs.nlp.triplets.spacy.dependencygraph import DependencyGraphExtractor
 from narrativegraphs.nlp.tuplets.cooccurrences import ChunkCooccurrenceExtractor
 
@@ -13,6 +16,7 @@ __all__ = [
     "DependencyGraphExtractor",
     "ChunkCooccurrenceExtractor",
     "SubgramStemmingMapper",
+    "SubgramLemmatizationMapper",
     "SpacyEntityExtractor",
 ]
 

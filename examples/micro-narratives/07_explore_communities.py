@@ -67,10 +67,7 @@ typology_cells = [
     ),
 ]
 
-for filename, k_args, l_args in typology_cells:
+for filename, k_args, _ in typology_cells:
     with open(output_path(filename), "w") as f, redirect_stdout(f):
         print("--- k-clique ---")
         print_micro_narratives(k_clique_comms_with_contexts, k_clique_df, *k_args)
-        if l_args is not None:
-            print("--- louvain ---")
-            print_micro_narratives(louvain_comms_with_contexts, louvain_df, *l_args)

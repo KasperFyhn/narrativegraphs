@@ -42,7 +42,8 @@ Maps surface forms to canonical labels: `dict[str, str]`
 
 - **Mapper** - Abstract base class
 - **StemmingMapper** - Groups by Porter stemmed form
-- **SubgramStemmingMapper** - Stemming + subgram matching (default)
+- **SubgramStemmingMapper** - Stemming + subgram matching
+- **SubgramLemmatizationMapper** - Lemmatization + subgram matching (default)
 
 ## Data Models (`common/`)
 
@@ -68,11 +69,11 @@ Pipeline / CooccurrencePipeline
 
 - `DependencyGraphExtractor` (triplets, default; `EntityPairDependencyExtractor` is an alternative)
 - `ChunkCooccurrenceExtractor` (cooccurrences)
-- `SubgramStemmingMapper("noun")` (entities)
-- `SubgramStemmingMapper("verb")` (predicates)
+- `SubgramLemmatizationMapper("noun")` (entities)
+- `SubgramLemmatizationMapper("verb")` (predicates)
 
 **CooccurrencePipeline:**
 
 - `SpacyEntityExtractor` (entities)
 - `ChunkCooccurrenceExtractor` (cooccurrences)
-- `SubgramStemmingMapper("noun")` (entities)
+- `SubgramLemmatizationMapper("noun")` (entities)

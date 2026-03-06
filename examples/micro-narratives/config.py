@@ -1,15 +1,12 @@
 import sys
+from typing import Literal
 
 CONFIGS = {
     "lotr": {
-        "OUTPUT_DIR": "output/lotr",
-        "DB_PATH": "output/lotr/lotr.db",
         "COMMUNITIES_CACHE_PATH": "output/lotr/communities.pkl",
         "DOCS_PATH": "input/lotr_docs.jsonl",
-        # Data preparation
-        "INPUT_GLOB": "input/*.txt",
-        "SECTION_SPLIT_PATTERN": r"(?<=\S)\n\n(?=\S)|\n{3}",
         # Model
+        "COREF": None,
         "N_CPU": 1,
         # Community detection
         "MIN_NODE_FREQUENCY": 2,
@@ -17,9 +14,19 @@ CONFIGS = {
         "K_CLIQUE_K": 4,
         "LOUVAIN_RESOLUTION": 35,
     },
+    "lotr_coref": {
+        "COMMUNITIES_CACHE_PATH": "output/lotr/communities.pkl",
+        "DOCS_PATH": "input/lotr_docs.jsonl",
+        # Model
+        "COREF": "fastcoref",
+        "N_CPU": 1,
+        # Community detection
+        "MIN_NODE_FREQUENCY": 2,
+        "MIN_WEIGHT": 3.5,
+        "K_CLIQUE_K": 4,
+        "LOUVAIN_RESOLUTION": 35,
+    },
     "chatgpt_reddit": {
-        "OUTPUT_DIR": "output/chatgpt_reddit",
-        "DB_PATH": "output/chatgpt_reddit/chatgpt_reddit.db",
         "COMMUNITIES_CACHE_PATH": "output/chatgpt_reddit/communities.pkl",
         "DOCS_PATH": "input/chatgpt_reddit_docs.jsonl",
         # Data preparation
@@ -42,17 +49,17 @@ def _parse_config_name() -> str:
             return sys.argv[i + 2]
         if arg.startswith("--config="):
             return arg.split("=", 1)[1]
-    return "lotr"
+    raise ValueError("invalid config name")
 
 
-_cfg = CONFIGS[_parse_config_name()]
+name = _parse_config_name()
+_cfg = CONFIGS[name]
 
-OUTPUT_DIR: str = _cfg["OUTPUT_DIR"]
-DB_PATH: str = _cfg["DB_PATH"]
-COMMUNITIES_CACHE_PATH: str = _cfg["COMMUNITIES_CACHE_PATH"]
+OUTPUT_DIR: str = f"output/{name}"
+DB_PATH: str = OUTPUT_DIR + f"/{name}.db"
+COMMUNITIES_CACHE_PATH: str = OUTPUT_DIR + "/communities.pkl"
 DOCS_PATH: str = _cfg["DOCS_PATH"]
-INPUT_GLOB: str = _cfg["INPUT_GLOB"]
-SECTION_SPLIT_PATTERN: str | None = _cfg["SECTION_SPLIT_PATTERN"]
+COREF: Literal["fastcoref"] | None = _cfg["COREF"]
 N_CPU: int = _cfg["N_CPU"]
 MIN_NODE_FREQUENCY: int = _cfg["MIN_NODE_FREQUENCY"]
 MIN_WEIGHT: float = _cfg["MIN_WEIGHT"]

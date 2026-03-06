@@ -60,12 +60,14 @@ class SpacyEntityExtractor(EntityExtractor, SpanEntityCollector):
             )
         self.remove_pronouns = remove_pronouns
 
-        if coref_resolver == "fastcoref" or coref_resolver is None:
+        if coref_resolver == "fastcoref":
             coref_resolver = FastCorefResolver()
+        if coref_resolver is not None:
+            coref_resolver.add_to_pipeline(self.nlp)
+
         SpanEntityCollector._init_collector(
             self, named_entities, noun_chunks, coref_resolver
         )
-        coref_resolver.add_to_pipeline(self.nlp)
 
     def extract_entities_from_doc(self, doc: Doc) -> list[SpanAnnotation]:
         """Extract entities from a spaCy Doc.
