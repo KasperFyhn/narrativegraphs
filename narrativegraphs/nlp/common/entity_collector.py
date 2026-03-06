@@ -62,16 +62,23 @@ class SpanEntityCollector:
     def _build_coref_map(self, doc: Doc) -> CorefMap:
         """Build and return a coref map for the given doc.
 
-        Calls coref_resolver.resolve_doc(doc), unpacks (ant_text, head_start, head_end),
-        validates the head span via doc.char_span, and only keeps entries where the
-        mention is pronominal and the antecedent passes _is_allowed_entity. Returns an
-        empty dict if no resolver is set.
+        Only pronominal mentions are resolved, and only to antecedents that would
+        themselves be extracted by the normal NER/noun-chunk pipeline (i.e. present
+        in _collect_spans with an empty coref map). This ensures resolution targets
+        are coherent entities and excludes long descriptive NPs, relative clauses,
+        and other spans that would not survive ordinary extraction.
 
-        Only pronominal mentions are resolved to prevent false-positive cluster
-        assignments (e.g. "no way" → "Frodo") from overwriting legitimate NP entities.
+        Returns an empty dict if no resolver is set.
         """
         if not self.coref_resolver:
             return {}
+
+        # Valid targets = spans the extractor would produce without any coref.
+        valid_spans = {
+            (span.start_char, span.end_char)
+            for span in self._collect_spans(doc, {})
+        }
+
         result: CorefMap = {}
         for (pron_start, pron_end), (
             ant_text,
@@ -81,8 +88,7 @@ class SpanEntityCollector:
             mention_span = doc.char_span(pron_start, pron_end)
             if mention_span is None or not self._is_pronoun_only(mention_span):
                 continue
-            head_span = doc.char_span(head_start, head_end)
-            if head_span is not None and self._is_allowed_entity(head_span):
+            if (head_start, head_end) in valid_spans:
                 result[(pron_start, pron_end)] = ant_text
         return result
 

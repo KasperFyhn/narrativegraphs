@@ -61,15 +61,16 @@ class FastCorefResolver(CoreferenceResolver):
         for cluster in doc._.coref_clusters:
             if not cluster:
                 continue
-            # Use the first non-pronoun mention as antecedent so that cataphoric
-            # references ("Before he left, John …") resolve correctly.
-            head = next(
-                ((s, e) for s, e in cluster if not self._is_pronoun(doc, s, e)),
-                None,
-            )
-            if head is None:
+            # Use the shortest non-pronoun mention as antecedent.
+            # Shortest is preferred over first so that a clean name ("Gandalf")
+            # wins over a long descriptive NP ("the old man who walked from the
+            # east") even when the NP appears earlier in the text.
+            non_pronoun = [
+                (s, e) for s, e in cluster if not self._is_pronoun(doc, s, e)
+            ]
+            if not non_pronoun:
                 continue
-            head_start, head_end = head
+            head_start, head_end = min(non_pronoun, key=lambda se: se[1] - se[0])
             antecedent_text = doc.text[head_start:head_end]
             for start, end in cluster:
                 if (start, end) != (head_start, head_end):

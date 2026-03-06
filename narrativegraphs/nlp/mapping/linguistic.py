@@ -128,10 +128,17 @@ class NormalizationMapper(Mapper):
 
     def create_mapping(self, labels: list[str]) -> dict[str, str]:
         if self._ranking == "shortest":
-            ranker = self._negative_length
+            # Primary: fewest words (ascending). Secondary: alphabetical (ascending).
+            # Both criteria are corpus-frequency-independent, so the canonical label
+            # is stable across runs and corpus variants.
+            sort_key = lambda x: (len(word_tokenize(x)), x)  # noqa: E731
+            reverse = False
         elif self._ranking == "most_frequent":
             counter = Counter(labels)
-            ranker = counter.__getitem__
+            # Primary: most frequent (descending). Secondary: alphabetical (ascending)
+            # as a deterministic tiebreaker.
+            sort_key = lambda x: (-counter[x], x)  # noqa: E731
+            reverse = False
         else:
             raise NotImplementedError("Unknown ranking")
 
@@ -140,7 +147,7 @@ class NormalizationMapper(Mapper):
             clusters[self._normalize(label)].append(label)
 
         for cluster in clusters.values():
-            cluster.sort(key=ranker, reverse=True)
+            cluster.sort(key=sort_key, reverse=reverse)
 
         return {label: cluster[0] for cluster in clusters.values() for label in cluster}
 
@@ -225,14 +232,14 @@ class SubgramNormalizationMapper(NormalizationMapper):
         }
 
     def create_mapping(self, labels: list[str]) -> dict[str, str]:
-        stem_mapping = super().create_mapping(labels)
+        norm_mapping = super().create_mapping(labels)
         subgram_mapping = self._subgram_mapping(
-            [stem_mapping[label] for label in labels]
+            [norm_mapping[label] for label in labels]
         )
         result = {}
         for label in labels:
-            stemmed = stem_mapping[label]
-            result[label] = subgram_mapping.get(stemmed, stemmed)
+            norm = norm_mapping[label]
+            result[label] = subgram_mapping.get(norm, norm)
         return result
 
 
