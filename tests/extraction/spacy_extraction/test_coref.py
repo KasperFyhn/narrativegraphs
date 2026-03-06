@@ -87,6 +87,28 @@ class TestCorefEntityExtractor(unittest.TestCase):
         self.assertIn("Alice", texts)
         self.assertIn("Paris", texts)
 
+    def test_np_mention_in_coref_map_is_not_resolved(self):
+        """Non-pronominal NP mapped in coref → NOT replaced with antecedent.
+
+        fastcoref can produce false-positive clusters (e.g. "no way" → "Frodo").
+        The fix ensures only pronoun spans are resolved so NP entities survive.
+        """
+        # "Frodo left. The Shire was quiet." — "The Shire" at 12:21
+        text = "Frodo left. The Shire was quiet."
+        frodo_start, frodo_end = 0, 5
+        shire_start, shire_end = 12, 21  # "The Shire"
+        extractor = self._make_extractor(
+            {(shire_start, shire_end): ("Frodo", frodo_start, frodo_end)}
+        )
+        entities = extractor.extract(text)
+
+        # "The Shire" must NOT appear as a "Frodo" mention at position 12
+        spurious = next(
+            (e for e in entities if e.text == "Frodo" and e.start_char == shire_start),
+            None,
+        )
+        self.assertIsNone(spurious, "NP mention should not be coref-resolved to Frodo")
+
     def test_no_resolver_behavior_unchanged(self):
         """Without a coref resolver, remove_pronouns=True still filters pronouns."""
         text = "He visited Paris."

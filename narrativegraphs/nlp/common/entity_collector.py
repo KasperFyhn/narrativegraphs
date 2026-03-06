@@ -64,8 +64,11 @@ class SpanEntityCollector:
 
         Calls coref_resolver.resolve_doc(doc), unpacks (ant_text, head_start, head_end),
         validates the head span via doc.char_span, and only keeps entries where the
-        antecedent passes _is_allowed_entity. Returns an empty dict if no resolver is
-        set.
+        mention is pronominal and the antecedent passes _is_allowed_entity. Returns an
+        empty dict if no resolver is set.
+
+        Only pronominal mentions are resolved to prevent false-positive cluster
+        assignments (e.g. "no way" → "Frodo") from overwriting legitimate NP entities.
         """
         if not self.coref_resolver:
             return {}
@@ -75,6 +78,9 @@ class SpanEntityCollector:
             head_start,
             head_end,
         ) in self.coref_resolver.resolve_doc(doc).items():
+            mention_span = doc.char_span(pron_start, pron_end)
+            if mention_span is None or not self._is_pronoun_only(mention_span):
+                continue
             head_span = doc.char_span(head_start, head_end)
             if head_span is not None and self._is_allowed_entity(head_span):
                 result[(pron_start, pron_end)] = ant_text

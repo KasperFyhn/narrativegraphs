@@ -107,28 +107,127 @@ def spike_analysis(comms_with_contexts, model):
     return spike_values, spread_values
 
 
-def fit_and_visualize_entity_frequencies(df: pd.DataFrame, save_path: str):
-    # Assuming df has columns 'entity' and 'frequency'
+def fit_and_visualize_entity_frequencies(
+    df: pd.DataFrame,
+    save_path: str,
+    label: str = "Baseline",
+    color: str = "steelblue",
+    ax: plt.Axes = None,
+) -> plt.Axes:
+    """Zipf's law check for a single distribution. Can plot onto an existing axis for
+    overlay."""
     df_sorted = df.sort_values("frequency", ascending=False).reset_index(drop=True)
     df_sorted["rank"] = df_sorted.index + 1
 
-    fig, ax = plt.subplots()
-    ax.loglog(df_sorted["rank"], df_sorted["frequency"], "o", markersize=3, alpha=0.7)
+    standalone = ax is None
+    if standalone:
+        fig, ax = plt.subplots()
 
-    # Fit a power law line for reference
+    ax.loglog(
+        df_sorted["rank"],
+        df_sorted["frequency"],
+        "o",
+        markersize=3,
+        alpha=0.7,
+        color=color,
+        label=label,
+    )
+
     log_rank = np.log(df_sorted["rank"])
     log_freq = np.log(df_sorted["frequency"])
     slope, intercept = np.polyfit(log_rank, log_freq, 1)
     ax.loglog(
         df_sorted["rank"],
         np.exp(intercept) * df_sorted["rank"] ** slope,
-        "r--",
-        label=f"Fit: slope = {slope:.2f}",
+        "--",
+        color=color,
+        alpha=0.5,
+        label=f"{label} fit: slope = {slope:.2f}",
     )
 
     ax.set_xlabel("Rank")
     ax.set_ylabel("Frequency")
     ax.set_title("Zipf's Law Check")
+    ax.legend()
+
+    if standalone:
+        fig = ax.get_figure()
+        fig.savefig(save_path, bbox_inches="tight")
+        plt.close(fig)
+
+    return ax
+
+
+def overlay_zipf_comparison(
+    df_baseline: pd.DataFrame,
+    df_coref: pd.DataFrame,
+    save_path: str,
+) -> None:
+    """Overlay Zipf plots for baseline and coref distributions."""
+    fig, ax = plt.subplots()
+    ax = fit_and_visualize_entity_frequencies(
+        df_baseline, save_path=None, label="Baseline", color="steelblue", ax=ax
+    )
+    ax = fit_and_visualize_entity_frequencies(
+        df_coref, save_path=None, label="Coref", color="tomato", ax=ax
+    )
+    ax.set_title("Zipf's Law: Baseline vs. Coref")
+    fig.savefig(save_path, bbox_inches="tight")
+    plt.close(fig)
+
+
+def scatter_frequency_shift(
+    df_baseline: pd.DataFrame,
+    df_coref: pd.DataFrame,
+    save_path: str,
+    annotate_top_n: int = 10,
+) -> None:
+    """
+    Scatter plot of entity frequencies: baseline (x) vs coref (y).
+    Points below the diagonal gained counts; points above lost counts.
+    Annotates the top_n entities by absolute shift.
+    """
+    merged = df_baseline.merge(
+        df_coref, on="entity", suffixes=("_baseline", "_coref"), how="outer"
+    ).fillna(0)
+    merged["abs_shift"] = (
+        merged["frequency_coref"] - merged["frequency_baseline"]
+    ).abs()
+
+    fig, ax = plt.subplots()
+
+    scatter = ax.scatter(
+        merged["frequency_baseline"] + 1,  # +1 to avoid log(0)
+        merged["frequency_coref"] + 1,
+        c=merged["abs_shift"],
+        cmap="RdYlGn_r",
+        alpha=0.6,
+        s=20,
+        norm=plt.matplotlib.colors.LogNorm(),
+    )
+    fig.colorbar(scatter, ax=ax, label="Absolute frequency shift")
+
+    # Diagonal reference line
+    max_val = (
+        max(merged["frequency_baseline"].max(), merged["frequency_coref"].max()) + 1
+    )
+    ax.plot([1, max_val], [1, max_val], "k--", linewidth=0.8, label="No change")
+
+    # Annotate top shifted entities
+    top = merged.nlargest(annotate_top_n, "abs_shift")
+    for _, row in top.iterrows():
+        ax.annotate(
+            row["entity"],
+            xy=(row["frequency_baseline"] + 1, row["frequency_coref"] + 1),
+            fontsize=7,
+            alpha=0.8,
+        )
+
+    ax.set_xscale("log")
+    ax.set_yscale("log")
+    ax.set_xlabel("Baseline frequency")
+    ax.set_ylabel("Coref frequency")
+    ax.set_title("Entity frequency shift: Baseline vs. Coref")
     ax.legend()
     fig.savefig(save_path, bbox_inches="tight")
     plt.close(fig)
