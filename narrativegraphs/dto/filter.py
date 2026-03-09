@@ -36,3 +36,4 @@ class GraphFilter(CamelModel):
     latest_ordinal_time: Optional[int] = None
     blacklisted_entity_ids: Optional[set[int]] = None
     categories: Optional[dict[str, list[str]]] = None
+    exclude_self_loops: bool = True

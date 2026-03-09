@@ -177,6 +177,9 @@ def create_entity_conditions(
 
 def create_relation_conditions(graph_filter: GraphFilter) -> list:
     return combine_filters(
+        [RelationOrm.subject_id != RelationOrm.object_id]
+        if graph_filter.exclude_self_loops
+        else [],
         date_filter(RelationOrm, graph_filter),
         ordinal_time_filter(RelationOrm, graph_filter),
         category_filter(RelationOrm, graph_filter),
@@ -187,6 +190,9 @@ def create_relation_conditions(graph_filter: GraphFilter) -> list:
 
 def create_cooccurrence_conditions(graph_filter: GraphFilter) -> list:
     return combine_filters(
+        [CooccurrenceOrm.entity_one_id != CooccurrenceOrm.entity_two_id]
+        if graph_filter.exclude_self_loops
+        else [],
         date_filter(CooccurrenceOrm, graph_filter),
         ordinal_time_filter(CooccurrenceOrm, graph_filter),
         category_filter(CooccurrenceOrm, graph_filter),
