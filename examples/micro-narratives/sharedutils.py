@@ -152,7 +152,11 @@ def fit_and_visualize_entity_frequencies(
 
     if standalone:
         fig = ax.get_figure()
-        fig.savefig(save_path, bbox_inches="tight")
+        fig.savefig(
+            save_path,
+            bbox_inches="tight",
+            dpi=300,
+        )
         plt.close(fig)
 
     return ax
@@ -172,7 +176,11 @@ def overlay_zipf_comparison(
         df_coref, save_path=None, label="Coref", color="tomato", ax=ax
     )
     ax.set_title("Zipf's Law: Baseline vs. Coref")
-    fig.savefig(save_path, bbox_inches="tight")
+    fig.savefig(
+        save_path,
+        bbox_inches="tight",
+        dpi=300,
+    )
     plt.close(fig)
 
 
@@ -229,7 +237,11 @@ def scatter_frequency_shift(
     ax.set_ylabel("Coref frequency")
     ax.set_title("Entity frequency shift: Baseline vs. Coref")
     ax.legend()
-    fig.savefig(save_path, bbox_inches="tight")
+    fig.savefig(
+        save_path,
+        bbox_inches="tight",
+        dpi=300,
+    )
     plt.close(fig)
 
 
@@ -274,7 +286,7 @@ def visualize_pmi_by_frequency(coocs: pd.DataFrame, save_path: str):
 
     # Plot
     fig, ax = plt.subplots(figsize=(10, 8))
-    im = ax.imshow(heatmap_data, cmap="grey", aspect="auto", origin="lower")
+    im = ax.imshow(heatmap_data, cmap="viridis", aspect="auto", origin="lower")
 
     # Labels
     ax.set_xlabel("Frequency of entity 1", fontsize=20)
@@ -289,7 +301,11 @@ def visualize_pmi_by_frequency(coocs: pd.DataFrame, save_path: str):
     cbar.set_label("Mean PMI", rotation=270, labelpad=20, fontsize=20)
 
     plt.tight_layout()
-    fig.savefig(save_path, bbox_inches="tight")
+    fig.savefig(
+        save_path,
+        bbox_inches="tight",
+        dpi=300,
+    )
     plt.close(fig)
 
 
@@ -349,7 +365,11 @@ def multi_spike_heatmap(df, save_path: str):
 
     plt.suptitle("Community spread vs. spikes", fontsize=14)
     plt.tight_layout()
-    fig.savefig(save_path, bbox_inches="tight")
+    fig.savefig(
+        save_path,
+        bbox_inches="tight",
+        dpi=300,
+    )
     plt.close(fig)
 
 
