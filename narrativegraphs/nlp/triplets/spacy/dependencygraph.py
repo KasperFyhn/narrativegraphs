@@ -5,7 +5,7 @@ from typing import Literal, Optional
 from spacy.tokens import Doc, Span, Token
 
 from narrativegraphs.nlp.common.annotation import AnnotationContext, SpanAnnotation
-from narrativegraphs.nlp.common.entity_collector import CorefMap, SpanEntityCollector
+from narrativegraphs.nlp.common.spacy import CorefMap, SpanEntityCollector
 from narrativegraphs.nlp.coref.common import CoreferenceResolver
 from narrativegraphs.nlp.triplets.common import Triplet
 from narrativegraphs.nlp.triplets.spacy.common import SpacyTripletExtractor
@@ -98,7 +98,7 @@ DEFAULT_PATH_PATTERNS: tuple[PathPattern, ...] = (
 # ----------------------------------------------------------------------
 
 
-class _SpacyDepBase(SpacyTripletExtractor, SpanEntityCollector, ABC):
+class _SpacyDepBase(SpacyTripletExtractor, ABC):
     """Shared entity-filtering logic for dependency-based extractors."""
 
     def __init__(
@@ -115,14 +115,14 @@ class _SpacyDepBase(SpacyTripletExtractor, SpanEntityCollector, ABC):
             split_sentence_on_double_line_break=split_sentence_on_double_line_break,
         )
         self.remove_pronoun_entities = remove_pronoun_entities
-        SpanEntityCollector._init_collector(
-            self, named_entities, noun_chunks, coref_resolver
-        )
         if coref_resolver is not None:
             coref_resolver.add_to_pipeline(self.nlp)
+        self._collector = SpanEntityCollector(
+            named_entities, noun_chunks, coref_resolver
+        )
 
     def extract_triplets_from_doc(self, doc: Doc) -> list[Triplet]:
-        coref_map = self._build_coref_map(doc)
+        coref_map = self._collector.build_coref_map(doc)
         triplets = []
         for sent in doc.sents:
             sent_triplets = self.extract_triplets_from_sent(sent, coref_map)
@@ -133,10 +133,10 @@ class _SpacyDepBase(SpacyTripletExtractor, SpanEntityCollector, ABC):
     def _collect_entities(self, sent: Span, coref_map: CorefMap) -> list[Span]:
         return [
             s
-            for s in self._collect_spans(sent, coref_map)
+            for s in self._collector.collect_spans(sent, coref_map)
             if not (
                 self.remove_pronoun_entities
-                and self._is_unresolved_pronoun(s, coref_map)
+                and self._collector.is_unresolved_pronoun(s, coref_map)
             )
         ]
 
@@ -192,8 +192,9 @@ class DependencyGraphExtractor(_SpacyDepBase):
         for child in verb_token.children:
             if child.dep_ in ("nsubj", "nsubjpass"):
                 for chunk in sent.noun_chunks:
-                    if chunk.start <= child.i < chunk.end and self._is_allowed_entity(
-                        chunk
+                    if (
+                        chunk.start <= child.i < chunk.end
+                        and self._collector.is_allowed_entity(chunk)
                     ):
                         return chunk
         return None
@@ -216,8 +217,9 @@ class DependencyGraphExtractor(_SpacyDepBase):
         for child in verb_token.children:
             if self.direct_objects and child.dep_ == "dobj":
                 for chunk in sent.noun_chunks:
-                    if chunk.start <= child.i < chunk.end and self._is_allowed_entity(
-                        chunk
+                    if (
+                        chunk.start <= child.i < chunk.end
+                        and self._collector.is_allowed_entity(chunk)
                     ):
                         potential_objects.append(("dobj", chunk))
                         break
@@ -232,7 +234,7 @@ class DependencyGraphExtractor(_SpacyDepBase):
                         for chunk in sent.noun_chunks:
                             if (
                                 chunk.start <= grandchild.i < chunk.end
-                                and self._is_allowed_entity(chunk)
+                                and self._collector.is_allowed_entity(chunk)
                             ):
                                 potential_objects.append(("pobj", chunk))
                                 break
@@ -245,7 +247,7 @@ class DependencyGraphExtractor(_SpacyDepBase):
                         for chunk in sent.noun_chunks:
                             if (
                                 chunk.start <= grandchild.i < chunk.end
-                                and self._is_allowed_entity(chunk)
+                                and self._collector.is_allowed_entity(chunk)
                             ):
                                 potential_objects.append(("passive", chunk))
                                 break
@@ -256,13 +258,14 @@ class DependencyGraphExtractor(_SpacyDepBase):
             ):
                 attr_comp_span: Optional[Span] = None
                 for chunk in sent.noun_chunks:
-                    if chunk.start <= child.i < chunk.end and self._is_allowed_entity(
-                        chunk
+                    if (
+                        chunk.start <= child.i < chunk.end
+                        and self._collector.is_allowed_entity(chunk)
                     ):
                         attr_comp_span = chunk
                         break
 
-                if attr_comp_span and self._is_allowed_entity(attr_comp_span):
+                if attr_comp_span and self._collector.is_allowed_entity(attr_comp_span):
                     potential_objects.append(("attr", attr_comp_span))
 
         if not potential_objects:
@@ -321,14 +324,14 @@ class DependencyGraphExtractor(_SpacyDepBase):
                 continue
 
             if self.remove_pronoun_entities and (
-                self._is_unresolved_pronoun(subject_span, coref_map)
-                or self._is_unresolved_pronoun(obj_span, coref_map)
+                self._collector.is_unresolved_pronoun(subject_span, coref_map)
+                or self._collector.is_unresolved_pronoun(obj_span, coref_map)
             ):
                 continue
 
-            subject_part = self._annotate(subject_span, coref_map)
+            subject_part = self._collector.annotate(subject_span, coref_map)
             predicate_part = SpanAnnotation.from_span(verb_token)
-            obj_part = self._annotate(obj_span, coref_map)
+            obj_part = self._collector.annotate(obj_span, coref_map)
 
             if is_passive:
                 subject_part, obj_part = obj_part, subject_part
@@ -349,9 +352,9 @@ class DependencyGraphExtractor(_SpacyDepBase):
         triplets = []
 
         for chunk in sent.noun_chunks:
-            if not self._is_allowed_entity(chunk):
+            if not self._collector.is_allowed_entity(chunk):
                 continue
-            if self.remove_pronoun_entities and self._is_unresolved_pronoun(
+            if self.remove_pronoun_entities and self._collector.is_unresolved_pronoun(
                 chunk, coref_map
             ):
                 continue
@@ -365,10 +368,10 @@ class DependencyGraphExtractor(_SpacyDepBase):
                             for pobj_chunk in sent.noun_chunks:
                                 if (
                                     pobj_chunk.start <= grandchild.i < pobj_chunk.end
-                                    and self._is_allowed_entity(pobj_chunk)
+                                    and self._collector.is_allowed_entity(pobj_chunk)
                                     and not (
                                         self.remove_pronoun_entities
-                                        and self._is_unresolved_pronoun(
+                                        and self._collector.is_unresolved_pronoun(
                                             pobj_chunk, coref_map
                                         )
                                     )
@@ -385,9 +388,13 @@ class DependencyGraphExtractor(_SpacyDepBase):
                                     )
                                     triplets.append(
                                         Triplet(
-                                            subj=self._annotate(chunk, coref_map),
+                                            subj=self._collector.annotate(
+                                                chunk, coref_map
+                                            ),
                                             pred=pred,
-                                            obj=self._annotate(pobj_chunk, coref_map),
+                                            obj=self._collector.annotate(
+                                                pobj_chunk, coref_map
+                                            ),
                                             context=AnnotationContext.from_span(sent),
                                         )
                                     )

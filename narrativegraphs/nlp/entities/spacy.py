@@ -4,8 +4,8 @@ from typing import Generator, Literal
 from spacy.tokens import Doc
 
 from narrativegraphs.nlp.common.annotation import SpanAnnotation
-from narrativegraphs.nlp.common.entity_collector import SpanEntityCollector
 from narrativegraphs.nlp.common.spacy import (
+    SpanEntityCollector,
     calculate_batch_size,
     ensure_spacy_model,
 )
@@ -16,7 +16,7 @@ from narrativegraphs.nlp.entities.common import EntityExtractor
 _logger = logging.getLogger("narrativegraphs.nlp.extraction")
 
 
-class SpacyEntityExtractor(EntityExtractor, SpanEntityCollector):
+class SpacyEntityExtractor(EntityExtractor):
     """Entity extractor using spaCy NER and/or noun chunks.
 
     Extracts entities from text using named entity recognition and/or noun chunks,
@@ -65,8 +65,8 @@ class SpacyEntityExtractor(EntityExtractor, SpanEntityCollector):
         if coref_resolver is not None:
             coref_resolver.add_to_pipeline(self.nlp)
 
-        SpanEntityCollector._init_collector(
-            self, named_entities, noun_chunks, coref_resolver
+        self._collector = SpanEntityCollector(
+            named_entities, noun_chunks, coref_resolver
         )
 
     def extract_entities_from_doc(self, doc: Doc) -> list[SpanAnnotation]:
@@ -78,19 +78,19 @@ class SpacyEntityExtractor(EntityExtractor, SpanEntityCollector):
         Returns:
             extracted entities as SpanAnnotation objects
         """
-        coref_map = self._build_coref_map(doc)
+        coref_map = self._collector.build_coref_map(doc)
 
         result = []
-        for span in self._collect_spans(doc, coref_map):
-            is_pronoun = self._is_pronoun_only(span)
+        for span in self._collector.collect_spans(doc, coref_map):
+            is_pronoun = self._collector.is_pronoun_only(span)
             if is_pronoun:
                 if (span.start_char, span.end_char) in coref_map:
-                    result.append(self._annotate(span, coref_map))
+                    result.append(self._collector.annotate(span, coref_map))
                 elif not self.remove_pronouns:
                     result.append(SpanAnnotation.from_span(span))
                 # else: unresolved pronoun + remove_pronouns=True → skip
             else:
-                result.append(self._annotate(span, coref_map))
+                result.append(self._collector.annotate(span, coref_map))
         return result
 
     def extract(self, text: str) -> list[SpanAnnotation]:

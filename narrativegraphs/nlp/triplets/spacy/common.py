@@ -4,8 +4,8 @@ from typing import Generator
 
 from spacy.tokens import Doc, Span
 
-from narrativegraphs.nlp.common.entity_collector import CorefMap
 from narrativegraphs.nlp.common.spacy import (
+    CorefMap,
     calculate_batch_size,
     ensure_spacy_model,
 )

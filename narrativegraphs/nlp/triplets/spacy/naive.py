@@ -1,13 +1,13 @@
 from spacy.tokens import Doc, Span
 
 from narrativegraphs.nlp.common.annotation import AnnotationContext, SpanAnnotation
-from narrativegraphs.nlp.common.entity_collector import CorefMap, SpanEntityCollector
+from narrativegraphs.nlp.common.spacy import CorefMap, SpanEntityCollector
 from narrativegraphs.nlp.coref.common import CoreferenceResolver
 from narrativegraphs.nlp.triplets.common import Triplet
 from narrativegraphs.nlp.triplets.spacy.common import SpacyTripletExtractor
 
 
-class NaiveSpacyTripletExtractor(SpacyTripletExtractor, SpanEntityCollector):
+class NaiveSpacyTripletExtractor(SpacyTripletExtractor):
     def __init__(
         self,
         model_name: str = None,
@@ -28,14 +28,14 @@ class NaiveSpacyTripletExtractor(SpacyTripletExtractor, SpanEntityCollector):
             )
         self.max_tokens_between = max_tokens_between
         self.remove_pronoun_entities = remove_pronoun_entities
-        SpanEntityCollector._init_collector(
-            self, named_entities, noun_chunks, coref_resolver
-        )
         if coref_resolver is not None:
             coref_resolver.add_to_pipeline(self.nlp)
+        self._collector = SpanEntityCollector(
+            named_entities, noun_chunks, coref_resolver
+        )
 
     def extract_triplets_from_doc(self, doc: Doc) -> list[Triplet]:
-        coref_map = self._build_coref_map(doc)
+        coref_map = self._collector.build_coref_map(doc)
         triplets = []
         for sent in doc.sents:
             sent_triplets = self.extract_triplets_from_sent(sent, coref_map)
@@ -52,10 +52,10 @@ class NaiveSpacyTripletExtractor(SpacyTripletExtractor, SpanEntityCollector):
 
         entities = [
             s
-            for s in self._collect_spans(sent, coref_map)
+            for s in self._collector.collect_spans(sent, coref_map)
             if not (
                 self.remove_pronoun_entities
-                and self._is_unresolved_pronoun(s, coref_map)
+                and self._collector.is_unresolved_pronoun(s, coref_map)
             )
         ]
 
@@ -73,9 +73,9 @@ class NaiveSpacyTripletExtractor(SpacyTripletExtractor, SpanEntityCollector):
 
             triplets.append(
                 Triplet(
-                    subj=self._annotate(subj, coref_map),
+                    subj=self._collector.annotate(subj, coref_map),
                     pred=SpanAnnotation.from_span(pred),
-                    obj=self._annotate(obj, coref_map),
+                    obj=self._collector.annotate(obj, coref_map),
                     context=AnnotationContext.from_span(sent),
                 )
             )
