@@ -10,7 +10,9 @@ from narrativegraphs.nlp.common.transformcategories import normalize_categories
 from narrativegraphs.nlp.entities.common import EntityExtractor
 from narrativegraphs.nlp.entities.spacy import SpacyEntityExtractor
 from narrativegraphs.nlp.mapping import Mapper
-from narrativegraphs.nlp.mapping.linguistic import SubgramStemmingMapper
+from narrativegraphs.nlp.mapping.linguistic import (
+    SubgramLemmatizationMapper,
+)
 from narrativegraphs.nlp.triplets import DependencyGraphExtractor, TripletExtractor
 from narrativegraphs.nlp.tuplets.common import CooccurrenceExtractor
 from narrativegraphs.nlp.tuplets.cooccurrences import (
@@ -103,9 +105,9 @@ class Pipeline(_AbstractPipeline):
             cooccurrence_extractor: Extractor for entity co-occurrences
                 (default: ChunkCooccurrenceExtractor).
             entity_mapper: Mapper for entity normalization
-                (default: SubgramStemmingMapper("noun")).
+                (default: SubgramLemmatizationMapper("noun")).
             predicate_mapper: Mapper for predicate normalization
-                (default: SubgramStemmingMapper("verb")).
+                (default: SubgramLemmatizationMapper("verb")).
             n_cpu: Number of CPUs for parallel processing.
         """
         super().__init__(engine, n_cpu=n_cpu)
@@ -114,8 +116,8 @@ class Pipeline(_AbstractPipeline):
         self._cooccurrence_extractor = (
             cooccurrence_extractor or ChunkCooccurrenceExtractor()
         )
-        self._entity_mapper = entity_mapper or SubgramStemmingMapper("noun")
-        self._predicate_mapper = predicate_mapper or SubgramStemmingMapper("verb")
+        self._entity_mapper = entity_mapper or SubgramLemmatizationMapper("noun")
+        self._predicate_mapper = predicate_mapper or SubgramLemmatizationMapper("verb")
 
     def _process_docs(self):
         with self._populator.get_session_context():
@@ -143,7 +145,8 @@ class Pipeline(_AbstractPipeline):
                 self._populator.add_tuplets(doc, doc_tuplets, occ_lookup)
 
             _logger.info("Resolving entities and predicates")
-            entities = [e.span_text for e in self._populator.get_entity_occurrences()]
+            occurrences = self._populator.get_entity_occurrences()
+            entities = [e.span_text for e in occurrences if not e.is_coref_resolved]
             entity_mapping = self._entity_mapper.create_mapping(entities)
 
             predicates = [
@@ -185,7 +188,7 @@ class CooccurrencePipeline(_AbstractPipeline):
             cooccurrence_extractor: Extractor for co-occurrences
                 (default: ChunkCooccurrenceExtractor)
             entity_mapper: Mapper for entity normalization
-                (default: SubgramStemmingMapper)
+                (default: SubgramLemmatizationMapper)
             n_cpu: Number of CPUs for parallel processing
         """
         super().__init__(engine, n_cpu)
@@ -193,7 +196,7 @@ class CooccurrencePipeline(_AbstractPipeline):
         self._cooccurrence_extractor = (
             cooccurrence_extractor or ChunkCooccurrenceExtractor()
         )
-        self._entity_mapper = entity_mapper or SubgramStemmingMapper("noun")
+        self._entity_mapper = entity_mapper or SubgramLemmatizationMapper("noun")
 
     def _process_docs(self):
         with self._populator.get_session_context():
@@ -215,7 +218,8 @@ class CooccurrencePipeline(_AbstractPipeline):
                 self._populator.add_tuplets(doc, doc_tuplets, occ_lookup)
 
             _logger.info("Resolving entities")
-            entities = [e.span_text for e in self._populator.get_entity_occurrences()]
+            occurrences = self._populator.get_entity_occurrences()
+            entities = [e.span_text for e in occurrences if not e.is_coref_resolved]
             entity_mapping = self._entity_mapper.create_mapping(entities)
 
             _logger.info("Mapping tuplets")

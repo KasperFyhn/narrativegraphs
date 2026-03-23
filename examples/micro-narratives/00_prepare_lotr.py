@@ -10,12 +10,12 @@ import json
 import os
 import re
 
-from config import DOCS_PATH, INPUT_GLOB, SECTION_SPLIT_PATTERN
+out_path = "input/lotr_docs.jsonl"
 
-section_splitter = re.compile(SECTION_SPLIT_PATTERN)
+section_splitter = re.compile(r"(?<=\S)\n\n(?=\S)|\n{3}")
 
 docs = []
-for file in sorted(glob.glob(INPUT_GLOB)):
+for file in sorted(glob.glob("input/0*.txt")):
     with open(file) as f:
         text = f.read()
     for section in section_splitter.split(text):
@@ -23,9 +23,9 @@ for file in sorted(glob.glob(INPUT_GLOB)):
         if section:
             docs.append(section)
 
-os.makedirs(os.path.dirname(DOCS_PATH), exist_ok=True)
-with open(DOCS_PATH, "w") as f:
+os.makedirs(os.path.dirname(out_path), exist_ok=True)
+with open(out_path, "w") as f:
     for i, text in enumerate(docs):
         f.write(json.dumps({"text": text, "timestamp_ordinal": i}) + "\n")
 
-print(f"Wrote {len(docs)} sections to {DOCS_PATH}")
+print(f"Wrote {len(docs)} sections to {out_path}")

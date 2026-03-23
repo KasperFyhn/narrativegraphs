@@ -4,12 +4,11 @@ import json
 import os.path
 from contextlib import redirect_stdout
 
-from config import DB_PATH, DOCS_PATH, N_CPU
+from config import COREF, DB_PATH, DOCS_PATH, N_CPU
 from sharedutils import output_path
 
-from narrativegraphs import CooccurrenceGraph
+from narrativegraphs import CooccurrenceGraph, SubgramLemmatizationMapper
 from narrativegraphs.nlp.entities import SpacyEntityExtractor
-from narrativegraphs.nlp.mapping import SubgramStemmingMapper
 
 with open(DOCS_PATH) as f:
     rows = [json.loads(line) for line in f]
@@ -38,8 +37,9 @@ else:
             model_name="en_core_web_lg",
             named_entities=True,
             noun_chunks=(2, None),
+            coref_resolver=COREF,
         ),
-        entity_mapper=SubgramStemmingMapper(
+        entity_mapper=SubgramLemmatizationMapper(
             head_word_type="noun",
             min_subgram_length=2,
             min_subgram_frequency=2,

@@ -12,10 +12,10 @@ from narrativegraphs.nlp.triplets.spacy.dependencygraph import DependencyGraphEx
 class MockCorefResolver(CoreferenceResolver):
     """Lightweight mock resolver for tests — no model required."""
 
-    def __init__(self, mapping: dict[tuple[int, int], str]):
+    def __init__(self, mapping: dict[tuple[int, int], tuple[str, int, int]]):
         self._mapping = mapping
 
-    def resolve_doc(self, doc: Doc) -> dict[tuple[int, int], str]:
+    def resolve_doc(self, doc: Doc) -> dict[tuple[int, int], tuple[str, int, int]]:
         return self._mapping
 
 
@@ -39,17 +39,22 @@ class TestCorefEntityExtractor(unittest.TestCase):
     def test_resolved_pronoun_emitted_with_antecedent_text(self):
         """Pronoun with a coref mapping → emitted with resolved text, original
         positions."""
-        # "He visited Paris." — "He" is at 0:2
-        text = "He visited Paris."
-        he_start, he_end = 0, 2
-        extractor = self._make_extractor({(he_start, he_end): "Frodo"})
+        # "Frodo left. He visited Paris." — "Frodo" at 0:5, "He" at 12:14
+        text = "Frodo left. He visited Paris."
+        he_start, he_end = 12, 14
+        frodo_start, frodo_end = 0, 5
+        extractor = self._make_extractor(
+            {(he_start, he_end): ("Frodo", frodo_start, frodo_end)}
+        )
         entities = extractor.extract(text)
 
         texts = [e.text for e in entities]
         self.assertIn("Frodo", texts)
         self.assertIn("Paris", texts)
 
-        resolved = next(e for e in entities if e.text == "Frodo")
+        resolved = next(
+            e for e in entities if e.text == "Frodo" and e.start_char == he_start
+        )
         self.assertEqual(resolved.start_char, he_start)
         self.assertEqual(resolved.end_char, he_end)
 
@@ -82,6 +87,44 @@ class TestCorefEntityExtractor(unittest.TestCase):
         self.assertIn("Alice", texts)
         self.assertIn("Paris", texts)
 
+    def test_np_mention_in_coref_map_is_not_resolved(self):
+        """Non-pronominal NP mapped in coref → NOT replaced with antecedent.
+
+        fastcoref can produce false-positive clusters (e.g. "no way" → "Frodo").
+        The fix ensures only pronoun spans are resolved so NP entities survive.
+        """
+        # "Frodo left. The Shire was quiet." — "The Shire" at 12:21
+        text = "Frodo left. The Shire was quiet."
+        frodo_start, frodo_end = 0, 5
+        shire_start, shire_end = 12, 21  # "The Shire"
+        extractor = self._make_extractor(
+            {(shire_start, shire_end): ("Frodo", frodo_start, frodo_end)}
+        )
+        entities = extractor.extract(text)
+
+        # "The Shire" must NOT appear as a "Frodo" mention at position 12
+        spurious = next(
+            (e for e in entities if e.text == "Frodo" and e.start_char == shire_start),
+            None,
+        )
+        self.assertIsNone(spurious, "NP mention should not be coref-resolved to Frodo")
+
+    def test_pronoun_not_resolved_when_antecedent_not_extractable(self):
+        """Pronoun whose antecedent span would not be extracted by the normal pipeline
+        (e.g. a long NP + relative clause) is left unresolved rather than mapped to
+        a junk entity."""
+        # Mock: "he" → a very long span that spaCy would never emit as a single entity
+        text = "He visited Paris."
+        he_start, he_end = 0, 2
+        # Fabricate a span covering the whole sentence — definitely not extractable
+        extractor = self._make_extractor(
+            {(he_start, he_end): ("He visited Paris", 0, 17)}
+        )
+        entities = extractor.extract(text)
+        texts = [e.text for e in entities]
+        # "He" should not appear resolved to the junk antecedent
+        self.assertNotIn("He visited Paris", texts)
+
     def test_no_resolver_behavior_unchanged(self):
         """Without a coref resolver, remove_pronouns=True still filters pronouns."""
         text = "He visited Paris."
@@ -107,10 +150,13 @@ class TestCorefTripletExtractor(unittest.TestCase):
 
     def test_resolved_pronoun_subject_appears_in_triplet(self):
         """Pronoun subject resolved via coref → triplet subject has resolved text."""
-        # "He visited Paris." — "He" at 0:2
-        text = "He visited Paris."
-        he_start, he_end = 0, 2
-        extractor = self._make_extractor({(he_start, he_end): "Frodo"})
+        # "Frodo left. He visited Paris." — "Frodo" at 0:5, "He" at 12:14
+        text = "Frodo left. He visited Paris."
+        he_start, he_end = 12, 14
+        frodo_start, frodo_end = 0, 5
+        extractor = self._make_extractor(
+            {(he_start, he_end): ("Frodo", frodo_start, frodo_end)}
+        )
         triplets = extractor.extract(text)
 
         self.assertTrue(len(triplets) > 0, "Expected at least one triplet")
@@ -178,8 +224,27 @@ class TestFastCorefResolverLogic(unittest.TestCase):
         coref_map = self.resolver.resolve_doc(doc)
 
         self.assertIn(he, coref_map)
-        self.assertEqual(coref_map[he], "Frodo")
+        ant_text, _, _ = coref_map[he]
+        self.assertEqual(ant_text, "Frodo")
         self.assertNotIn(frodo, coref_map)
+
+    def test_shortest_non_pronoun_chosen_as_antecedent(self):
+        """When a cluster contains both a long NP and a short name, the short name
+        is chosen as antecedent."""
+        # "He met the old man who wandered the road. Gandalf smiled."
+        #   ^0:2                                     ^42:49
+        # Long NP: "the old man who wandered the road" at 7:41
+        text = "He met the old man who wandered the road. Gandalf smiled."
+        he = (0, 2)
+        long_np = (7, 40)   # "the old man who wandered the road"
+        gandalf = (42, 49)  # "Gandalf"
+        doc = self._doc(text, [[he, long_np, gandalf]])
+        coref_map = self.resolver.resolve_doc(doc)
+
+        self.assertIn(he, coref_map)
+        ant_text, head_start, _ = coref_map[he]
+        self.assertEqual(ant_text, "Gandalf")
+        self.assertEqual(head_start, gandalf[0])
 
     def test_all_pronouns_cluster_produces_no_mappings(self):
         """Cluster where every mention is a pronoun → skipped entirely."""

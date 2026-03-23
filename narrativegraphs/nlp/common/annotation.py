@@ -25,6 +25,7 @@ class SpanAnnotation(BaseModel):
     start_char: int
     end_char: int
     normalized_text: Optional[str] = None
+    is_coref_resolved: bool = False
 
     @classmethod
     def from_span(cls, span: Span | Token) -> "SpanAnnotation":

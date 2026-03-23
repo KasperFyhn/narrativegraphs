@@ -1,7 +1,8 @@
-from spacy.tokens import Span
+from spacy.tokens import Doc, Span
 
 from narrativegraphs.nlp.common.annotation import AnnotationContext, SpanAnnotation
-from narrativegraphs.nlp.common.spacy import filter_by_range, spans_overlap
+from narrativegraphs.nlp.common.spacy import CorefMap, SpanEntityCollector
+from narrativegraphs.nlp.coref.common import CoreferenceResolver
 from narrativegraphs.nlp.triplets.common import Triplet
 from narrativegraphs.nlp.triplets.spacy.common import SpacyTripletExtractor
 
@@ -13,50 +14,47 @@ class NaiveSpacyTripletExtractor(SpacyTripletExtractor):
         named_entities: bool | tuple[int, int | None] = (1, None),
         noun_chunks: bool | tuple[int, int | None] = (2, None),
         max_tokens_between: int = 4,
+        coref_resolver: CoreferenceResolver | None = None,
+        remove_pronoun_entities: bool = True,
         split_sentence_on_double_line_break: bool = True,
     ):
         super().__init__(
             model_name,
             split_sentence_on_double_line_break=split_sentence_on_double_line_break,
+            coref_resolver=coref_resolver,
         )
         if not named_entities and not noun_chunks:
             raise NotImplementedError(
                 "Naive spacy requires at least named_entities or noun_chunks."
             )
-        self.ner = named_entities
-        self.noun_chunks = noun_chunks
         self.max_tokens_between = max_tokens_between
+        self.remove_pronoun_entities = remove_pronoun_entities
+        self._collector = SpanEntityCollector(named_entities, noun_chunks)
 
-    def extract_triplets_from_sent(self, sent: Span) -> list[Triplet]:
+    def extract_triplets_from_doc(self, doc: Doc) -> list[Triplet]:
+        coref_map = self._collector.build_coref_map(doc)
+        triplets = []
+        for sent in doc.sents:
+            sent_triplets = self.extract_triplets_from_sent(sent, coref_map)
+            if sent_triplets:
+                triplets.extend(sent_triplets)
+        return triplets
+
+    def extract_triplets_from_sent(
+        self, sent: Span, coref_map: CorefMap | None = None
+    ) -> list[Triplet]:
+        if coref_map is None:
+            coref_map = {}
         triplets = []
 
-        # Collect entities with priority scoring
-        candidates = []
-        if self.ner:
-            ents = sent.ents
-            if isinstance(self.ner, tuple):
-                ents = filter_by_range(ents, self.ner)
-            ents = [
-                e for e in ents if list(e)[0].ent_type_ not in {"CARDINAL", "ORDINAL"}
-            ]
-            candidates.extend((span, 0) for span in ents)  # NER priority: 0
-
-        if self.noun_chunks:
-            chunks = sent.noun_chunks
-            if isinstance(self.noun_chunks, tuple):
-                chunks = filter_by_range(chunks, self.noun_chunks)
-            candidates.extend((span, 1) for span in chunks)  # Noun chunk priority: 1
-
-        # Sort by priority: NER first, then length desc, then position
-        candidates.sort(key=lambda x: (x[1], -len(x[0]), x[0].start))
-
-        # Greedily select non-overlapping spans
-        entities = []
-        for target, _ in candidates:
-            if not any(spans_overlap(target, other) for other in entities):
-                entities.append(target)
-
-        entities.sort(key=lambda x: x.start_char)
+        entities = [
+            s
+            for s in self._collector.collect_spans(sent, coref_map)
+            if not (
+                self.remove_pronoun_entities
+                and self._collector.is_unresolved_pronoun(s, coref_map)
+            )
+        ]
 
         # Create triplets from adjacent entities
         for i in range(len(entities) - 1):
@@ -72,9 +70,9 @@ class NaiveSpacyTripletExtractor(SpacyTripletExtractor):
 
             triplets.append(
                 Triplet(
-                    subj=SpanAnnotation.from_span(subj),
+                    subj=self._collector.annotate(subj, coref_map),
                     pred=SpanAnnotation.from_span(pred),
-                    obj=SpanAnnotation.from_span(obj),
+                    obj=self._collector.annotate(obj, coref_map),
                     context=AnnotationContext.from_span(sent),
                 )
             )

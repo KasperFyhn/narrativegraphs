@@ -1,15 +1,13 @@
 import logging
 from typing import Generator
 
-from spacy.tokens import Doc, Span
+from spacy.tokens import Doc
 
 from narrativegraphs.nlp.common.annotation import SpanAnnotation
 from narrativegraphs.nlp.common.spacy import (
+    SpanEntityCollector,
+    build_spacy_pipeline,
     calculate_batch_size,
-    ensure_spacy_model,
-    filter_by_range,
-    fits_in_range,
-    spans_overlap,
 )
 from narrativegraphs.nlp.coref.common import CoreferenceResolver
 from narrativegraphs.nlp.entities.common import EntityExtractor
@@ -32,7 +30,7 @@ class SpacyEntityExtractor(EntityExtractor):
         noun_chunks: bool | tuple[int, int | None] = (2, None),
         remove_pronouns: bool = True,
         split_sentence_on_double_line_break: bool = True,
-        coref_resolver: CoreferenceResolver | None = None,
+        coref_resolver: bool | CoreferenceResolver | None = None,
     ):
         """
         Args:
@@ -44,44 +42,22 @@ class SpacyEntityExtractor(EntityExtractor):
             remove_pronouns: whether to filter out pronoun-only spans
             split_sentence_on_double_line_break: adds extra sentence boundaries on
                 double line breaks ("\\n\\n")
-            coref_resolver: optional coreference resolver; when set, pronouns that
-                resolve to a named antecedent are emitted with the resolved text
+            coref_resolver: optional coreference resolver; True uses FastCorefResolver;
+                when set, pronouns that resolve to a named antecedent are emitted with
+                the resolved text
         """
         if model_name is None:
             model_name = "en_core_web_sm"
-        self.nlp = ensure_spacy_model(model_name)
-        if split_sentence_on_double_line_break:
-            # Only add if not already present
-            if "custom_sentencizer" not in self.nlp.pipe_names:
-                self.nlp.add_pipe("custom_sentencizer", before="parser")
 
         if not named_entities and not noun_chunks:
             raise ValueError(
                 "SpacyEntityExtractor requires at least named_entities or noun_chunks."
             )
-        self.ner = named_entities
-        self.noun_chunks = noun_chunks
         self.remove_pronouns = remove_pronouns
-        self.coref_resolver = coref_resolver
-        if coref_resolver is not None:
-            coref_resolver.add_to_pipeline(self.nlp)
-
-    def _is_allowed_entity(self, span: Span) -> bool:
-        """Check if span is allowed based on NER/noun_chunks settings."""
-        if all(t.ent_type_ for t in span):  # NER land
-            if isinstance(self.ner, tuple):
-                return fits_in_range(span, self.ner)
-            else:
-                return bool(self.ner)
-        else:  # NP land
-            if isinstance(self.noun_chunks, tuple):
-                return fits_in_range(span, self.noun_chunks)
-            else:
-                return bool(self.noun_chunks)
-
-    def _is_pronoun_only(self, span: Span) -> bool:
-        """Check if span consists only of pronouns."""
-        return all(t.pos_ == "PRON" for t in span)
+        self.nlp = build_spacy_pipeline(
+            model_name, split_sentence_on_double_line_break, coref_resolver
+        )
+        self._collector = SpanEntityCollector(named_entities, noun_chunks)
 
     def extract_entities_from_doc(self, doc: Doc) -> list[SpanAnnotation]:
         """Extract entities from a spaCy Doc.
@@ -92,62 +68,19 @@ class SpacyEntityExtractor(EntityExtractor):
         Returns:
             extracted entities as SpanAnnotation objects
         """
-        # Collect entities with priority scoring
-        candidates = []
-
-        if self.ner:
-            ents = doc.ents
-            if isinstance(self.ner, tuple):
-                ents = filter_by_range(ents, self.ner)
-            # Filter out numeric entity types
-            ents = [
-                e for e in ents if list(e)[0].ent_type_ not in {"CARDINAL", "ORDINAL"}
-            ]
-            candidates.extend((span, 0) for span in ents)  # NER priority: 0
-
-        if self.noun_chunks:
-            chunks = list(doc.noun_chunks)
-            if isinstance(self.noun_chunks, tuple):
-                chunks = filter_by_range(chunks, self.noun_chunks)
-            # Filter chunks that pass _is_allowed_entity check
-            chunks = [c for c in chunks if self._is_allowed_entity(c)]
-            candidates.extend((span, 1) for span in chunks)  # Noun chunk priority: 1
-
-        # Sort by priority: NER first, then length desc, then position
-        candidates.sort(key=lambda x: (x[1], -len(x[0]), x[0].start))
-
-        # Greedily select non-overlapping spans
-        entities = []
-        for target, _ in candidates:
-            if not any(spans_overlap(target, other) for other in entities):
-                entities.append(target)
-
-        # Sort by position
-        entities.sort(key=lambda x: x.start_char)
-
-        # Resolve coreferences and build result
-        coref_map = self.coref_resolver.resolve_doc(doc) if self.coref_resolver else {}
+        coref_map = self._collector.build_coref_map(doc)
 
         result = []
-        for span in entities:
-            is_pronoun = self._is_pronoun_only(span)
-            key = (span.start_char, span.end_char)
+        for span in self._collector.collect_spans(doc, coref_map):
+            is_pronoun = self._collector.is_pronoun_only(span)
             if is_pronoun:
-                if key in coref_map:
-                    resolved = coref_map[key]
-                    result.append(
-                        SpanAnnotation(
-                            text=resolved,
-                            start_char=span.start_char,
-                            end_char=span.end_char,
-                            normalized_text=resolved.lower(),
-                        )
-                    )
+                if (span.start_char, span.end_char) in coref_map:
+                    result.append(self._collector.annotate(span, coref_map))
                 elif not self.remove_pronouns:
                     result.append(SpanAnnotation.from_span(span))
                 # else: unresolved pronoun + remove_pronouns=True → skip
             else:
-                result.append(SpanAnnotation.from_span(span))
+                result.append(self._collector.annotate(span, coref_map))
         return result
 
     def extract(self, text: str) -> list[SpanAnnotation]:

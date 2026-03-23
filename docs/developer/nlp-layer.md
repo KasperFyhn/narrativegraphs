@@ -26,8 +26,8 @@ Default components:
 
 - Triplet extraction: `DependencyGraphExtractor` (default; `EntityPairDependencyExtractor` is an alternative)
 - Cooccurrence extraction: `ChunkCooccurrenceExtractor`
-- Entity mapping: `SubgramStemmingMapper("noun")`
-- Predicate mapping: `SubgramStemmingMapper("verb")`
+- Entity mapping: `SubgramLemmatizationMapper("noun")`
+- Predicate mapping: `SubgramLemmatizationMapper("verb")`
 
 ### CooccurrencePipeline
 
@@ -37,7 +37,7 @@ Default components:
 
 - Entity extraction: `SpacyEntityExtractor`
 - Cooccurrence extraction: `ChunkCooccurrenceExtractor`
-- Entity mapping: `SubgramStemmingMapper("noun")`
+- Entity mapping: `SubgramLemmatizationMapper("noun")`
 
 ## Extraction Components
 
@@ -94,15 +94,16 @@ Tuplets consist of:
 
 Mappers normalize surface forms to canonical labels, creating a `dict[str, str]` mapping.
 
-| Class                     | Description                                |
-| ------------------------- | ------------------------------------------ |
-| **Mapper**                | Abstract base class                        |
-| **StemmingMapper**        | Groups by Porter stemmed form              |
-| **SubgramStemmingMapper** | Stemming + subgram matching for head words |
+| Class                          | Description                                |
+| ------------------------------ | ------------------------------------------ |
+| **Mapper**                     | Abstract base class                        |
+| **StemmingMapper**             | Groups by Porter stemmed form              |
+| **SubgramStemmingMapper**      | Stemming + subgram matching for head words |
+| **SubgramLemmatizationMapper** | Lemma + subgram matching for head words    |
 
-`SubgramStemmingMapper` (default):
+`SubgramLemmatizationMapper` (default):
 
-- First applies stemming normalization
+- First applies lemma normalization
 - Then matches shorter forms to longer ones containing them
 - Configurable for nouns or verbs via `head_word_type`
 - Ranking by shortest label or most frequent
@@ -152,7 +153,9 @@ Pipeline / CooccurrencePipeline
     ├── Mapping
     │   └── Mapper ──► dict[str, str]
     │       ├── StemmingMapper
+    │       ├── LemmatizationMapper
     │       └── SubgramStemmingMapper (default)
+    │       └── SubgramLemmatizationMapper
     │
     └── Stats calculation (via service layer)
 ```
