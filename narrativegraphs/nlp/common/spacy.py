@@ -10,6 +10,9 @@ from spacy.tokens import Doc, Span
 from narrativegraphs.nlp.common.annotation import SpanAnnotation
 from narrativegraphs.nlp.coref import CoreferenceResolver
 
+if not Doc.has_extension("coref_resolutions"):
+    Doc.set_extension("coref_resolutions", default=None)
+
 _logger = logging.getLogger("narrativegraphs.nlp")
 
 
@@ -73,6 +76,42 @@ def custom_sentencizer(doc):
     return doc
 
 
+def build_spacy_pipeline(
+    model_name: str,
+    split_sentence_on_double_line_break: bool,
+    coref_resolver: bool | CoreferenceResolver | None = None,
+) -> Language:
+    """Load a spaCy model and wire up sentencizer and coref annotation."""
+
+    nlp = ensure_spacy_model(model_name)
+
+    if split_sentence_on_double_line_break:
+        if "custom_sentencizer" not in nlp.pipe_names:
+            nlp.add_pipe("custom_sentencizer", before="parser")
+
+    if coref_resolver is True:
+        from narrativegraphs.nlp.coref import FastCorefResolver
+
+        coref_resolver = FastCorefResolver()
+
+    if coref_resolver is not None:
+        coref_resolver.add_to_pipeline(nlp)
+
+        component_name = f"{type(coref_resolver).__name__}_resolver"
+
+        def _make_annotator(resolver):
+            def _annotate(doc):
+                doc._.coref_resolutions = resolver.resolve_doc(doc)
+                return doc
+
+            return _annotate
+
+        Language.component(component_name, func=_make_annotator(coref_resolver))
+        nlp.add_pipe(component_name)
+
+    return nlp
+
+
 CorefMap = dict[tuple[int, int], str]
 
 
@@ -83,11 +122,9 @@ class SpanEntityCollector:
         self,
         named_entities: bool | tuple[int, int | None],
         noun_chunks: bool | tuple[int, int | None],
-        coref_resolver: CoreferenceResolver | None = None,
     ) -> None:
         self.ner = named_entities
         self.noun_chunks = noun_chunks
-        self.coref_resolver = coref_resolver
 
     @staticmethod
     def fits_in_range(span: Span, range_: tuple[int, int | None]) -> bool:
@@ -138,9 +175,10 @@ class SpanEntityCollector:
         are coherent entities and excludes long descriptive NPs, relative clauses,
         and other spans that would not survive ordinary extraction.
 
-        Returns an empty dict if no resolver is set.
+        Returns an empty dict if no coref annotations are present on the doc.
         """
-        if not self.coref_resolver:
+        raw_resolutions = doc._.coref_resolutions or {}
+        if not raw_resolutions:
             return {}
 
         # Valid targets = spans the extractor would produce without any coref.
@@ -153,7 +191,7 @@ class SpanEntityCollector:
             ant_text,
             head_start,
             head_end,
-        ) in self.coref_resolver.resolve_doc(doc).items():
+        ) in raw_resolutions.items():
             mention_span = doc.char_span(pron_start, pron_end)
             if mention_span is None or not self.is_pronoun_only(mention_span):
                 continue

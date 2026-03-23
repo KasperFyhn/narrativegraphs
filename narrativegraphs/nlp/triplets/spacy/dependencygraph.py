@@ -113,13 +113,10 @@ class _SpacyDepBase(SpacyTripletExtractor, ABC):
         super().__init__(
             model_name=model_name,
             split_sentence_on_double_line_break=split_sentence_on_double_line_break,
+            coref_resolver=coref_resolver,
         )
         self.remove_pronoun_entities = remove_pronoun_entities
-        if coref_resolver is not None:
-            coref_resolver.add_to_pipeline(self.nlp)
-        self._collector = SpanEntityCollector(
-            named_entities, noun_chunks, coref_resolver
-        )
+        self._collector = SpanEntityCollector(named_entities, noun_chunks)
 
     def extract_triplets_from_doc(self, doc: Doc) -> list[Triplet]:
         coref_map = self._collector.build_coref_map(doc)

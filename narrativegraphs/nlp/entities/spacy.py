@@ -1,15 +1,14 @@
 import logging
-from typing import Generator, Literal
+from typing import Generator
 
 from spacy.tokens import Doc
 
 from narrativegraphs.nlp.common.annotation import SpanAnnotation
 from narrativegraphs.nlp.common.spacy import (
     SpanEntityCollector,
+    build_spacy_pipeline,
     calculate_batch_size,
-    ensure_spacy_model,
 )
-from narrativegraphs.nlp.coref import FastCorefResolver
 from narrativegraphs.nlp.coref.common import CoreferenceResolver
 from narrativegraphs.nlp.entities.common import EntityExtractor
 
@@ -31,7 +30,7 @@ class SpacyEntityExtractor(EntityExtractor):
         noun_chunks: bool | tuple[int, int | None] = (2, None),
         remove_pronouns: bool = True,
         split_sentence_on_double_line_break: bool = True,
-        coref_resolver: Literal["fastcoref"] | CoreferenceResolver | None = None,
+        coref_resolver: bool | CoreferenceResolver | None = None,
     ):
         """
         Args:
@@ -43,31 +42,22 @@ class SpacyEntityExtractor(EntityExtractor):
             remove_pronouns: whether to filter out pronoun-only spans
             split_sentence_on_double_line_break: adds extra sentence boundaries on
                 double line breaks ("\\n\\n")
-            coref_resolver: optional coreference resolver; when set, pronouns that
-                resolve to a named antecedent are emitted with the resolved text
+            coref_resolver: optional coreference resolver; True uses FastCorefResolver;
+                when set, pronouns that resolve to a named antecedent are emitted with
+                the resolved text
         """
         if model_name is None:
             model_name = "en_core_web_sm"
-        self.nlp = ensure_spacy_model(model_name)
-        if split_sentence_on_double_line_break:
-            # Only add if not already present
-            if "custom_sentencizer" not in self.nlp.pipe_names:
-                self.nlp.add_pipe("custom_sentencizer", before="parser")
 
         if not named_entities and not noun_chunks:
             raise ValueError(
                 "SpacyEntityExtractor requires at least named_entities or noun_chunks."
             )
         self.remove_pronouns = remove_pronouns
-
-        if coref_resolver == "fastcoref":
-            coref_resolver = FastCorefResolver()
-        if coref_resolver is not None:
-            coref_resolver.add_to_pipeline(self.nlp)
-
-        self._collector = SpanEntityCollector(
-            named_entities, noun_chunks, coref_resolver
+        self.nlp = build_spacy_pipeline(
+            model_name, split_sentence_on_double_line_break, coref_resolver
         )
+        self._collector = SpanEntityCollector(named_entities, noun_chunks)
 
     def extract_entities_from_doc(self, doc: Doc) -> list[SpanAnnotation]:
         """Extract entities from a spaCy Doc.
