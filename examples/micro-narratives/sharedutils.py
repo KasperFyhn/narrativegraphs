@@ -208,7 +208,7 @@ def scatter_frequency_shift(
         merged["frequency_baseline"] + 1,  # +1 to avoid log(0)
         merged["frequency_coref"] + 1,
         c=merged["abs_shift"],
-        cmap="RdYlGn_r",
+        cmap="viridis",
         alpha=0.6,
         s=20,
         norm=plt.matplotlib.colors.LogNorm(),
