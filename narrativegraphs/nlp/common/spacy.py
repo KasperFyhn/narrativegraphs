@@ -97,7 +97,12 @@ def build_spacy_pipeline(
     if coref_resolver is not None:
         coref_resolver.add_to_pipeline(nlp)
 
-        component_name = f"{type(coref_resolver).__name__}_resolver"
+        # The resolve_doc method of a CoreferenceResolver may rely on instance
+        # variables (for one reason or the other). Therefore, we need to have a unique
+        # for each instance registed in SpaCy.
+        component_name = (
+            f"{type(coref_resolver).__name__}-{id(coref_resolver)}_resolve_doc"
+        )
 
         def _make_annotator(resolver):
             def _annotate(doc):
