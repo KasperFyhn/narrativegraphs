@@ -18,8 +18,7 @@ from narrativegraphs.nlp.tuplets.common import CooccurrenceExtractor
 from narrativegraphs.nlp.tuplets.cooccurrences import (
     ChunkCooccurrenceExtractor,
 )
-from narrativegraphs.service import PopulationService
-from narrativegraphs.service.stats import StatsCalculator
+from narrativegraphs.service import PopulationService, StatsCalculator
 
 logging.basicConfig(level=logging.INFO)
 _logger = logging.getLogger("narrativegraphs.pipeline")

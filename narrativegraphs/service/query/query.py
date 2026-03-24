@@ -8,15 +8,15 @@ from narrativegraphs.db.entities import EntityOrm
 from narrativegraphs.db.relations import RelationOrm
 from narrativegraphs.dto.filter import DataBounds
 from narrativegraphs.service.common import DbService
-from narrativegraphs.service.cooccurrences import CooccurrenceService
-from narrativegraphs.service.documents import DocService
-from narrativegraphs.service.entities import EntityService
-from narrativegraphs.service.graph import ConnectionType, GraphService
-from narrativegraphs.service.mention import EntityMentionService
-from narrativegraphs.service.predicates import PredicateService
-from narrativegraphs.service.relations import RelationService
-from narrativegraphs.service.triplets import TripletService
-from narrativegraphs.service.tuplets import TupletService
+from narrativegraphs.service.query.cooccurrences import CooccurrenceService
+from narrativegraphs.service.query.documents import DocService
+from narrativegraphs.service.query.entities import EntityService
+from narrativegraphs.service.query.graph import ConnectionType, GraphService
+from narrativegraphs.service.query.mention import EntityMentionService
+from narrativegraphs.service.query.predicates import PredicateService
+from narrativegraphs.service.query.relations import RelationService
+from narrativegraphs.service.query.triplets import TripletService
+from narrativegraphs.service.query.tuplets import TupletService
 
 
 class QueryService(DbService):

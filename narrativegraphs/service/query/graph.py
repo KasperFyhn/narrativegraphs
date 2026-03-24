@@ -15,7 +15,7 @@ from narrativegraphs.dto.entities import EntityLabel
 from narrativegraphs.dto.filter import GraphFilter
 from narrativegraphs.dto.graph import Community, Edge, Graph, Node, Relation
 from narrativegraphs.service.common import SubService
-from narrativegraphs.service.filter import (
+from narrativegraphs.service.query.filter import (
     create_connection_conditions,
     create_cooccurrence_conditions,
     create_entity_conditions,
