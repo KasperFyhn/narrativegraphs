@@ -1,7 +1,7 @@
 ---
 name: server-guide
 description: Overview of the FastAPI server and REST API
-user-invocable: false
+user-invocable: true
 ---
 
 # Server Layer Guide

@@ -1,7 +1,7 @@
 ---
 name: orm-guide
 description: Overview of ORM structure and corresponding database tables
-user-invocable: false
+user-invocable: true
 ---
 
 # ORM Structure Guide
