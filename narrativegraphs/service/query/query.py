@@ -1,6 +1,6 @@
 from collections import defaultdict
 
-from sqlalchemy import Engine, func
+from sqlalchemy import Engine, func, text
 
 from narrativegraphs.db.cooccurrences import CooccurrenceOrm
 from narrativegraphs.db.documents import DocumentCategory, DocumentOrm
@@ -38,6 +38,10 @@ class QueryService(DbService):
             for doc_category in db.query(DocumentCategory).all():
                 categories[doc_category.name].add(doc_category.value)
             return {name: list(values) for name, values in categories.items()}
+
+    def vacuum_into_file(self, file_path: str):
+        with self.get_session_context() as session:
+            session.execute(text(f"VACUUM main INTO '{file_path}'"))
 
     def get_bounds(self, connection_type: ConnectionType):
         with self.get_session_context() as db:
