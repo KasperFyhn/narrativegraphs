@@ -117,22 +117,6 @@ class StatsCalculator(DbService):
             if not isinstance(annotation_fk_columns, list):
                 annotation_fk_columns = [annotation_fk_columns]
 
-            # Build union of categories from all foreign key columns
-            category_queries = []
-            for fk_column in annotation_fk_columns:
-                category_queries.append(
-                    select(
-                        fk_column.label("target_id"),
-                        DocumentCategory.name,
-                        DocumentCategory.value,
-                    )
-                    .join(DocumentOrm, backing_annotation_type.doc_id == DocumentOrm.id)
-                    .join(
-                        DocumentCategory, DocumentOrm.id == DocumentCategory.target_id
-                    )
-                    .where(fk_column.isnot(None))
-                )
-
             # Build queries for all columns
             category_queries = []
             for fk_column in annotation_fk_columns:

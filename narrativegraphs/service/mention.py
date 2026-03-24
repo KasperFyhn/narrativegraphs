@@ -34,14 +34,14 @@ class EntityMentionService(OrmAssociatedService):
 
         return cleaned
 
-    def get_single(self, id_: int) -> dict:
+    def get_single(self, id_: int) -> IdentifiableSpan:
         return self._get_by_id_and_transform(
             id_, IdentifiableSpan.from_entity_occurrence_orm
         )
 
     def get_multiple(
         self, ids: list[int] = None, limit: Optional[int] = None
-    ) -> list[dict]:
+    ) -> list[IdentifiableSpan]:
         return self._get_multiple_by_ids_and_transform(
             IdentifiableSpan.from_entity_occurrence_orm, ids=ids, limit=limit
         )

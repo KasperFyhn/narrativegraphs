@@ -63,12 +63,12 @@ class TupletService(OrmAssociatedService):
 
         return cleaned
 
-    def get_single(self, id_: int) -> dict:
+    def get_single(self, id_: int) -> Tuplet:
         return self._get_by_id_and_transform(id_, Tuplet.from_orm)
 
     def get_multiple(
         self, ids: list[int] = None, limit: Optional[int] = None
-    ) -> list[dict]:
+    ) -> list[Tuplet]:
         return self._get_multiple_by_ids_and_transform(
             Tuplet.from_orm, ids=ids, limit=limit
         )

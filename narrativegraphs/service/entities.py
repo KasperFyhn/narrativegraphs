@@ -56,8 +56,7 @@ class EntityService(OrmAssociatedService):
             )
             if limit:
                 query = query.limit(limit)
-
-        return list({e_occ.doc_id for e_occ in query.all()})
+            return list({e_occ.doc_id for e_occ in query.all()})
 
     def labels_by_ids(self, entity_ids: list[int]) -> list[EntityLabel]:
         with self._get_session_context() as sc:
@@ -109,5 +108,4 @@ class EntityService(OrmAssociatedService):
             )
             if limit:
                 query = query.limit(limit)
-
-        return [tuplet.doc_id for tuplet in query.all()]
+            return [row.doc_id for row in query.all()]
