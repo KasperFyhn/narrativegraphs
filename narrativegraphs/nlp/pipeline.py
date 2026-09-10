@@ -124,15 +124,19 @@ class Pipeline(_AbstractPipeline):
             _logger.info("Extracting triplets")
             # TODO: use generators instead of lists here
             doc_orms = self._populator.get_docs()
-            extracted_triplets = self._triplet_extractor.batch_extract(
+            # Keyed by index rather than zipped, so that extractors which
+            # finish documents out of order can be stored as results land.
+            extracted_triplets = self._triplet_extractor.batch_extract_unordered(
                 [d.text for d in doc_orms], n_cpu=self.n_cpu
             )
-            docs_and_triplets = zip(doc_orms, extracted_triplets)
             if _logger.isEnabledFor(logging.INFO):
-                docs_and_triplets = tqdm(
-                    docs_and_triplets, desc="Extracting triplets", total=len(doc_orms)
+                extracted_triplets = tqdm(
+                    extracted_triplets,
+                    desc="Extracting triplets",
+                    total=len(doc_orms),
                 )
-            for doc, doc_triplets in docs_and_triplets:
+            for doc_index, doc_triplets in extracted_triplets:
+                doc = doc_orms[doc_index]
                 # Extract entities from triplets
                 entities = list(
                     {e for triplet in doc_triplets for e in [triplet.subj, triplet.obj]}

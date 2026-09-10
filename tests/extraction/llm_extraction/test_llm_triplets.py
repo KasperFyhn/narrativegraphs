@@ -1,5 +1,6 @@
 import builtins
 import json
+import threading
 import unittest
 from types import SimpleNamespace
 
@@ -24,6 +25,34 @@ class FakeMessages:
 class FakeClient:
     def __init__(self, *responses):
         self.messages = FakeMessages(responses)
+
+
+class GatedClient:
+    """A client whose per-document responses are released on demand.
+
+    Lets a test decide the order in which in-flight requests complete.
+    """
+
+    def __init__(self, responses_by_text):
+        self.gates = {text: threading.Event() for text in responses_by_text}
+        self.messages = GatedMessages(responses_by_text, self.gates)
+
+    def release(self, text):
+        self.gates[text].set()
+
+
+class GatedMessages:
+    def __init__(self, responses_by_text, gates):
+        self.responses_by_text = responses_by_text
+        self.gates = gates
+        self.calls = []
+
+    def create(self, **kwargs):
+        text = kwargs["messages"][0]["content"]
+        self.calls.append(kwargs)
+        if not self.gates[text].wait(timeout=10):
+            raise AssertionError(f"response for {text!r} was never released")
+        return self.responses_by_text[text]
 
 
 def json_response(*triplets, stop_reason="end_turn"):
@@ -294,6 +323,79 @@ class TestBatchExtract(unittest.TestCase):
         self.assertEqual(1, len(consumed))
         next(batches)
         self.assertEqual(2, len(consumed))
+
+
+class TestBatchExtractUnordered(unittest.TestCase):
+    def test_yields_each_document_as_it_comes_back(self):
+        texts = [
+            "Frodo carried the ring.",
+            "Sam cooked potatoes.",
+            "Gollum followed Frodo.",
+        ]
+        subjects = ["Frodo", "Sam", "Gollum"]
+        predicates = ["carried", "cooked", "followed"]
+        objects = ["the ring", "potatoes", "Frodo"]
+        client = GatedClient(
+            {
+                text: json_response(triplet_dict(subj, pred, obj, text))
+                for text, subj, pred, obj in zip(texts, subjects, predicates, objects)
+            }
+        )
+        extractor = LlmTripletExtractor(
+            "Extract relations.", client=client, max_concurrent_requests=3
+        )
+
+        results = extractor.batch_extract_unordered(texts)
+
+        # Release the last document first: it should not wait for the first.
+        for released in (2, 1, 0):
+            client.release(texts[released])
+            index, triplets = next(results)
+            self.assertEqual(released, index)
+            self.assertEqual(subjects[released], triplets[0].subj.text)
+
+    def test_index_identifies_the_source_document(self):
+        texts = ["Frodo carried the ring.", "Sam cooked potatoes."]
+        extractor = make_extractor(
+            json_response(triplet_dict("Frodo", "carried", "the ring", texts[0])),
+            json_response(triplet_dict("Sam", "cooked", "potatoes", texts[1])),
+            max_concurrent_requests=1,
+        )
+
+        results = dict(extractor.batch_extract_unordered(texts))
+
+        self.assertEqual("Frodo", results[0][0].subj.text)
+        self.assertEqual("Sam", results[1][0].subj.text)
+
+    def test_consumes_input_lazily(self):
+        consumed = []
+
+        def texts():
+            for text in ["Frodo carried the ring.", "Sam cooked potatoes."]:
+                consumed.append(text)
+                yield text
+
+        extractor = make_extractor(
+            json_response(), json_response(), max_concurrent_requests=1
+        )
+        results = extractor.batch_extract_unordered(texts())
+
+        next(results)
+        self.assertEqual(1, len(consumed))
+        next(results)
+        self.assertEqual(2, len(consumed))
+
+    def test_default_implementation_is_ordered(self):
+        """Extractors that do not override it keep working, in order."""
+        from tests.mocks import MockTripletExtractor
+
+        texts = ["Alice met Bob.", "Carol visited Dave."]
+
+        results = list(MockTripletExtractor().batch_extract_unordered(texts))
+
+        self.assertEqual([0, 1], [index for index, _ in results])
+        self.assertEqual("Alice", results[0][1][0].subj.text)
+        self.assertEqual("Carol", results[1][1][0].subj.text)
 
 
 if __name__ == "__main__":

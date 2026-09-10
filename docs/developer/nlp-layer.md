@@ -72,6 +72,15 @@ Triplets consist of:
 - `obj`: Object entity (SpanAnnotation)
 - `context`: Optional sentence context (AnnotationContext)
 
+Extractors expose two batch methods. `batch_extract` yields one result list per document
+in input order. `batch_extract_unordered` yields `(index, triplets)` pairs instead, where
+`index` is the document's position in the input, and makes no promise about the order
+they arrive in. `Pipeline` consumes the latter, so a backend that finishes documents out
+of order — as an LLM backend does — has its annotations stored the moment each document
+comes back, rather than being held up behind a slower one. The default implementation
+delegates to `batch_extract`, so extractors that do not override it stay ordered and
+keep working unchanged.
+
 ### Cooccurrence Extraction (`tuplets/`)
 
 | Class                             | Description                           |
@@ -149,7 +158,8 @@ source text again (`common/llm.py`):
 
 ### Cost and robustness
 
-- One request per document, `max_concurrent_requests` of them in flight at a time.
+- One request per document, `max_concurrent_requests` of them in flight at a time,
+  each stored as it returns via `batch_extract_unordered`.
 - Structured outputs (`output_config.format`) guarantee schema-valid JSON.
 - The default `effort="low"` suits bounded extraction at corpus scale; raise it for
   instructions that call for genuine judgement.

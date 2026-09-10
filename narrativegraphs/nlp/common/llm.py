@@ -14,7 +14,7 @@ import json
 import logging
 import re
 from collections import deque
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from itertools import islice
 from typing import Any, Callable, Generator, Iterable, Optional, TypeVar
 
@@ -208,6 +208,38 @@ def map_ordered(
             next_item = next(iterator, _SENTINEL)
             if next_item is not _SENTINEL:
                 pending.append(executor.submit(fn, next_item))
+
+
+def map_completed(
+    fn: Callable[[_T], _R], items: Iterable[_T], max_workers: int = 4
+) -> Generator[tuple[int, _R], None, None]:
+    """Apply `fn` concurrently, yielding (index, result) as each call completes.
+
+    As in `map_ordered`, at most `max_workers` items are in flight and no more
+    of `items` is consumed than that. The difference is that a finished result
+    is handed over immediately rather than waiting behind an earlier item that
+    is still running, which is what lets a caller store annotations for a
+    document as soon as it comes back.
+    """
+    if max_workers <= 1:
+        for index, item in enumerate(items):
+            yield index, fn(item)
+        return
+
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        indexed = enumerate(items)
+        pending = {
+            executor.submit(fn, item): index
+            for index, item in islice(indexed, max_workers)
+        }
+        while pending:
+            completed, _ = wait(pending, return_when=FIRST_COMPLETED)
+            for future in completed:
+                yield pending.pop(future), future.result()
+                next_item = next(indexed, None)
+                if next_item is not None:
+                    index, item = next_item
+                    pending[executor.submit(fn, item)] = index
 
 
 def align_span(

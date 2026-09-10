@@ -10,6 +10,7 @@ from narrativegraphs.nlp.common.llm import (
     Span,
     align_sequence,
     align_span,
+    map_completed,
     map_ordered,
 )
 from narrativegraphs.nlp.triplets.common import Triplet, TripletExtractor
@@ -146,6 +147,25 @@ class LlmTripletExtractor(TripletExtractor):
             yields triplets per text in the same order as the texts iterable
         """
         yield from map_ordered(
+            self.extract, texts, max_workers=self.max_concurrent_requests
+        )
+
+    def batch_extract_unordered(
+        self, texts: Iterable[str], n_cpu: int = 1, **kwargs
+    ) -> Generator[tuple[int, list[Triplet]], None, None]:
+        """Extract from several documents, handing over each as it comes back.
+
+        Args:
+            texts: an iterable of raw text strings
+            n_cpu: ignored; requests are I/O-bound, so concurrency is governed
+                by `max_concurrent_requests` instead
+            **kwargs: unused
+
+        Returns:
+            yields (index, triplets) pairs in completion order, so that a slow
+            document does not hold up the ones behind it
+        """
+        yield from map_completed(
             self.extract, texts, max_workers=self.max_concurrent_requests
         )
 

@@ -37,6 +37,13 @@ Both handle: document ingestion → extraction → mapping → stats calculation
 - **ChunkCooccurrenceExtractor** - Sentence-windowed cooccurrences (default)
 - **DocumentCooccurrenceExtractor** - All entity pairs in document
 
+## Batch Contracts
+
+- **batch_extract** - yields one result list per document, in input order
+- **batch_extract_unordered** - yields `(index, results)` pairs in any order; what
+  `Pipeline` consumes, so out-of-order backends are stored as results land. Defaults to
+  delegating to `batch_extract`.
+
 ## Mapping (`mapping/`)
 
 Maps surface forms to canonical labels: `dict[str, str]`
