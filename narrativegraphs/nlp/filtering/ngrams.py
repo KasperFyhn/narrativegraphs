@@ -3,7 +3,8 @@ from collections import Counter
 from typing import Iterable
 
 import nltk
-import spacy
+
+from narrativegraphs.nlp.common.spacy import ensure_spacy_model
 
 
 def _bigrams(tokens: list[str]):
@@ -20,7 +21,7 @@ class BigramFilter:
     ):
         if model_name is None:
             model_name = "en_core_web_sm"
-        self.nlp = spacy.load(model_name, enable=["tokenizer"])
+        self.nlp = ensure_spacy_model(model_name, enable=["tokenizer"])
         self._lowercase = lowercase
 
         self._total_token_count = 0

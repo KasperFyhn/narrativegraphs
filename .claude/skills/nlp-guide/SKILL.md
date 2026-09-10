@@ -67,6 +67,14 @@ Maps surface forms to canonical labels: `dict[str, str]`
 - **align_span / align_sequence** - Locate model-returned surface forms in the source text
 - **map_ordered** - Order-preserving concurrent map for I/O-bound per-document requests
 
+## spaCy Model Loading (`common/spacy.py`)
+
+- **ensure_spacy_model** - the single entry point; pipelines from the same model share one
+  `Vocab` (~83 MB -> ~30 MB for a NarrativeGraph). Each call still returns its own mutable
+  `Language`, because call sites reconfigure pipelines incompatibly (extractor needs the
+  parser, normalizer disables it) - which is why spaCy itself does not cache models.
+- **clear_shared_vocabs** - drops the cache; for test isolation only
+
 ## Data Models (`common/`)
 
 - **SpanAnnotation** - Text span with offsets (`text`, `start_char`, `end_char`)

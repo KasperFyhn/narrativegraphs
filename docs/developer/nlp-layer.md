@@ -205,12 +205,31 @@ fitting several times, for instance to compare mappers over identical triplets.
 
 ### Common Utilities (`common/`)
 
-| Module                     | Purpose                                                                |
-| -------------------------- | ---------------------------------------------------------------------- |
-| **annotation.py**          | Data models: `SpanAnnotation`, `AnnotationContext`                     |
-| **spacy.py**               | spaCy utilities: model loading, batch size calculation, span filtering |
-| **transformcategories.py** | Normalizes various category input formats                              |
-| **llm.py**                 | LLM utilities: JSON requests, concurrency, span alignment              |
+| Module            | Purpose                                                                |
+| ----------------- | ---------------------------------------------------------------------- |
+| **annotation.py** | Data models: `SpanAnnotation`, `AnnotationContext`                     |
+| **spacy.py**      | spaCy utilities: model loading, batch size calculation, span filtering |
+
+### Shared vocabularies
+
+`ensure_spacy_model` is the single entry point for loading a spaCy model, and pipelines
+loaded from the same model share one `Vocab`.
+
+spaCy deliberately does not cache loaded models, and this package is a good example of
+why: a `Language` object is mutable, and the call sites reconfigure it in conflicting
+ways — `build_spacy_pipeline` adds a sentencizer and needs the parser enabled, while
+`spacy_normalizer` disables the parser. Handing out a shared `Language` would let one of
+those silently reconfigure the other.
+
+The `Vocab` is a different matter: it holds the expensive part, it is identical for a
+given model, and pipelines only ever add to it. spaCy's `vocab` argument exists precisely
+so it can be shared. A `NarrativeGraph` loads `en_core_web_sm` three times over — once for
+the triplet extractor and once per mapper — so sharing it cuts construction from about
+83 MB to 30 MB, with every pipeline still free to be reconfigured independently.
+
+`clear_shared_vocabs()` drops the cache, which is only needed to isolate tests.
+| **transformcategories.py** | Normalizes various category input formats |
+| **llm.py** | LLM utilities: JSON requests, concurrency, span alignment |
 
 `SpanAnnotation` represents a text span with:
 
