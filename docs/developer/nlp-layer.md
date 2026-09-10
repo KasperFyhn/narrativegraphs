@@ -64,6 +64,7 @@ Default components:
 | **DependencyGraphExtractor**      | Verb-first (top-down from ROOT); fine-grained boolean flags per relation type           |
 | **EntityPairDependencyExtractor** | Entity-pair (bottom-up, path matching); declarative `PathPattern` list; sentence guards |
 | **LlmTripletExtractor**           | Prompts an LLM with a plain-language instruction; one request per document              |
+| **LlmBatchTripletExtractor**      | The same, through the Message Batches API: half the price, asynchronous                 |
 
 Triplets consist of:
 
@@ -156,15 +157,49 @@ source text again (`common/llm.py`):
 3. Triplets with a part that cannot be found, or with overlapping parts, are dropped.
    Hallucinated and paraphrased spans do not reach the database.
 
+### Live or batched
+
+`LlmTripletExtractor` sends one request per document and answers immediately, with
+`max_concurrent_requests` in flight at a time, each stored as it returns.
+
+`LlmBatchTripletExtractor` sends the same requests through the Message Batches API at
+**half the price**. That work is asynchronous: most batches finish within an hour, the
+limit is 24 hours, and a batch hands over nothing until it has ended in full. Documents
+are therefore submitted in chunks of `chunk_size`, and each chunk's results are stored as
+that chunk ends. Used as a drop-in extractor, `fit` simply blocks until the corpus is
+done.
+
+### Submitting one day, collecting the next
+
+Batch results stay retrievable for 29 days, so the wait need not be sat through. `submit`
+returns the batch IDs and exits; `collect_all` turns them back into triplets later, which
+`fit` accepts as pre-computed annotations:
+
+```python
+extractor = LlmBatchTripletExtractor("Extract relations between ...")
+batch_ids = extractor.submit(docs)      # write these down, turn the machine off
+# ... another day ...
+triplets = extractor.collect_all(batch_ids, docs)
+ng = NarrativeGraph().fit(docs, triplets=triplets)
+```
+
+`collect_all` needs the same documents in the same order, because aligning a triplet
+requires its source text, and because each request is identified by its document's index.
+
+The same `triplets=` argument serves any pre-computed annotations — extracting once and
+fitting several times, for instance to compare mappers over identical triplets.
+`CooccurrenceGraph.fit` takes `entities=` in the same way, and both are `annotations=` on
+`Pipeline.run`.
+
 ### Cost and robustness
 
-- One request per document, `max_concurrent_requests` of them in flight at a time,
-  each stored as it returns via `batch_extract_unordered`.
 - Structured outputs (`output_config.format`) guarantee schema-valid JSON.
 - The default `effort="low"` suits bounded extraction at corpus scale; raise it for
   instructions that call for genuine judgement.
 - Refusals, truncated responses and transient failures skip the document with a warning;
   authentication and request errors raise, since every later document would hit them too.
+- A batch request that errored or expired yields no triplets for that document and is
+  logged with a summary count at the end, so one bad document does not cost the run.
 
 ## Supporting Components
 

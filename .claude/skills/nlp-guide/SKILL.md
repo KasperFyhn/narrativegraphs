@@ -30,6 +30,7 @@ Both handle: document ingestion → extraction → mapping → stats calculation
 - **DependencyGraphExtractor** - Verb-first traversal; fine-grained boolean flags per relation type; no sentence-length limits
 - **EntityPairExtractor** - Entity-pair traversal; declarative `PathPattern` list; supports compound "verb prep" predicates; guards: `max_sentence_length=60`, `max_entity_distance=10`
 - **LlmTripletExtractor** - Prompts an LLM (Anthropic; optional `llm-anthropic` extra) with a plain-language instruction; returned surface forms are aligned back to character offsets, unlocatable ones dropped
+- **LlmBatchTripletExtractor** - Same via the Message Batches API at half the price; `submit()` returns batch IDs, `collect_all()` redeems them later (results live 29 days)
 
 ### Cooccurrence Extraction (`tuplets/`)
 
@@ -43,6 +44,13 @@ Both handle: document ingestion → extraction → mapping → stats calculation
 - **batch_extract_unordered** - yields `(index, results)` pairs in any order; what
   `Pipeline` consumes, so out-of-order backends are stored as results land. Defaults to
   delegating to `batch_extract`.
+
+## Pre-computed Annotations
+
+`Pipeline.run(annotations=...)`, `NarrativeGraph.fit(triplets=...)` and
+`CooccurrenceGraph.fit(entities=...)` accept one annotation list per document and skip
+extraction. Used for batch runs collected later, and for reusing one extraction across
+several fits.
 
 ## Mapping (`mapping/`)
 

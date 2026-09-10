@@ -4,7 +4,10 @@ import threading
 import unittest
 from types import SimpleNamespace
 
-from narrativegraphs.nlp.triplets.llm import LlmTripletExtractor
+from narrativegraphs.nlp.triplets.llm import (
+    LlmBatchTripletExtractor,
+    LlmTripletExtractor,
+)
 
 
 class FakeMessages:
@@ -53,6 +56,55 @@ class GatedMessages:
         if not self.gates[text].wait(timeout=10):
             raise AssertionError(f"response for {text!r} was never released")
         return self.responses_by_text[text]
+
+
+class FakeBatches:
+    """Stands in for `anthropic.Anthropic().messages.batches`.
+
+    Results are replayed per batch, optionally reordered, since the real API
+    returns them in arbitrary order.
+    """
+
+    def __init__(self, outcomes, reorder=None, polls_until_ended=0):
+        self.outcomes = outcomes
+        self.reorder = reorder
+        self.polls_until_ended = polls_until_ended
+        self.submitted = {}
+        self.polls = {}
+
+    def create(self, requests):
+        batch_id = f"batch-{len(self.submitted)}"
+        self.submitted[batch_id] = list(requests)
+        return SimpleNamespace(id=batch_id)
+
+    def retrieve(self, batch_id):
+        seen = self.polls.get(batch_id, 0)
+        self.polls[batch_id] = seen + 1
+        status = "ended" if seen >= self.polls_until_ended else "in_progress"
+        return SimpleNamespace(
+            processing_status=status,
+            request_counts=SimpleNamespace(processing=0, succeeded=0, errored=0),
+        )
+
+    def results(self, batch_id):
+        requests = list(self.submitted[batch_id])
+        if self.reorder is not None:
+            requests = self.reorder(requests)
+        for request in requests:
+            text = request["params"]["messages"][0]["content"]
+            outcome = self.outcomes[text]
+            if isinstance(outcome, str):
+                # "errored", "expired" or "canceled"
+                result = SimpleNamespace(type=outcome)
+            else:
+                result = SimpleNamespace(type="succeeded", message=outcome)
+            yield SimpleNamespace(custom_id=request["custom_id"], result=result)
+
+
+class FakeBatchClient:
+    def __init__(self, outcomes, reorder=None, polls_until_ended=0):
+        self.batches = FakeBatches(outcomes, reorder, polls_until_ended)
+        self.messages = SimpleNamespace(batches=self.batches)
 
 
 def json_response(*triplets, stop_reason="end_turn"):
@@ -396,6 +448,181 @@ class TestBatchExtractUnordered(unittest.TestCase):
         self.assertEqual([0, 1], [index for index, _ in results])
         self.assertEqual("Alice", results[0][1][0].subj.text)
         self.assertEqual("Carol", results[1][1][0].subj.text)
+
+
+TEXTS = [
+    "Frodo carried the ring.",
+    "Sam cooked potatoes.",
+    "Gollum followed Frodo.",
+]
+PARTS = [
+    ("Frodo", "carried", "the ring"),
+    ("Sam", "cooked", "potatoes"),
+    ("Gollum", "followed", "Frodo"),
+]
+
+
+def batch_outcomes(*, failing=(), texts=TEXTS):
+    outcomes = {}
+    for index, (text, parts) in enumerate(zip(texts, PARTS)):
+        if index in failing:
+            outcomes[text] = "errored"
+        else:
+            outcomes[text] = json_response(triplet_dict(*parts, text))
+    return outcomes
+
+
+def make_batch_extractor(client, **kwargs):
+    return LlmBatchTripletExtractor(
+        "Extract relations.", client=client, poll_interval=0, **kwargs
+    )
+
+
+class TestBatchSubmission(unittest.TestCase):
+    def test_submit_returns_batch_ids_without_waiting(self):
+        client = FakeBatchClient(batch_outcomes())
+        extractor = make_batch_extractor(client)
+
+        batch_ids = extractor.submit(TEXTS)
+
+        self.assertEqual(["batch-0"], batch_ids)
+        self.assertEqual({}, client.batches.polls)
+
+    def test_submits_in_chunks(self):
+        client = FakeBatchClient(batch_outcomes())
+        extractor = make_batch_extractor(client, chunk_size=2)
+
+        batch_ids = extractor.submit(TEXTS)
+
+        self.assertEqual(["batch-0", "batch-1"], batch_ids)
+        self.assertEqual(2, len(client.batches.submitted["batch-0"]))
+        self.assertEqual(1, len(client.batches.submitted["batch-1"]))
+
+    def test_custom_id_carries_the_document_index(self):
+        client = FakeBatchClient(batch_outcomes())
+        make_batch_extractor(client).submit(TEXTS)
+
+        ids = [r["custom_id"] for r in client.batches.submitted["batch-0"]]
+        self.assertEqual(["doc-0", "doc-1", "doc-2"], ids)
+
+    def test_batched_request_matches_the_live_one(self):
+        client = FakeBatchClient(batch_outcomes())
+        make_batch_extractor(client).submit(TEXTS)
+
+        params = client.batches.submitted["batch-0"][0]["params"]
+        self.assertEqual("claude-opus-5", params["model"])
+        self.assertEqual("json_schema", params["output_config"]["format"]["type"])
+        self.assertEqual(TEXTS[0], params["messages"][0]["content"])
+
+    def test_empty_documents_are_not_submitted(self):
+        texts = [TEXTS[0], "   ", TEXTS[2]]
+        outcomes = batch_outcomes(texts=texts)
+        outcomes.pop("   ", None)
+        client = FakeBatchClient(outcomes)
+
+        make_batch_extractor(client).submit(texts)
+
+        ids = [r["custom_id"] for r in client.batches.submitted["batch-0"]]
+        self.assertEqual(["doc-0", "doc-2"], ids)
+
+
+class TestBatchCollection(unittest.TestCase):
+    def test_results_are_matched_by_id_not_by_position(self):
+        # The API returns results in arbitrary order; reverse them to prove
+        # nothing relies on the submission order.
+        client = FakeBatchClient(batch_outcomes(), reorder=lambda rs: rs[::-1])
+        extractor = make_batch_extractor(client)
+
+        collected = dict(extractor.collect(extractor.submit(TEXTS), TEXTS))
+
+        self.assertEqual("Frodo", collected[0][0].subj.text)
+        self.assertEqual("Sam", collected[1][0].subj.text)
+        self.assertEqual("Gollum", collected[2][0].subj.text)
+
+    def test_yields_each_chunk_as_it_ends(self):
+        client = FakeBatchClient(batch_outcomes())
+        extractor = make_batch_extractor(client, chunk_size=1)
+
+        results = extractor.batch_extract_unordered(TEXTS)
+
+        # One chunk per document, so results arrive one at a time.
+        self.assertEqual(0, next(results)[0])
+        self.assertEqual(1, next(results)[0])
+        self.assertEqual(2, next(results)[0])
+
+    def test_waits_for_a_running_batch(self):
+        client = FakeBatchClient(batch_outcomes(), polls_until_ended=2)
+        extractor = make_batch_extractor(client)
+
+        collected = dict(extractor.batch_extract_unordered(TEXTS))
+
+        self.assertEqual(3, len(collected))
+        self.assertEqual(3, client.batches.polls["batch-0"])
+
+    def test_failed_documents_are_skipped_not_fatal(self):
+        client = FakeBatchClient(batch_outcomes(failing=(1,)))
+        extractor = make_batch_extractor(client)
+
+        collected = dict(extractor.batch_extract_unordered(TEXTS))
+
+        self.assertEqual([], collected[1])
+        self.assertEqual("Frodo", collected[0][0].subj.text)
+        self.assertEqual("Gollum", collected[2][0].subj.text)
+
+    def test_every_document_is_accounted_for(self):
+        texts = [TEXTS[0], "   ", TEXTS[2]]
+        outcomes = batch_outcomes(texts=texts)
+        outcomes.pop("   ", None)
+        client = FakeBatchClient(outcomes)
+
+        collected = dict(make_batch_extractor(client).batch_extract_unordered(texts))
+
+        self.assertEqual({0, 1, 2}, set(collected))
+        self.assertEqual([], collected[1])
+
+    def test_unknown_custom_id_is_ignored(self):
+        client = FakeBatchClient(batch_outcomes())
+        extractor = make_batch_extractor(client)
+        extractor.submit(TEXTS)
+        client.batches.submitted["batch-0"][0]["custom_id"] = "surprise"
+
+        collected = dict(extractor.collect(["batch-0"], TEXTS))
+
+        self.assertNotIn(0, collected)
+        self.assertEqual("Sam", collected[1][0].subj.text)
+
+    def test_batch_extract_restores_input_order(self):
+        client = FakeBatchClient(batch_outcomes(), reorder=lambda rs: rs[::-1])
+        extractor = make_batch_extractor(client)
+
+        results = list(extractor.batch_extract(TEXTS))
+
+        self.assertEqual(
+            ["Frodo", "Sam", "Gollum"], [ts[0].subj.text for ts in results]
+        )
+
+
+class TestBatchResume(unittest.TestCase):
+    def test_ids_can_be_collected_by_a_later_instance(self):
+        """Submit, throw the extractor away, collect with the IDs next day."""
+        client = FakeBatchClient(batch_outcomes())
+        batch_ids = make_batch_extractor(client).submit(TEXTS)
+
+        # A fresh extractor, as if the process had been restarted.
+        resumed = make_batch_extractor(client)
+        triplets = resumed.collect_all(batch_ids, TEXTS)
+
+        self.assertEqual(3, len(triplets))
+        self.assertEqual("Frodo", triplets[0][0].subj.text)
+        self.assertEqual("Gollum", triplets[2][0].subj.text)
+
+    def test_collect_all_returns_one_list_per_document(self):
+        client = FakeBatchClient(batch_outcomes(failing=(2,)))
+        extractor = make_batch_extractor(client)
+
+        triplets = extractor.collect_all(extractor.submit(TEXTS), TEXTS)
+
+        self.assertEqual([1, 1, 0], [len(t) for t in triplets])
 
 
 if __name__ == "__main__":

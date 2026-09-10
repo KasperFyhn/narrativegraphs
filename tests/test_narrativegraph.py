@@ -73,5 +73,61 @@ class TestNarrativeGraphProperties(unittest.TestCase):
         self.assertGreater(len(graph.nodes), 0)
 
 
+class TestFitWithPrecomputedTriplets(unittest.TestCase):
+    """Extraction done elsewhere — a batch run collected later, or reused."""
+
+    docs = ["Alice met Bob.", "Carol visited Dave."]
+
+    def triplets(self):
+        return [MockTripletExtractor().extract(doc) for doc in self.docs]
+
+    def graph(self, **kwargs):
+        return NarrativeGraph(
+            entity_mapper=MockMapper(), predicate_mapper=MockMapper(), **kwargs
+        )
+
+    def test_extractor_is_not_run(self):
+        class ExplodingExtractor(MockTripletExtractor):
+            def extract(self, text):
+                raise AssertionError("the extractor should not have run")
+
+            def batch_extract(self, texts, n_cpu=1, **kwargs):
+                raise AssertionError("the extractor should not have run")
+
+            def batch_extract_unordered(self, texts, n_cpu=1, **kwargs):
+                raise AssertionError("the extractor should not have run")
+
+        ng = self.graph(triplet_extractor=ExplodingExtractor()).fit(
+            self.docs, triplets=self.triplets()
+        )
+
+        self.assertGreater(len(ng.relations_), 0)
+
+    def test_gives_the_same_graph_as_extracting_inline(self):
+        extracted = self.graph(triplet_extractor=MockTripletExtractor()).fit(self.docs)
+        precomputed = self.graph(triplet_extractor=MockTripletExtractor()).fit(
+            self.docs, triplets=self.triplets()
+        )
+
+        self.assertEqual(
+            sorted(extracted.entities_["label"]),
+            sorted(precomputed.entities_["label"]),
+        )
+        self.assertEqual(len(extracted.relations_), len(precomputed.relations_))
+
+    def test_rejects_a_mismatched_number_of_lists(self):
+        graph = self.graph(triplet_extractor=MockTripletExtractor())
+
+        with self.assertRaises(ValueError):
+            graph.fit(self.docs, triplets=[[]])
+
+    def test_documents_are_still_stored(self):
+        ng = self.graph(triplet_extractor=MockTripletExtractor()).fit(
+            self.docs, triplets=self.triplets()
+        )
+
+        self.assertEqual(len(self.docs), len(ng.documents_))
+
+
 if __name__ == "__main__":
     unittest.main()
