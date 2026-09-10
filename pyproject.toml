@@ -52,6 +52,7 @@ dependencies = [
 
 [project.optional-dependencies]
 coref-fastcoref = ["fastcoref>=2.1.3"]
+llm-anthropic = ["anthropic>=1.0.0"]
 
 dev = [
     "pytest~=8.4.1",

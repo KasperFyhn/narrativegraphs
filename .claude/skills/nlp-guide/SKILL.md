@@ -29,6 +29,7 @@ Both handle: document ingestion → extraction → mapping → stats calculation
 - **TripletExtractor** - Abstract base class
 - **DependencyGraphExtractor** - Verb-first traversal; fine-grained boolean flags per relation type; no sentence-length limits
 - **EntityPairExtractor** - Entity-pair traversal; declarative `PathPattern` list; supports compound "verb prep" predicates; guards: `max_sentence_length=60`, `max_entity_distance=10`
+- **LlmTripletExtractor** - Prompts an LLM (Anthropic; optional `llm-anthropic` extra) with a plain-language instruction; returned surface forms are aligned back to character offsets, unlocatable ones dropped
 
 ### Cooccurrence Extraction (`tuplets/`)
 
@@ -44,6 +45,12 @@ Maps surface forms to canonical labels: `dict[str, str]`
 - **StemmingMapper** - Groups by Porter stemmed form
 - **SubgramStemmingMapper** - Stemming + subgram matching
 - **SubgramLemmatizationMapper** - Lemmatization + subgram matching (default)
+
+## LLM Support (`common/llm.py`)
+
+- **LlmJsonClient** - Schema-constrained JSON requests to Claude
+- **align_span / align_sequence** - Locate model-returned surface forms in the source text
+- **map_ordered** - Order-preserving concurrent map for I/O-bound per-document requests
 
 ## Data Models (`common/`)
 

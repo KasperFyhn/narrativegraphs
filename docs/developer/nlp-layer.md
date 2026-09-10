@@ -63,6 +63,7 @@ Default components:
 | **TripletExtractor**              | Abstract base class                                                                     |
 | **DependencyGraphExtractor**      | Verb-first (top-down from ROOT); fine-grained boolean flags per relation type           |
 | **EntityPairDependencyExtractor** | Entity-pair (bottom-up, path matching); declarative `PathPattern` list; sentence guards |
+| **LlmTripletExtractor**           | Prompts an LLM with a plain-language instruction; one request per document              |
 
 Triplets consist of:
 
@@ -108,6 +109,53 @@ Mappers normalize surface forms to canonical labels, creating a `dict[str, str]`
 - Configurable for nouns or verbs via `head_word_type`
 - Ranking by shortest label or most frequent
 
+## LLM-Based Components
+
+Where the rule-based components derive relations from the dependency parse, the LLM-based
+ones take a plain-language instruction stating what to extract:
+
+```python
+from narrativegraphs.nlp.triplets import LlmTripletExtractor
+
+extractor = LlmTripletExtractor(
+    "Extract relations between characters and the places they travel to."
+)
+pipeline = Pipeline(engine, triplet_extractor=extractor)
+```
+
+They require the optional `anthropic` dependency:
+
+```bash
+pip install "narrativegraphs[llm-anthropic]"
+```
+
+and credentials in the environment (`ANTHROPIC_API_KEY`), or a pre-configured
+`anthropic.Anthropic` instance passed as `client`.
+
+### Span alignment
+
+The rest of the package addresses entities by their character offsets in the document,
+but a model returns strings. Every returned surface form is therefore located in the
+source text again (`common/llm.py`):
+
+1. The quoted evidence sentence is located and becomes the search window as well as the
+   triplet's `context`, so that a repeated entity is anchored in the sentence the model
+   actually meant.
+2. Within that window, the parts are matched in order — verbatim first, then
+   case-insensitively, then allowing whitespace to differ — falling back to the whole
+   document and to order-independent matching.
+3. Triplets with a part that cannot be found, or with overlapping parts, are dropped.
+   Hallucinated and paraphrased spans do not reach the database.
+
+### Cost and robustness
+
+- One request per document, `max_concurrent_requests` of them in flight at a time.
+- Structured outputs (`output_config.format`) guarantee schema-valid JSON.
+- The default `effort="low"` suits bounded extraction at corpus scale; raise it for
+  instructions that call for genuine judgement.
+- Refusals, truncated responses and transient failures skip the document with a warning;
+  authentication and request errors raise, since every later document would hit them too.
+
 ## Supporting Components
 
 ### Common Utilities (`common/`)
@@ -117,6 +165,7 @@ Mappers normalize surface forms to canonical labels, creating a `dict[str, str]`
 | **annotation.py**          | Data models: `SpanAnnotation`, `AnnotationContext`                     |
 | **spacy.py**               | spaCy utilities: model loading, batch size calculation, span filtering |
 | **transformcategories.py** | Normalizes various category input formats                              |
+| **llm.py**                 | LLM utilities: JSON requests, concurrency, span alignment              |
 
 `SpanAnnotation` represents a text span with:
 
