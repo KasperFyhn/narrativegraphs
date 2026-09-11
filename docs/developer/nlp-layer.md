@@ -133,14 +133,55 @@ extractor = LlmTripletExtractor(
 pipeline = Pipeline(engine, triplet_extractor=extractor)
 ```
 
-They require the optional `anthropic` dependency:
+### Which model answers
 
-```bash
-pip install "narrativegraphs[llm-anthropic]"
+The components are provider-agnostic. They depend only on `LlmClient`, an interface that
+takes a system prompt, a user prompt and a JSON schema and returns the object the model
+produced. Structured output is the only thing providers genuinely disagree about, so it is
+the only thing abstracted.
+
+Two implementations ship:
+
+| Client                     | Covers                                                           | Install                          |
+| -------------------------- | ---------------------------------------------------------------- | -------------------------------- |
+| **AnthropicClient**        | Claude, immediate or batched                                     | `narrativegraphs[llm-anthropic]` |
+| **OpenAiCompatibleClient** | OpenAI, LM Studio, Ollama, vLLM — anything speaking its chat API | `narrativegraphs[llm-openai]`    |
+
+`AnthropicClient` is the default, so the common case needs no client at all. A different
+model or a local server is one argument:
+
+```python
+from narrativegraphs.nlp.common.llm import AnthropicClient, OpenAiCompatibleClient
+
+# Claude, the default
+LlmTripletExtractor("Extract relations between ...")
+
+# a cheaper Claude model
+LlmTripletExtractor("...", llm=AnthropicClient(model="claude-haiku-4-5"))
+
+# a local model through Ollama
+LlmTripletExtractor(
+    "...", llm=OpenAiCompatibleClient("llama3.1:8b", base_url="http://localhost:11434/v1")
+)
 ```
 
-and credentials in the environment (`ANTHROPIC_API_KEY`), or a pre-configured
-`anthropic.Anthropic` instance passed as `client`.
+Credentials come from the environment (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`); local
+servers ignore the key, so none is needed. Both clients accept a pre-configured SDK client
+as `client=`, which is also how the tests inject fakes.
+
+The two differ in what they can do beyond a single request:
+
+- **Effort and prompt caching** are Anthropic features; `AnthropicClient` takes `effort`
+  and caches the system prompt. There is no equivalent to map onto a generic server, and
+  sampling parameters such as `temperature` are rejected by current Claude models, so
+  `temperature` lives on `OpenAiCompatibleClient` only.
+- **Batching** is `BatchLlmClient`, a narrower interface that only `AnthropicClient`
+  implements. `LlmBatchTripletExtractor` requires it and raises `TypeError` at
+  construction otherwise, since most OpenAI-compatible servers have no batch API at all.
+- **Sloppy output**: small local models wrap JSON in code fences even when given a schema,
+  so `OpenAiCompatibleClient` strips them. `strict` schema adherence is off by default
+  because not every compatible server implements it; hosted OpenAI does, and the schemas
+  used here are strict-compatible.
 
 ### Span alignment
 

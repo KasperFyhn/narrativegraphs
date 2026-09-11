@@ -6,8 +6,9 @@ from typing import Any, Generator, Iterable, Optional
 from narrativegraphs.nlp.common.annotation import AnnotationContext, SpanAnnotation
 from narrativegraphs.nlp.common.llm import (
     DEFAULT_BATCH_CHUNK_SIZE,
-    DEFAULT_MODEL,
-    LlmJsonClient,
+    AnthropicClient,
+    BatchLlmClient,
+    LlmClient,
     Span,
     align_sequence,
     align_span,
@@ -78,34 +79,22 @@ class _LlmTripletExtractor(TripletExtractor):
     Requires optional dependency: anthropic>=1.0.0
     """
 
-    def __init__(
-        self,
-        instructions: str,
-        model: str = DEFAULT_MODEL,
-        effort: str = "low",
-        max_tokens: int = 16000,
-        client: Any = None,
-    ):
+    def __init__(self, instructions: str, llm: LlmClient = None):
         """
         Args:
             instructions: a short description of the entities and relations to
                 extract, e.g. "extract relations between characters and the
                 places they travel to"
-            model: Claude model ID
-            effort: thinking/token effort, one of "low", "medium", "high",
-                "xhigh", "max"; raise it for instructions that call for
-                genuine judgement
-            max_tokens: cap on each response
-            client: a pre-configured `anthropic.Anthropic` instance
+            llm: which model to ask; defaults to Claude via `AnthropicClient`.
+                Pass `OpenAiCompatibleClient(...)` for OpenAI or any server
+                speaking its chat-completions API.
         """
         if not instructions or not instructions.strip():
             raise ValueError(
                 "instructions must describe which entities and relations to extract"
             )
         self.instructions = instructions.strip()
-        self._llm = LlmJsonClient(
-            model=model, effort=effort, max_tokens=max_tokens, client=client
-        )
+        self._llm = llm if llm is not None else AnthropicClient()
         self._system_prompt = _SYSTEM_PROMPT.format(instructions=self.instructions)
 
     def _triplets_from_response(
@@ -173,30 +162,17 @@ class LlmTripletExtractor(_LlmTripletExtractor):
     def __init__(
         self,
         instructions: str,
-        model: str = DEFAULT_MODEL,
-        effort: str = "low",
-        max_tokens: int = 16000,
+        llm: LlmClient = None,
         max_concurrent_requests: int = 4,
-        client: Any = None,
     ):
         """
         Args:
             instructions: a short description of the entities and relations to
                 extract
-            model: Claude model ID
-            effort: thinking/token effort, one of "low", "medium", "high",
-                "xhigh", "max"
-            max_tokens: cap on each response
+            llm: which model to ask; defaults to Claude
             max_concurrent_requests: number of documents in flight at a time
-            client: a pre-configured `anthropic.Anthropic` instance
         """
-        super().__init__(
-            instructions,
-            model=model,
-            effort=effort,
-            max_tokens=max_tokens,
-            client=client,
-        )
+        super().__init__(instructions, llm=llm)
         self.max_concurrent_requests = max_concurrent_requests
 
     def extract(self, text: str) -> list[Triplet]:
@@ -267,33 +243,31 @@ class LlmBatchTripletExtractor(_LlmTripletExtractor):
     def __init__(
         self,
         instructions: str,
-        model: str = DEFAULT_MODEL,
-        effort: str = "low",
-        max_tokens: int = 16000,
+        llm: BatchLlmClient = None,
         chunk_size: int = DEFAULT_BATCH_CHUNK_SIZE,
         poll_interval: float = 60.0,
-        client: Any = None,
     ):
         """
         Args:
             instructions: a short description of the entities and relations to
                 extract
-            model: Claude model ID
-            effort: thinking/token effort, one of "low", "medium", "high",
-                "xhigh", "max"
-            max_tokens: cap on each response
+            llm: which model to ask; must be able to queue work
+                asynchronously, which today means Claude via `AnthropicClient`
             chunk_size: documents per batch; smaller chunks mean results start
                 landing sooner
             poll_interval: seconds between checks on a running batch
-            client: a pre-configured `anthropic.Anthropic` instance
+
+        Raises:
+            TypeError: the client cannot queue work asynchronously. Most
+                OpenAI-compatible servers have no batch API at all; use
+                `LlmTripletExtractor` with those.
         """
-        super().__init__(
-            instructions,
-            model=model,
-            effort=effort,
-            max_tokens=max_tokens,
-            client=client,
-        )
+        super().__init__(instructions, llm=llm)
+        if not isinstance(self._llm, BatchLlmClient):
+            raise TypeError(
+                f"{type(self._llm).__name__} cannot process batches. Use "
+                "LlmTripletExtractor for immediate requests instead."
+            )
         self.chunk_size = chunk_size
         self.poll_interval = poll_interval
 
@@ -312,7 +286,7 @@ class LlmBatchTripletExtractor(_LlmTripletExtractor):
         if not prompts:
             return []
         return self._llm.submit_batches(
-            self._system_prompt, prompts, _SCHEMA, chunk_size=self.chunk_size
+            self._system_prompt, prompts, _SCHEMA, self.chunk_size
         )
 
     def collect(
@@ -337,7 +311,7 @@ class LlmBatchTripletExtractor(_LlmTripletExtractor):
                 yield index, []
 
         for custom_id, response in self._llm.collect_batches(
-            batch_ids, poll_interval=self.poll_interval
+            batch_ids, self.poll_interval
         ):
             index = _index_from_custom_id(custom_id, len(texts))
             if index is None:

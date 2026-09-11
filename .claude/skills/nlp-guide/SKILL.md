@@ -45,6 +45,17 @@ Both handle: document ingestion → extraction → mapping → stats calculation
   `Pipeline` consumes, so out-of-order backends are stored as results land. Defaults to
   delegating to `batch_extract`.
 
+## LLM Clients (`common/llm/`)
+
+Three layers: pipeline components -> `LlmClient` (provider-agnostic interface) ->
+implementations. Components never know which provider answers.
+
+- **LlmClient** - `request_json(system_prompt, user_prompt, schema)`; the whole contract
+- **BatchLlmClient** - narrower, adds async batching; only `AnthropicClient` implements it
+- **AnthropicClient** - Claude (default); structured outputs, `effort`, prompt caching, batches
+- **OpenAiCompatibleClient** - OpenAI, LM Studio, Ollama, vLLM via `base_url`;
+  `response_format` JSON schema, `temperature`, strips code fences from sloppy local models
+
 ## Pre-computed Annotations
 
 `Pipeline.run(annotations=...)`, `NarrativeGraph.fit(triplets=...)` and

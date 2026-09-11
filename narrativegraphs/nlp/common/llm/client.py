@@ -1,0 +1,96 @@
+"""The model- and server-agnostic interface for LLM-backed pipeline steps.
+
+Pipeline components depend on this and nothing else, so a step works against
+any provider without knowing which one it has. Implementations live beside
+this module, one per provider family, and keep their own quirks to themselves.
+
+Structured output is the only thing providers genuinely disagree about, so it
+is the only thing this abstracts. An implementation takes a system prompt, a
+user prompt and a JSON schema, and returns the object the model produced.
+"""
+
+from abc import ABC, abstractmethod
+from typing import Any, Generator, Iterable, Optional
+
+JsonSchema = dict[str, Any]
+
+
+class LlmError(RuntimeError):
+    """Raised when a model cannot be queried in a way worth retrying.
+
+    Bad credentials and malformed requests are the cases that matter: every
+    later document would fail the same way, so failing loudly beats spending
+    an hour building an empty graph.
+    """
+
+
+class LlmClient(ABC):
+    """Returns JSON objects conforming to a schema, from some model."""
+
+    @abstractmethod
+    def request_json(
+        self, system_prompt: str, user_prompt: str, schema: JsonSchema
+    ) -> Optional[dict[str, Any]]:
+        """Ask for a single JSON object matching `schema`.
+
+        Args:
+            system_prompt: the stable part of the prompt, i.e. the task
+                definition and the user's extraction instructions
+            user_prompt: the per-request part, i.e. the document to work on
+            schema: a JSON schema describing the expected object
+
+        Returns:
+            the parsed object, or None if the model declined or returned
+            something unusable — a document that produces nothing should not
+            take the rest of the corpus down with it
+
+        Raises:
+            LlmError: the model cannot be queried at all
+        """
+
+
+class BatchLlmClient(LlmClient):
+    """An `LlmClient` that can also queue requests for asynchronous processing.
+
+    Batch APIs are cheaper but answer in their own time and only in bulk, and
+    they are far from universal — most OpenAI-compatible servers have nothing
+    of the kind. Steps that want batching require this narrower interface, so
+    asking for it from a provider that cannot do it fails at construction
+    rather than halfway through a corpus.
+    """
+
+    @abstractmethod
+    def submit_batches(
+        self,
+        system_prompt: str,
+        prompts: Iterable[tuple[str, str]],
+        schema: JsonSchema,
+        chunk_size: int,
+    ) -> list[str]:
+        """Send prompts off for processing without waiting.
+
+        Args:
+            system_prompt: the stable part of the prompt
+            prompts: (custom_id, user_prompt) pairs; the custom_id is what
+                identifies a result on the way back
+            schema: a JSON schema describing the expected object
+            chunk_size: requests per batch
+
+        Returns:
+            the ID of each submitted batch, in submission order
+        """
+
+    @abstractmethod
+    def collect_batches(
+        self, batch_ids: Iterable[str], poll_interval: float
+    ) -> Generator[tuple[str, Optional[dict[str, Any]]], None, None]:
+        """Wait for submitted batches and yield their results.
+
+        Args:
+            batch_ids: IDs returned by `submit_batches`
+            poll_interval: seconds between status checks
+
+        Returns:
+            yields (custom_id, parsed object) pairs in whatever order they
+            come back; the object is None for a request that failed
+        """

@@ -4,6 +4,7 @@ import threading
 import unittest
 from types import SimpleNamespace
 
+from narrativegraphs.nlp.common.llm import AnthropicClient
 from narrativegraphs.nlp.triplets.llm import (
     LlmBatchTripletExtractor,
     LlmTripletExtractor,
@@ -125,10 +126,10 @@ def triplet_dict(subject, predicate, obj, evidence):
     }
 
 
-def make_extractor(*responses, **kwargs):
+def make_extractor(*responses, effort="low", **kwargs):
     return LlmTripletExtractor(
         "Extract relations between people and places.",
-        client=FakeClient(*responses),
+        llm=AnthropicClient(effort=effort, client=FakeClient(*responses)),
         **kwargs,
     )
 
@@ -285,8 +286,7 @@ class TestRobustness(unittest.TestCase):
         self.assertEqual([], extractor.extract("Frodo carried the ring."))
 
     def test_missing_dependency_is_not_swallowed(self):
-        extractor = LlmTripletExtractor("Extract relations.")
-        extractor._llm._client = None
+        extractor = LlmTripletExtractor("Extract relations.", llm=AnthropicClient())
 
         def no_anthropic(name, *args, **kwargs):
             if name == "anthropic":
@@ -394,7 +394,9 @@ class TestBatchExtractUnordered(unittest.TestCase):
             }
         )
         extractor = LlmTripletExtractor(
-            "Extract relations.", client=client, max_concurrent_requests=3
+            "Extract relations.",
+            llm=AnthropicClient(client=client),
+            max_concurrent_requests=3,
         )
 
         results = extractor.batch_extract_unordered(texts)
@@ -474,7 +476,10 @@ def batch_outcomes(*, failing=(), texts=TEXTS):
 
 def make_batch_extractor(client, **kwargs):
     return LlmBatchTripletExtractor(
-        "Extract relations.", client=client, poll_interval=0, **kwargs
+        "Extract relations.",
+        llm=AnthropicClient(client=client),
+        poll_interval=0,
+        **kwargs,
     )
 
 
