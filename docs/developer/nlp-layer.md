@@ -221,15 +221,15 @@ consolidates: a relation stated three times comes back once. Recording only thos
 entities understates the text, and the mention counts behind co-occurrence, PMI and
 community detection are skewed by the shortfall.
 
-`Pipeline(all_entity_occurrences=True)`, the default, therefore records every mention of
-an extracted entity in its document. Matching is case-insensitive, tolerates differing
-whitespace, and respects word boundaries, so "ring" does not match inside "ringing";
-added mentions never overlap one another or an extractor's own spans, and longer surface
-forms claim their text first. The entities an extractor reported are always kept exactly
-as given, since population resolves triplets by their spans.
+`Pipeline` therefore always records every mention of an extracted entity in its
+document. Matching is case-insensitive, tolerates differing whitespace, and respects word
+boundaries, so "ring" does not match inside "ringing"; added mentions never overlap one
+another or an extractor's own spans, and longer surface forms claim their text first. The
+entities an extractor reported are always kept exactly as given, since population
+resolves triplets by their spans.
 
-Set it to `False` for the previous behaviour, where only the entities taking part in an
-extracted relation are recorded.
+What this does not yet catch is pronouns and other referring expressions, which need
+coreference resolution during extraction.
 
 ### Live or batched
 

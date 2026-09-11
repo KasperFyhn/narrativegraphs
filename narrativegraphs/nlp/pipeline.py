@@ -117,7 +117,6 @@ class Pipeline(_AbstractPipeline):
         cooccurrence_extractor: CooccurrenceExtractor = None,
         entity_mapper: Mapper = None,
         predicate_mapper: Mapper = None,
-        all_entity_occurrences: bool = True,
         n_cpu: int = 1,
     ):
         """Initialize the pipeline.
@@ -132,17 +131,9 @@ class Pipeline(_AbstractPipeline):
                 (default: SubgramLemmatizationMapper("noun")).
             predicate_mapper: Mapper for predicate normalization
                 (default: SubgramLemmatizationMapper("verb")).
-            all_entity_occurrences: Record every mention of an extracted entity
-                in a document, not only the mentions that take part in an
-                extracted relation. Extractors report the entities of the
-                relations they found, and generative models consolidate a
-                relation stated several times into one, so without this the
-                mention counts behind co-occurrence and the PMI statistics
-                understate the text.
             n_cpu: Number of CPUs for parallel processing.
         """
         super().__init__(engine, n_cpu=n_cpu)
-        self.all_entity_occurrences = all_entity_occurrences
         # Analysis components
         self._triplet_extractor = triplet_extractor or DependencyGraphExtractor()
         self._cooccurrence_extractor = (
@@ -173,12 +164,15 @@ class Pipeline(_AbstractPipeline):
                 )
             for doc_index, doc_triplets in extracted_triplets:
                 doc = doc_orms[doc_index]
-                # Extract entities from triplets
+                # Extract entities from the triplets, then record every
+                # other mention of them the document makes: extractors only
+                # report the entities of the relations they found, and a
+                # generative model consolidates a relation stated several
+                # times into one.
                 entities = list(
                     {e for triplet in doc_triplets for e in [triplet.subj, triplet.obj]}
                 )
-                if self.all_entity_occurrences:
-                    entities = expand_to_all_occurrences(doc.text, entities)
+                entities = expand_to_all_occurrences(doc.text, entities)
                 # Add entity occurrences first, get lookup for efficient referencing
                 occ_lookup = self._populator.add_entity_occurrences(doc, entities)
                 # Then add triplets and tuplets that reference them

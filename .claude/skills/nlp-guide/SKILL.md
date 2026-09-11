@@ -61,9 +61,10 @@ implementations. Components never know which provider answers.
 - **find_all_occurrences** - every occurrence of a surface form; case-insensitive,
   whitespace-tolerant, word-boundary respecting
 - **expand_to_all_occurrences** - adds the mentions an extractor did not report, keeping
-  its own spans exactly (population resolves triplets by span). On by default via
-  `Pipeline(all_entity_occurrences=True)`; without it, mention counts understate the text
-  because generative models consolidate repeated relations.
+  its own spans exactly (population resolves triplets by span). Always applied by
+  `Pipeline`: extractors report only the entities of the relations they found, and
+  generative models consolidate repeated relations, so mention counts would otherwise
+  understate the text. Does not yet cover pronouns; that needs coreference resolution.
 
 ## Pre-computed Annotations
 
