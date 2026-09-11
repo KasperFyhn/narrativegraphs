@@ -12,7 +12,38 @@ user prompt and a JSON schema, and returns the object the model produced.
 from abc import ABC, abstractmethod
 from typing import Any, Generator, Iterable, Optional
 
+from pydantic import BaseModel
+
 JsonSchema = dict[str, Any]
+
+
+def json_schema_of(model: type[BaseModel]) -> JsonSchema:
+    """Derive a provider-ready JSON schema from a Pydantic model.
+
+    Defining the expected response as a model keeps the schema sent to the
+    model and the validation of what comes back from drifting apart.
+
+    Pydantic expresses nested models as `$defs` and `$ref`. Not every provider
+    resolves those, and few local servers doing constrained decoding do, so
+    the definitions are inlined here. Recursive models would not survive that
+    and are not used.
+    """
+    schema = model.model_json_schema()
+    definitions = schema.pop("$defs", {})
+    return _inline_refs(schema, definitions)
+
+
+def _inline_refs(node: Any, definitions: dict[str, Any]) -> Any:
+    if isinstance(node, dict):
+        reference = node.get("$ref")
+        if reference is not None:
+            resolved = dict(definitions[reference.rsplit("/", 1)[-1]])
+            resolved.update({k: v for k, v in node.items() if k != "$ref"})
+            return _inline_refs(resolved, definitions)
+        return {key: _inline_refs(value, definitions) for key, value in node.items()}
+    if isinstance(node, list):
+        return [_inline_refs(item, definitions) for item in node]
+    return node
 
 
 class LlmError(RuntimeError):

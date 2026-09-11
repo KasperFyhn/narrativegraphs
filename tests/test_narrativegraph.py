@@ -129,5 +129,47 @@ class TestFitWithPrecomputedTriplets(unittest.TestCase):
         self.assertEqual(len(self.docs), len(ng.documents_))
 
 
+class TestAllEntityOccurrences(unittest.TestCase):
+    """Mentions the extractor did not report still belong in the graph."""
+
+    docs = ["Frodo carried the ring. Later Frodo rested. Then Frodo slept."]
+
+    def graph(self, all_entity_occurrences):
+        ng = NarrativeGraph(
+            triplet_extractor=MockTripletExtractor(),
+            entity_mapper=MockMapper(),
+            predicate_mapper=MockMapper(),
+        )
+        ng._pipeline.all_entity_occurrences = all_entity_occurrences
+        return ng.fit(self.docs)
+
+    def test_records_repeated_mentions(self):
+        only_relations = self.graph(False).entity_mentions_
+        every_mention = self.graph(True).entity_mentions_
+
+        frodo = every_mention[every_mention["entity_span_text"] == "Frodo"]
+        self.assertEqual(3, len(frodo))
+        self.assertGreater(len(every_mention), len(only_relations))
+
+    def test_triplets_still_resolve_to_their_own_occurrences(self):
+        """Population looks triplets up by exact span; expansion must not break it."""
+        ng = self.graph(True)
+
+        self.assertGreater(len(ng.relations_), 0)
+
+    def test_mentions_do_not_overlap(self):
+        mentions = self.graph(True).entity_mentions_
+        spans = sorted(zip(mentions["entity_span_start"], mentions["entity_span_end"]))
+
+        for current, following in zip(spans, spans[1:]):
+            self.assertLessEqual(current[1], following[0])
+
+    def test_can_be_turned_off(self):
+        mentions = self.graph(False).entity_mentions_
+        frodo = mentions[mentions["entity_span_text"] == "Frodo"]
+
+        self.assertEqual(1, len(frodo))
+
+
 if __name__ == "__main__":
     unittest.main()

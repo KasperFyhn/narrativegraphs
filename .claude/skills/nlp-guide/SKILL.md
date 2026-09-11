@@ -56,6 +56,15 @@ implementations. Components never know which provider answers.
 - **OpenAiCompatibleClient** - OpenAI, LM Studio, Ollama, vLLM via `base_url`;
   `response_format` JSON schema, `temperature`, strips code fences from sloppy local models
 
+## Mentions (`common/mentions.py`)
+
+- **find_all_occurrences** - every occurrence of a surface form; case-insensitive,
+  whitespace-tolerant, word-boundary respecting
+- **expand_to_all_occurrences** - adds the mentions an extractor did not report, keeping
+  its own spans exactly (population resolves triplets by span). On by default via
+  `Pipeline(all_entity_occurrences=True)`; without it, mention counts understate the text
+  because generative models consolidate repeated relations.
+
 ## Pre-computed Annotations
 
 `Pipeline.run(annotations=...)`, `NarrativeGraph.fit(triplets=...)` and

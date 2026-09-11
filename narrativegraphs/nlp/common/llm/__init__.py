@@ -30,6 +30,7 @@ from narrativegraphs.nlp.common.llm.client import (
     JsonSchema,
     LlmClient,
     LlmError,
+    json_schema_of,
 )
 from narrativegraphs.nlp.common.llm.concurrency import map_completed, map_ordered
 from narrativegraphs.nlp.common.llm.openai import OpenAiCompatibleClient
@@ -43,6 +44,7 @@ __all__ = [
     "BatchLlmClient",
     "LlmError",
     "JsonSchema",
+    "json_schema_of",
     "AnthropicClient",
     "OpenAiCompatibleClient",
     "DEFAULT_MODEL",

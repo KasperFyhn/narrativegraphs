@@ -630,5 +630,104 @@ class TestBatchResume(unittest.TestCase):
         self.assertEqual([1, 1, 0], [len(t) for t in triplets])
 
 
+class TestSchemaValidation(unittest.TestCase):
+    def test_schema_sent_to_the_model_has_no_unresolved_refs(self):
+        """Few local servers resolve $ref while constrain-decoding."""
+        import json
+
+        from narrativegraphs.nlp.triplets.llm import _SCHEMA
+
+        serialised = json.dumps(_SCHEMA)
+        self.assertNotIn("$ref", serialised)
+        self.assertNotIn("$defs", serialised)
+
+    def test_one_malformed_triplet_does_not_cost_the_others(self):
+        text = "Frodo carried the ring to Mordor."
+        extractor = make_extractor(
+            json_response(
+                triplet_dict("Frodo", "carried", "the ring", text),
+                {"subject": "Sam"},  # missing predicate, object and evidence
+            )
+        )
+
+        triplets = extractor.extract(text)
+
+        self.assertEqual(1, len(triplets))
+        self.assertEqual("Frodo", triplets[0].subj.text)
+
+    def test_unexpected_fields_are_rejected(self):
+        text = "Frodo carried the ring to Mordor."
+        extracted = triplet_dict("Frodo", "carried", "the ring", text)
+        extracted["confidence"] = 0.9
+        extractor = make_extractor(json_response(extracted))
+
+        self.assertEqual([], extractor.extract(text))
+
+
+class TestAlignmentStats(unittest.TestCase):
+    def test_counts_what_was_returned_and_what_survived(self):
+        text = "Frodo carried the ring to Mordor."
+        extractor = make_extractor(
+            json_response(
+                triplet_dict("Frodo", "carried", "the ring", text),
+                triplet_dict("Sam", "cooked", "potatoes", text),  # not in the text
+            )
+        )
+
+        extractor.extract(text)
+
+        stats = extractor.alignment_stats
+        self.assertEqual(2, stats.returned)
+        self.assertEqual(1, stats.kept)
+        self.assertEqual(1, stats.dropped)
+        self.assertEqual(0.5, stats.drop_rate)
+
+    def test_accumulates_across_documents(self):
+        texts = ["Frodo carried the ring.", "Sam cooked potatoes."]
+        extractor = make_extractor(
+            json_response(triplet_dict("Frodo", "carried", "the ring", texts[0])),
+            json_response(triplet_dict("Sam", "cooked", "potatoes", texts[1])),
+            max_concurrent_requests=1,
+        )
+
+        list(extractor.batch_extract(texts))
+
+        self.assertEqual(2, extractor.alignment_stats.returned)
+        self.assertEqual(2, extractor.alignment_stats.kept)
+
+    def test_drop_rate_is_zero_when_nothing_was_returned(self):
+        extractor = make_extractor(json_response())
+        extractor.extract("Frodo carried the ring.")
+
+        self.assertEqual(0.0, extractor.alignment_stats.drop_rate)
+
+    def test_summary_reads_as_a_quality_signal(self):
+        text = "Frodo carried the ring to Mordor."
+        extractor = make_extractor(
+            json_response(
+                triplet_dict("Frodo", "carried", "the ring", text),
+                triplet_dict("Sam", "cooked", "potatoes", text),
+            )
+        )
+        extractor.extract(text)
+
+        self.assertEqual(
+            "1/2 triplets aligned to the text (50.0% dropped)",
+            extractor.alignment_stats.summary(),
+        )
+
+    def test_a_high_drop_rate_is_warned_about(self):
+        text = "Frodo carried the ring to Mordor."
+        extractor = make_extractor(
+            json_response(triplet_dict("Sam", "cooked", "potatoes", text)),
+            max_concurrent_requests=1,
+        )
+
+        with self.assertLogs("narrativegraphs.nlp.extraction", level="WARNING") as logs:
+            list(extractor.batch_extract([text]))
+
+        self.assertIn("could not be found in the text", "".join(logs.output))
+
+
 if __name__ == "__main__":
     unittest.main()

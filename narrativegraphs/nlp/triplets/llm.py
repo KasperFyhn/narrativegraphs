@@ -1,7 +1,11 @@
 """Triplet (relation) extraction with an LLM."""
 
 import logging
+import threading
+from dataclasses import dataclass
 from typing import Any, Generator, Iterable, Optional
+
+from pydantic import BaseModel, ConfigDict, ValidationError
 
 from narrativegraphs.nlp.common.annotation import AnnotationContext, SpanAnnotation
 from narrativegraphs.nlp.common.llm import (
@@ -12,6 +16,7 @@ from narrativegraphs.nlp.common.llm import (
     Span,
     align_sequence,
     align_span,
+    json_schema_of,
     map_completed,
     map_ordered,
 )
@@ -43,27 +48,55 @@ the instructions above. Extracting nothing is a valid answer for a document \
 that holds no such relations.
 """
 
-_SCHEMA = {
-    "type": "object",
-    "properties": {
-        "triplets": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "subject": {"type": "string"},
-                    "predicate": {"type": "string"},
-                    "object": {"type": "string"},
-                    "evidence": {"type": "string"},
-                },
-                "required": ["subject", "predicate", "object", "evidence"],
-                "additionalProperties": False,
-            },
-        }
-    },
-    "required": ["triplets"],
-    "additionalProperties": False,
-}
+class _ExtractedTriplet(BaseModel):
+    """One triplet as the model is asked to report it."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    subject: str
+    predicate: str
+    object: str
+    evidence: str
+
+
+class _TripletResponse(BaseModel):
+    """The whole response. Only used to derive the schema that constrains it."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    triplets: list[_ExtractedTriplet]
+
+
+_SCHEMA = json_schema_of(_TripletResponse)
+
+
+@dataclass
+class AlignmentStats:
+    """How much of what the model returned could be located in the text.
+
+    A triplet whose parts cannot be found verbatim is dropped, which is what
+    keeps hallucinated and paraphrased spans out of the graph. The drop rate
+    is therefore a quality signal about the instructions and the model: a few
+    percent is normal, a large fraction means the model is paraphrasing and
+    the extraction is not measuring what it appears to.
+    """
+
+    returned: int = 0
+    kept: int = 0
+
+    @property
+    def dropped(self) -> int:
+        return self.returned - self.kept
+
+    @property
+    def drop_rate(self) -> float:
+        return self.dropped / self.returned if self.returned else 0.0
+
+    def summary(self) -> str:
+        return (
+            f"{self.kept}/{self.returned} triplets aligned to the text "
+            f"({self.drop_rate:.1%} dropped)"
+        )
 
 
 class _LlmTripletExtractor(TripletExtractor):
@@ -96,6 +129,9 @@ class _LlmTripletExtractor(TripletExtractor):
         self.instructions = instructions.strip()
         self._llm = llm if llm is not None else AnthropicClient()
         self._system_prompt = _SYSTEM_PROMPT.format(instructions=self.instructions)
+        self.alignment_stats = AlignmentStats()
+        # extract() runs concurrently across documents.
+        self._stats_lock = threading.Lock()
 
     def _triplets_from_response(
         self, text: str, response: Optional[dict[str, Any]]
@@ -103,22 +139,46 @@ class _LlmTripletExtractor(TripletExtractor):
         """Align one document's extracted triplets back onto its text."""
         if response is None:
             return []
+
+        returned = response.get("triplets") or []
         triplets = []
-        for extracted in response.get("triplets", []):
+        for item in returned:
+            extracted = _validated(item)
+            if extracted is None:
+                continue
             triplet = self._to_triplet(text, extracted)
             if triplet is not None:
                 triplets.append(triplet)
+
+        with self._stats_lock:
+            self.alignment_stats.returned += len(returned)
+            self.alignment_stats.kept += len(triplets)
         return triplets
 
-    def _to_triplet(self, text: str, extracted: dict[str, Any]) -> Optional[Triplet]:
-        parts = [
-            str(extracted.get(key, "")) for key in ("subject", "predicate", "object")
-        ]
+    def _log_alignment_stats(self) -> None:
+        stats = self.alignment_stats
+        if not stats.returned:
+            return
+        message = "Span alignment: %s"
+        if stats.drop_rate > 0.2:
+            _logger.warning(
+                message + " — a large fraction of what the model returned could not "
+                "be found in the text; check that the instructions ask for verbatim "
+                "spans",
+                stats.summary(),
+            )
+        else:
+            _logger.info(message, stats.summary())
+
+    def _to_triplet(
+        self, text: str, extracted: "_ExtractedTriplet"
+    ) -> Optional[Triplet]:
+        parts = [extracted.subject, extracted.predicate, extracted.object]
         if not all(part.strip() for part in parts):
             _logger.debug("Dropping triplet with an empty part: %s", extracted)
             return None
 
-        evidence = align_span(text, str(extracted.get("evidence", "")))
+        evidence = align_span(text, extracted.evidence)
         spans = align_sequence(text, parts, window=evidence)
         if spans is None:
             _logger.debug(
@@ -198,6 +258,7 @@ class LlmTripletExtractor(_LlmTripletExtractor):
         yield from map_ordered(
             self.extract, texts, max_workers=self.max_concurrent_requests
         )
+        self._log_alignment_stats()
 
     def batch_extract_unordered(
         self, texts: Iterable[str], n_cpu: int = 1, **kwargs
@@ -217,6 +278,7 @@ class LlmTripletExtractor(_LlmTripletExtractor):
         yield from map_completed(
             self.extract, texts, max_workers=self.max_concurrent_requests
         )
+        self._log_alignment_stats()
 
 
 class LlmBatchTripletExtractor(_LlmTripletExtractor):
@@ -318,6 +380,7 @@ class LlmBatchTripletExtractor(_LlmTripletExtractor):
                 _logger.warning("Ignoring result with unexpected id %r", custom_id)
                 continue
             yield index, self._triplets_from_response(texts[index], response)
+        self._log_alignment_stats()
 
     def collect_all(
         self, batch_ids: Iterable[str], texts: Iterable[str]
@@ -388,6 +451,19 @@ def _index_from_custom_id(custom_id: str, count: int) -> Optional[int]:
 def _extractable(texts: Iterable[str]) -> list[tuple[int, str]]:
     """The documents worth sending: an empty one has nothing to extract."""
     return [(index, text) for index, text in enumerate(texts) if text and text.strip()]
+
+
+def _validated(item: Any) -> Optional[_ExtractedTriplet]:
+    """Check one triplet against the schema the model was given.
+
+    Validated per item rather than per response so that one malformed triplet
+    costs only itself, not the whole document.
+    """
+    try:
+        return _ExtractedTriplet.model_validate(item)
+    except ValidationError as e:
+        _logger.debug("Dropping triplet that does not match the schema: %s", e)
+        return None
 
 
 def _overlapping(spans: list[Span]) -> bool:

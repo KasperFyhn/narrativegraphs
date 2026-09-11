@@ -198,6 +198,39 @@ source text again (`common/llm.py`):
 3. Triplets with a part that cannot be found, or with overlapping parts, are dropped.
    Hallucinated and paraphrased spans do not reach the database.
 
+The response is declared as a Pydantic model, from which the JSON schema sent to the
+model is derived, so the schema and the validation of what comes back cannot drift apart.
+Each triplet is validated separately, so one malformed triplet costs only itself.
+
+### Alignment is a quality signal
+
+Dropping what cannot be aligned is also a measurement. `extractor.alignment_stats`
+carries `returned`, `kept`, `dropped` and `drop_rate`, and a summary is logged when a
+batch run finishes — at WARNING above a 20% drop rate, since that means the model is
+paraphrasing rather than quoting and the extraction is not measuring what it appears to.
+
+```python
+extractor.alignment_stats.summary()
+# '482/500 triplets aligned to the text (3.6% dropped)'
+```
+
+### Every mention, not only the ones in a relation
+
+Extractors report the entities of the relations they found, and a generative model
+consolidates: a relation stated three times comes back once. Recording only those
+entities understates the text, and the mention counts behind co-occurrence, PMI and
+community detection are skewed by the shortfall.
+
+`Pipeline(all_entity_occurrences=True)`, the default, therefore records every mention of
+an extracted entity in its document. Matching is case-insensitive, tolerates differing
+whitespace, and respects word boundaries, so "ring" does not match inside "ringing";
+added mentions never overlap one another or an extractor's own spans, and longer surface
+forms claim their text first. The entities an extractor reported are always kept exactly
+as given, since population resolves triplets by their spans.
+
+Set it to `False` for the previous behaviour, where only the entities taking part in an
+extracted relation are recorded.
+
 ### Live or batched
 
 `LlmTripletExtractor` sends one request per document and answers immediately, with
