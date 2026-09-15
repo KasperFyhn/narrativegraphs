@@ -28,8 +28,6 @@ class AnthropicClient(BatchLlmClient):
     there is no prompt-level pleading for "valid JSON only" and no parsing of
     prose.
 
-    Requires optional dependency: anthropic>=1.0.0
-
     Args:
         model: Claude model ID; `claude-sonnet-5` or `claude-haiku-4-5` are
             cheaper alternatives for large corpora
@@ -62,8 +60,8 @@ class AnthropicClient(BatchLlmClient):
                 import anthropic
             except ImportError:
                 raise ImportError(
-                    "anthropic is required for AnthropicClient. "
-                    "Install it with: pip install 'narrativegraphs[llm-anthropic]'"
+                    "anthropic is required for AnthropicClient. It ships with "
+                    "narrativegraphs; reinstall it with: pip install anthropic"
                 )
             self._client = anthropic.Anthropic()
         return self._client

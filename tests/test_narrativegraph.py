@@ -94,9 +94,6 @@ class TestFitWithPrecomputedTriplets(unittest.TestCase):
             def batch_extract(self, texts, n_cpu=1, **kwargs):
                 raise AssertionError("the extractor should not have run")
 
-            def batch_extract_unordered(self, texts, n_cpu=1, **kwargs):
-                raise AssertionError("the extractor should not have run")
-
         ng = self.graph(triplet_extractor=ExplodingExtractor()).fit(
             self.docs, triplets=self.triplets()
         )

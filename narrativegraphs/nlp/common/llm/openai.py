@@ -37,8 +37,6 @@ class OpenAiCompatibleClient(LlmClient):
     Structured output uses `response_format` with a JSON schema, which local
     runtimes implement by constrained decoding.
 
-    Requires optional dependency: openai>=1.30
-
     Args:
         model: model name as the server knows it, e.g. "gpt-4.1" or
             "llama3.1:8b"
@@ -80,8 +78,8 @@ class OpenAiCompatibleClient(LlmClient):
                 from openai import OpenAI
             except ImportError:
                 raise ImportError(
-                    "openai is required for OpenAiCompatibleClient. "
-                    "Install it with: pip install 'narrativegraphs[llm-openai]'"
+                    "openai is required for OpenAiCompatibleClient. It ships with "
+                    "narrativegraphs; reinstall it with: pip install openai"
                 )
             kwargs = {
                 # Local servers ignore the key, but the SDK insists on one.

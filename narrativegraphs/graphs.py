@@ -337,7 +337,7 @@ class NarrativeGraph(BaseGraph):
                     extractor = LlmBatchTripletExtractor("Extract ...")
                     batch_ids = extractor.submit(docs)
                     # ... another day ...
-                    triplets = extractor.collect_all(batch_ids, docs)
+                    triplets = extractor.collect(batch_ids, docs)
                     ng = NarrativeGraph().fit(docs, triplets=triplets)
 
         Returns:

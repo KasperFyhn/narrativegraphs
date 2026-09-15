@@ -1,6 +1,5 @@
 import builtins
 import json
-import threading
 import unittest
 from types import SimpleNamespace
 
@@ -29,34 +28,6 @@ class FakeMessages:
 class FakeClient:
     def __init__(self, *responses):
         self.messages = FakeMessages(responses)
-
-
-class GatedClient:
-    """A client whose per-document responses are released on demand.
-
-    Lets a test decide the order in which in-flight requests complete.
-    """
-
-    def __init__(self, responses_by_text):
-        self.gates = {text: threading.Event() for text in responses_by_text}
-        self.messages = GatedMessages(responses_by_text, self.gates)
-
-    def release(self, text):
-        self.gates[text].set()
-
-
-class GatedMessages:
-    def __init__(self, responses_by_text, gates):
-        self.responses_by_text = responses_by_text
-        self.gates = gates
-        self.calls = []
-
-    def create(self, **kwargs):
-        text = kwargs["messages"][0]["content"]
-        self.calls.append(kwargs)
-        if not self.gates[text].wait(timeout=10):
-            raise AssertionError(f"response for {text!r} was never released")
-        return self.responses_by_text[text]
 
 
 class FakeBatches:
@@ -377,81 +348,6 @@ class TestBatchExtract(unittest.TestCase):
         self.assertEqual(2, len(consumed))
 
 
-class TestBatchExtractUnordered(unittest.TestCase):
-    def test_yields_each_document_as_it_comes_back(self):
-        texts = [
-            "Frodo carried the ring.",
-            "Sam cooked potatoes.",
-            "Gollum followed Frodo.",
-        ]
-        subjects = ["Frodo", "Sam", "Gollum"]
-        predicates = ["carried", "cooked", "followed"]
-        objects = ["the ring", "potatoes", "Frodo"]
-        client = GatedClient(
-            {
-                text: json_response(triplet_dict(subj, pred, obj, text))
-                for text, subj, pred, obj in zip(texts, subjects, predicates, objects)
-            }
-        )
-        extractor = LlmTripletExtractor(
-            "Extract relations.",
-            llm=AnthropicClient(client=client),
-            max_concurrent_requests=3,
-        )
-
-        results = extractor.batch_extract_unordered(texts)
-
-        # Release the last document first: it should not wait for the first.
-        for released in (2, 1, 0):
-            client.release(texts[released])
-            index, triplets = next(results)
-            self.assertEqual(released, index)
-            self.assertEqual(subjects[released], triplets[0].subj.text)
-
-    def test_index_identifies_the_source_document(self):
-        texts = ["Frodo carried the ring.", "Sam cooked potatoes."]
-        extractor = make_extractor(
-            json_response(triplet_dict("Frodo", "carried", "the ring", texts[0])),
-            json_response(triplet_dict("Sam", "cooked", "potatoes", texts[1])),
-            max_concurrent_requests=1,
-        )
-
-        results = dict(extractor.batch_extract_unordered(texts))
-
-        self.assertEqual("Frodo", results[0][0].subj.text)
-        self.assertEqual("Sam", results[1][0].subj.text)
-
-    def test_consumes_input_lazily(self):
-        consumed = []
-
-        def texts():
-            for text in ["Frodo carried the ring.", "Sam cooked potatoes."]:
-                consumed.append(text)
-                yield text
-
-        extractor = make_extractor(
-            json_response(), json_response(), max_concurrent_requests=1
-        )
-        results = extractor.batch_extract_unordered(texts())
-
-        next(results)
-        self.assertEqual(1, len(consumed))
-        next(results)
-        self.assertEqual(2, len(consumed))
-
-    def test_default_implementation_is_ordered(self):
-        """Extractors that do not override it keep working, in order."""
-        from tests.mocks import MockTripletExtractor
-
-        texts = ["Alice met Bob.", "Carol visited Dave."]
-
-        results = list(MockTripletExtractor().batch_extract_unordered(texts))
-
-        self.assertEqual([0, 1], [index for index, _ in results])
-        self.assertEqual("Alice", results[0][1][0].subj.text)
-        self.assertEqual("Carol", results[1][1][0].subj.text)
-
-
 TEXTS = [
     "Frodo carried the ring.",
     "Sam cooked potatoes.",
@@ -538,28 +434,28 @@ class TestBatchCollection(unittest.TestCase):
         client = FakeBatchClient(batch_outcomes(), reorder=lambda rs: rs[::-1])
         extractor = make_batch_extractor(client)
 
-        collected = dict(extractor.collect(extractor.submit(TEXTS), TEXTS))
+        collected = extractor.collect(extractor.submit(TEXTS), TEXTS)
 
         self.assertEqual("Frodo", collected[0][0].subj.text)
         self.assertEqual("Sam", collected[1][0].subj.text)
         self.assertEqual("Gollum", collected[2][0].subj.text)
 
-    def test_yields_each_chunk_as_it_ends(self):
+    def test_collects_results_spread_across_chunks(self):
         client = FakeBatchClient(batch_outcomes())
         extractor = make_batch_extractor(client, chunk_size=1)
 
-        results = extractor.batch_extract_unordered(TEXTS)
+        collected = extractor.collect(extractor.submit(TEXTS), TEXTS)
 
-        # One chunk per document, so results arrive one at a time.
-        self.assertEqual(0, next(results)[0])
-        self.assertEqual(1, next(results)[0])
-        self.assertEqual(2, next(results)[0])
+        # One chunk per document, each ending on its own.
+        self.assertEqual(
+            ["Frodo", "Sam", "Gollum"], [t[0].subj.text for t in collected]
+        )
 
     def test_waits_for_a_running_batch(self):
         client = FakeBatchClient(batch_outcomes(), polls_until_ended=2)
         extractor = make_batch_extractor(client)
 
-        collected = dict(extractor.batch_extract_unordered(TEXTS))
+        collected = extractor.collect(extractor.submit(TEXTS), TEXTS)
 
         self.assertEqual(3, len(collected))
         self.assertEqual(3, client.batches.polls["batch-0"])
@@ -568,7 +464,7 @@ class TestBatchCollection(unittest.TestCase):
         client = FakeBatchClient(batch_outcomes(failing=(1,)))
         extractor = make_batch_extractor(client)
 
-        collected = dict(extractor.batch_extract_unordered(TEXTS))
+        collected = extractor.collect(extractor.submit(TEXTS), TEXTS)
 
         self.assertEqual([], collected[1])
         self.assertEqual("Frodo", collected[0][0].subj.text)
@@ -580,9 +476,10 @@ class TestBatchCollection(unittest.TestCase):
         outcomes.pop("   ", None)
         client = FakeBatchClient(outcomes)
 
-        collected = dict(make_batch_extractor(client).batch_extract_unordered(texts))
+        extractor = make_batch_extractor(client)
+        collected = extractor.collect(extractor.submit(texts), texts)
 
-        self.assertEqual({0, 1, 2}, set(collected))
+        self.assertEqual(3, len(collected))
         self.assertEqual([], collected[1])
 
     def test_unknown_custom_id_is_ignored(self):
@@ -591,9 +488,9 @@ class TestBatchCollection(unittest.TestCase):
         extractor.submit(TEXTS)
         client.batches.submitted["batch-0"][0]["custom_id"] = "surprise"
 
-        collected = dict(extractor.collect(["batch-0"], TEXTS))
+        collected = extractor.collect(["batch-0"], TEXTS)
 
-        self.assertNotIn(0, collected)
+        self.assertEqual([], collected[0])
         self.assertEqual("Sam", collected[1][0].subj.text)
 
     def test_batch_extract_restores_input_order(self):
@@ -615,17 +512,17 @@ class TestBatchResume(unittest.TestCase):
 
         # A fresh extractor, as if the process had been restarted.
         resumed = make_batch_extractor(client)
-        triplets = resumed.collect_all(batch_ids, TEXTS)
+        triplets = resumed.collect(batch_ids, TEXTS)
 
         self.assertEqual(3, len(triplets))
         self.assertEqual("Frodo", triplets[0][0].subj.text)
         self.assertEqual("Gollum", triplets[2][0].subj.text)
 
-    def test_collect_all_returns_one_list_per_document(self):
+    def test_collect_returns_one_list_per_document(self):
         client = FakeBatchClient(batch_outcomes(failing=(2,)))
         extractor = make_batch_extractor(client)
 
-        triplets = extractor.collect_all(extractor.submit(TEXTS), TEXTS)
+        triplets = extractor.collect(extractor.submit(TEXTS), TEXTS)
 
         self.assertEqual([1, 1, 0], [len(t) for t in triplets])
 

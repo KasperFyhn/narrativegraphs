@@ -18,8 +18,9 @@ def align_span(
     """Locate `surface` in `text[start:end]` and return its character offsets.
 
     Models reproduce surface forms with small deviations — casing normalized,
-    line breaks collapsed into spaces — so matching is attempted in decreasing
-    order of strictness: verbatim, case-insensitive, then whitespace-flexible.
+    line breaks collapsed into spaces — so a verbatim match is tried first and,
+    failing that, one that ignores case and accepts any whitespace between the
+    tokens of `surface`.
 
     Returns:
         (start_char, end_char) of the first match, or None if there is none

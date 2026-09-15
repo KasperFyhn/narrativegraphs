@@ -73,14 +73,12 @@ Triplets consist of:
 - `obj`: Object entity (SpanAnnotation)
 - `context`: Optional sentence context (AnnotationContext)
 
-Extractors expose two batch methods. `batch_extract` yields one result list per document
-in input order. `batch_extract_unordered` yields `(index, triplets)` pairs instead, where
-`index` is the document's position in the input, and makes no promise about the order
-they arrive in. `Pipeline` consumes the latter, so a backend that finishes documents out
-of order — as an LLM backend does — has its annotations stored the moment each document
-comes back, rather than being held up behind a slower one. The default implementation
-delegates to `batch_extract`, so extractors that do not override it stay ordered and
-keep working unchanged.
+Extractors expose one batch method: `batch_extract` yields one result list per document,
+in input order, and that is what `Pipeline` zips with its documents. A backend that
+finishes documents out of order — as an LLM backend does — puts them back in order
+itself, so nothing in the pipeline has to track which document a result belongs to. For
+a batch run that is not to be waited on, that reordering is `collect`'s job, and its
+result goes back in as pre-computed annotations (see below).
 
 ### Cooccurrence Extraction (`tuplets/`)
 
@@ -142,10 +140,14 @@ the only thing abstracted.
 
 Two implementations ship:
 
-| Client                     | Covers                                                           | Install                          |
-| -------------------------- | ---------------------------------------------------------------- | -------------------------------- |
-| **AnthropicClient**        | Claude, immediate or batched                                     | `narrativegraphs[llm-anthropic]` |
-| **OpenAiCompatibleClient** | OpenAI, LM Studio, Ollama, vLLM — anything speaking its chat API | `narrativegraphs[llm-openai]`    |
+| Client                     | Covers                                                           |
+| -------------------------- | ---------------------------------------------------------------- |
+| **AnthropicClient**        | Claude, immediate or batched                                     |
+| **OpenAiCompatibleClient** | OpenAI, LM Studio, Ollama, vLLM — anything speaking its chat API |
+
+Both SDKs are ordinary dependencies rather than extras: they are thin HTTP clients next
+to spaCy and scikit-learn, and an extra to install before a model can be prompted costs
+more than it saves.
 
 `AnthropicClient` is the default, so the common case needs no client at all. A different
 model or a local server is one argument:
@@ -192,9 +194,9 @@ source text again (`common/llm.py`):
 1. The quoted evidence sentence is located and becomes the search window as well as the
    triplet's `context`, so that a repeated entity is anchored in the sentence the model
    actually meant.
-2. Within that window, the parts are matched in order — verbatim first, then
-   case-insensitively, then allowing whitespace to differ — falling back to the whole
-   document and to order-independent matching.
+2. Within that window, the parts are matched in order — verbatim first, then ignoring
+   case and whitespace differences — falling back to the whole document and to
+   order-independent matching.
 3. Triplets with a part that cannot be found, or with overlapping parts, are dropped.
    Hallucinated and paraphrased spans do not reach the database.
 
@@ -239,26 +241,28 @@ coreference resolution during extraction.
 `LlmBatchTripletExtractor` sends the same requests through the Message Batches API at
 **half the price**. That work is asynchronous: most batches finish within an hour, the
 limit is 24 hours, and a batch hands over nothing until it has ended in full. Documents
-are therefore submitted in chunks of `chunk_size`, and each chunk's results are stored as
-that chunk ends. Used as a drop-in extractor, `fit` simply blocks until the corpus is
-done.
+are therefore submitted in chunks of `chunk_size`, so that results start landing before
+the whole corpus is done. Used as a drop-in extractor, `fit` simply blocks until it is.
 
 ### Submitting one day, collecting the next
 
 Batch results stay retrievable for 29 days, so the wait need not be sat through. `submit`
-returns the batch IDs and exits; `collect_all` turns them back into triplets later, which
+returns the batch IDs and exits; `collect` turns them back into triplets later, which
 `fit` accepts as pre-computed annotations:
 
 ```python
 extractor = LlmBatchTripletExtractor("Extract relations between ...")
 batch_ids = extractor.submit(docs)      # write these down, turn the machine off
 # ... another day ...
-triplets = extractor.collect_all(batch_ids, docs)
+triplets = extractor.collect(batch_ids, docs)
 ng = NarrativeGraph().fit(docs, triplets=triplets)
 ```
 
-`collect_all` needs the same documents in the same order, because aligning a triplet
-requires its source text, and because each request is identified by its document's index.
+`collect` needs the same documents in the same order, because aligning a triplet requires
+its source text, and because each request is identified by its document's index. Chunks
+end in whatever order the provider finishes them; `collect` puts the results back into
+input order, and a document whose request errored or expired comes back as an empty list
+rather than going missing.
 
 The same `triplets=` argument serves any pre-computed annotations — extracting once and
 fitting several times, for instance to compare mappers over identical triplets.

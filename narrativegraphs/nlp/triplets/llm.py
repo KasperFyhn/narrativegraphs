@@ -17,7 +17,6 @@ from narrativegraphs.nlp.common.llm import (
     align_sequence,
     align_span,
     json_schema_of,
-    map_completed,
     map_ordered,
 )
 from narrativegraphs.nlp.triplets.common import Triplet, TripletExtractor
@@ -47,6 +46,7 @@ elsewhere in the same sentence; otherwise skip the triplet.
 the instructions above. Extracting nothing is a valid answer for a document \
 that holds no such relations.
 """
+
 
 class _ExtractedTriplet(BaseModel):
     """One triplet as the model is asked to report it."""
@@ -108,8 +108,6 @@ class _LlmTripletExtractor(TripletExtractor):
     Since the rest of the package addresses entities by their position in the
     document, every returned surface form is aligned back to the source text,
     and triplets whose parts cannot be found there are dropped.
-
-    Requires optional dependency: anthropic>=1.0.0
     """
 
     def __init__(self, instructions: str, llm: LlmClient = None):
@@ -260,26 +258,6 @@ class LlmTripletExtractor(_LlmTripletExtractor):
         )
         self._log_alignment_stats()
 
-    def batch_extract_unordered(
-        self, texts: Iterable[str], n_cpu: int = 1, **kwargs
-    ) -> Generator[tuple[int, list[Triplet]], None, None]:
-        """Extract from several documents, handing over each as it comes back.
-
-        Args:
-            texts: an iterable of raw text strings
-            n_cpu: ignored; requests are I/O-bound, so concurrency is governed
-                by `max_concurrent_requests` instead
-            **kwargs: unused
-
-        Returns:
-            yields (index, triplets) pairs in completion order, so that a slow
-            document does not hold up the ones behind it
-        """
-        yield from map_completed(
-            self.extract, texts, max_workers=self.max_concurrent_requests
-        )
-        self._log_alignment_stats()
-
 
 class LlmBatchTripletExtractor(_LlmTripletExtractor):
     """Extracts triplets through the Message Batches API, at half the price.
@@ -298,7 +276,7 @@ class LlmBatchTripletExtractor(_LlmTripletExtractor):
 
         batch_ids = extractor.submit(docs)          # write these down
         # ... another day ...
-        triplets = extractor.collect_all(batch_ids, docs)
+        triplets = extractor.collect(batch_ids, docs)
         ng = NarrativeGraph().fit(docs, triplets=triplets)
     """
 
@@ -353,8 +331,15 @@ class LlmBatchTripletExtractor(_LlmTripletExtractor):
 
     def collect(
         self, batch_ids: Iterable[str], texts: Iterable[str]
-    ) -> Generator[tuple[int, list[Triplet]], None, None]:
-        """Wait for submitted batches and yield triplets as each chunk ends.
+    ) -> list[list[Triplet]]:
+        """Wait for submitted batches and return one list of triplets per document.
+
+        Chunks end in whatever order the provider finishes them, so results are
+        put back into the order of `texts` here. That is also the shape
+        `NarrativeGraph.fit` takes as `triplets=` and `Pipeline.run` as
+        `annotations=`. A document that was never submitted, or whose request
+        errored or expired, comes back as an empty list rather than being
+        missing, so every document is accounted for.
 
         Args:
             batch_ids: the IDs returned by `submit`
@@ -362,16 +347,18 @@ class LlmBatchTripletExtractor(_LlmTripletExtractor):
                 needed because aligning a triplet requires its source text
 
         Returns:
-            yields (index, triplets) pairs, in the order results come back
+            one list of triplets per document, in the order of `texts`
         """
         texts = list(texts)
-        # Documents that were never submitted still belong in the output, so
-        # that a caller sees every document accounted for.
-        submitted = dict(_extractable(texts))
-        for index in range(len(texts)):
-            if index not in submitted:
-                yield index, []
+        collected: list[list[Triplet]] = [[] for _ in texts]
+        for index, triplets in self._collect_as_they_land(batch_ids, texts):
+            collected[index] = triplets
+        return collected
 
+    def _collect_as_they_land(
+        self, batch_ids: Iterable[str], texts: list[str]
+    ) -> Generator[tuple[int, list[Triplet]], None, None]:
+        """Yield (index, triplets) as each chunk ends, in whatever order that is."""
         for custom_id, response in self._llm.collect_batches(
             batch_ids, self.poll_interval
         ):
@@ -382,54 +369,32 @@ class LlmBatchTripletExtractor(_LlmTripletExtractor):
             yield index, self._triplets_from_response(texts[index], response)
         self._log_alignment_stats()
 
-    def collect_all(
-        self, batch_ids: Iterable[str], texts: Iterable[str]
-    ) -> list[list[Triplet]]:
-        """Collect submitted batches into one list of triplets per document.
-
-        The shape `Pipeline.run` and `NarrativeGraph.fit` accept as
-        pre-computed annotations.
-        """
-        texts = list(texts)
-        collected: list[list[Triplet]] = [[] for _ in texts]
-        for index, triplets in self.collect(batch_ids, texts):
-            collected[index] = triplets
-        return collected
-
     def extract(self, text: str) -> list[Triplet]:
         """Extract from a single document by submitting a batch of one.
 
         Batching a lone document buys nothing but the lower price, and still
-        waits for the batch to end. Prefer `batch_extract_unordered`.
+        waits for the batch to end. Prefer `batch_extract`.
         """
-        for _, triplets in self.batch_extract_unordered([text]):
+        for triplets in self.batch_extract([text]):
             return triplets
         return []
 
     def batch_extract(
         self, texts: Iterable[str], n_cpu: int = 1, **kwargs
     ) -> Generator[list[Triplet], None, None]:
-        """Extract from several documents, yielding them in input order.
+        """Submit every document, wait for the batches and yield them in order.
 
-        Batch results arrive out of order, so this holds them until the run is
-        done. `batch_extract_unordered` hands each chunk over as it lands.
-        """
-        texts = list(texts)
-        collected = self.collect_all(self.submit(texts), texts)
-        yield from collected
-
-    def batch_extract_unordered(
-        self, texts: Iterable[str], n_cpu: int = 1, **kwargs
-    ) -> Generator[tuple[int, list[Triplet]], None, None]:
-        """Submit all documents, then yield each chunk's results as it ends.
+        This blocks until the whole run has ended, which for a large corpus may
+        be hours. `submit` and `collect` split the same work in two, so that the
+        wait can be sat out with the machine off.
 
         Args:
             texts: an iterable of raw text strings
-            n_cpu: ignored; the work happens on Anthropic's infrastructure
+            n_cpu: ignored; the work happens on the provider's infrastructure
             **kwargs: unused
 
         Returns:
-            yields (index, triplets) pairs, in the order results come back
+            yields triplets per text in the same order as the texts iterable
         """
         texts = list(texts)
         yield from self.collect(self.submit(texts), texts)

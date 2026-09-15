@@ -29,8 +29,8 @@ Both handle: document ingestion → extraction → mapping → stats calculation
 - **TripletExtractor** - Abstract base class
 - **DependencyGraphExtractor** - Verb-first traversal; fine-grained boolean flags per relation type; no sentence-length limits
 - **EntityPairExtractor** - Entity-pair traversal; declarative `PathPattern` list; supports compound "verb prep" predicates; guards: `max_sentence_length=60`, `max_entity_distance=10`
-- **LlmTripletExtractor** - Prompts an LLM (Anthropic; optional `llm-anthropic` extra) with a plain-language instruction; returned surface forms are aligned back to character offsets, unlocatable ones dropped
-- **LlmBatchTripletExtractor** - Same via the Message Batches API at half the price; `submit()` returns batch IDs, `collect_all()` redeems them later (results live 29 days)
+- **LlmTripletExtractor** - Prompts an LLM (Claude by default) with a plain-language instruction; returned surface forms are aligned back to character offsets, unlocatable ones dropped
+- **LlmBatchTripletExtractor** - Same via the Message Batches API at half the price; `submit()` returns batch IDs, `collect()` redeems them later into one list per document (results live 29 days)
 
 ### Cooccurrence Extraction (`tuplets/`)
 
@@ -40,10 +40,12 @@ Both handle: document ingestion → extraction → mapping → stats calculation
 
 ## Batch Contracts
 
-- **batch_extract** - yields one result list per document, in input order
-- **batch_extract_unordered** - yields `(index, results)` pairs in any order; what
-  `Pipeline` consumes, so out-of-order backends are stored as results land. Defaults to
-  delegating to `batch_extract`.
+- **batch_extract** - yields one result list per document, in input order; the only batch
+  method, and what `Pipeline` zips with its documents. A backend that finishes out of
+  order reorders internally.
+- Pre-computed annotations are the way around a long wait: `Pipeline.run(annotations=)` /
+  `NarrativeGraph.fit(triplets=)` take one list per document instead of running the
+  extractor.
 
 ## LLM Clients (`common/llm/`)
 

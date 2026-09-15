@@ -148,22 +148,20 @@ class Pipeline(_AbstractPipeline):
             doc_orms = self._populator.get_docs()
             if annotations is not None:
                 _logger.info("Using pre-computed triplets")
-                extracted_triplets = enumerate(annotations)
+                extracted_triplets = iter(annotations)
             else:
                 _logger.info("Extracting triplets")
-                # Keyed by index rather than zipped, so that extractors which
-                # finish documents out of order are stored as results land.
-                extracted_triplets = self._triplet_extractor.batch_extract_unordered(
+                extracted_triplets = self._triplet_extractor.batch_extract(
                     [d.text for d in doc_orms], n_cpu=self.n_cpu
                 )
+            docs_and_triplets = zip(doc_orms, extracted_triplets)
             if _logger.isEnabledFor(logging.INFO):
-                extracted_triplets = tqdm(
-                    extracted_triplets,
+                docs_and_triplets = tqdm(
+                    docs_and_triplets,
                     desc="Extracting triplets",
                     total=len(doc_orms),
                 )
-            for doc_index, doc_triplets in extracted_triplets:
-                doc = doc_orms[doc_index]
+            for doc, doc_triplets in docs_and_triplets:
                 # Extract entities from the triplets, then record every
                 # other mention of them the document makes: extractors only
                 # report the entities of the relations they found, and a

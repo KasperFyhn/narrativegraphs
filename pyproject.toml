@@ -47,14 +47,16 @@ dependencies = [
     "psutil>=7.0.0",
     "numpy>=2.2.6",
     "networkx>=3.4.2",
-    "kagglehub>=0.4.1"
+    "kagglehub>=0.4.1",
+    # LLM clients. Thin HTTP SDKs next to spaCy and scikit-learn, and asking
+    # for an extra before a model can be prompted costs more than it saves.
+    # "openai" covers any OpenAI-compatible server: OpenAI, LM Studio, Ollama, vLLM.
+    "anthropic>=1.0.0",
+    "openai>=1.30"
 ]
 
 [project.optional-dependencies]
 coref-fastcoref = ["fastcoref>=2.1.3"]
-llm-anthropic = ["anthropic>=1.0.0"]
-# Any OpenAI-compatible server: OpenAI, LM Studio, Ollama, vLLM.
-llm-openai = ["openai>=1.30"]
 
 dev = [
     "pytest~=8.4.1",

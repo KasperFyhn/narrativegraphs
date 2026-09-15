@@ -32,7 +32,7 @@ from narrativegraphs.nlp.common.llm.client import (
     LlmError,
     json_schema_of,
 )
-from narrativegraphs.nlp.common.llm.concurrency import map_completed, map_ordered
+from narrativegraphs.nlp.common.llm.concurrency import map_ordered
 from narrativegraphs.nlp.common.llm.openai import OpenAiCompatibleClient
 
 # Requests per batch. A batch yields nothing until it has ended in full, so
@@ -53,5 +53,4 @@ __all__ = [
     "align_span",
     "align_sequence",
     "map_ordered",
-    "map_completed",
 ]
