@@ -6,6 +6,8 @@ from typing import Any
 from sqlalchemy import Engine
 from tqdm.auto import tqdm
 
+from narrativegraphs.nlp.common.annotation import SpanAnnotation
+from narrativegraphs.nlp.common.mentions import expand_to_all_occurrences
 from narrativegraphs.nlp.common.transformcategories import normalize_categories
 from narrativegraphs.nlp.entities.common import EntityExtractor
 from narrativegraphs.nlp.entities.spacy import SpacyEntityExtractor
@@ -14,6 +16,7 @@ from narrativegraphs.nlp.mapping.linguistic import (
     SubgramLemmatizationMapper,
 )
 from narrativegraphs.nlp.triplets import DependencyGraphExtractor, TripletExtractor
+from narrativegraphs.nlp.triplets.common import Triplet
 from narrativegraphs.nlp.tuplets.common import CooccurrenceExtractor
 from narrativegraphs.nlp.tuplets.cooccurrences import (
     ChunkCooccurrenceExtractor,
@@ -64,7 +67,7 @@ class _AbstractPipeline(ABC):
             )
 
     @abstractmethod
-    def _process_docs(self):
+    def _process_docs(self, annotations: list[list[Any]] = None):
         pass
 
     def run(
@@ -79,11 +82,31 @@ class _AbstractPipeline(ABC):
             | list[dict[str, str | list[str]]]
         ) = None,
         metadata: list[dict[str, Any]] = None,
+        annotations: list[list[Any]] = None,
     ):
+        """Add documents to the database and build the graph from them.
+
+        Args:
+            docs: the documents as strings
+            doc_ids: optional document ids, same length as docs
+            timestamps: optional document timestamps, same length as docs
+            timestamps_ordinal: optional integer timestamps, same length as docs
+            categories: optional document categories
+            metadata: optional document metadata, same length as docs
+            annotations: optional pre-computed annotations, one list per
+                document, which are used instead of running the extractor.
+                Lets extraction be done once — or elsewhere, as with a batch
+                run collected the next day — and reused across several fits.
+        """
+        if annotations is not None and len(annotations) != len(docs):
+            raise ValueError(
+                f"Got {len(annotations)} annotation lists for {len(docs)} documents; "
+                "there must be exactly one list per document, in the same order."
+            )
         self._add_documents_to_db(
             docs, doc_ids, timestamps, timestamps_ordinal, categories, metadata
         )
-        self._process_docs()
+        self._process_docs(annotations)
 
 
 class Pipeline(_AbstractPipeline):
@@ -119,24 +142,35 @@ class Pipeline(_AbstractPipeline):
         self._entity_mapper = entity_mapper or SubgramLemmatizationMapper("noun")
         self._predicate_mapper = predicate_mapper or SubgramLemmatizationMapper("verb")
 
-    def _process_docs(self):
+    def _process_docs(self, annotations: list[list[Triplet]] = None):
         with self._populator.get_session_context():
-            _logger.info("Extracting triplets")
             # TODO: use generators instead of lists here
             doc_orms = self._populator.get_docs()
-            extracted_triplets = self._triplet_extractor.batch_extract(
-                [d.text for d in doc_orms], n_cpu=self.n_cpu
-            )
+            if annotations is not None:
+                _logger.info("Using pre-computed triplets")
+                extracted_triplets = iter(annotations)
+            else:
+                _logger.info("Extracting triplets")
+                extracted_triplets = self._triplet_extractor.batch_extract(
+                    [d.text for d in doc_orms], n_cpu=self.n_cpu
+                )
             docs_and_triplets = zip(doc_orms, extracted_triplets)
             if _logger.isEnabledFor(logging.INFO):
                 docs_and_triplets = tqdm(
-                    docs_and_triplets, desc="Extracting triplets", total=len(doc_orms)
+                    docs_and_triplets,
+                    desc="Extracting triplets",
+                    total=len(doc_orms),
                 )
             for doc, doc_triplets in docs_and_triplets:
-                # Extract entities from triplets
+                # Extract entities from the triplets, then record every
+                # other mention of them the document makes: extractors only
+                # report the entities of the relations they found, and a
+                # generative model consolidates a relation stated several
+                # times into one.
                 entities = list(
                     {e for triplet in doc_triplets for e in [triplet.subj, triplet.obj]}
                 )
+                entities = expand_to_all_occurrences(doc.text, entities)
                 # Add entity occurrences first, get lookup for efficient referencing
                 occ_lookup = self._populator.add_entity_occurrences(doc, entities)
                 # Then add triplets and tuplets that reference them
@@ -198,13 +232,17 @@ class CooccurrencePipeline(_AbstractPipeline):
         )
         self._entity_mapper = entity_mapper or SubgramLemmatizationMapper("noun")
 
-    def _process_docs(self):
+    def _process_docs(self, annotations: list[list[SpanAnnotation]] = None):
         with self._populator.get_session_context():
-            _logger.info("Extracting entities")
             doc_orms = self._populator.get_docs()
-            extracted_entities = self._entity_extractor.batch_extract(
-                [d.text for d in doc_orms], n_cpu=self.n_cpu
-            )
+            if annotations is not None:
+                _logger.info("Using pre-computed entities")
+                extracted_entities = iter(annotations)
+            else:
+                _logger.info("Extracting entities")
+                extracted_entities = self._entity_extractor.batch_extract(
+                    [d.text for d in doc_orms], n_cpu=self.n_cpu
+                )
             docs_and_entities = zip(doc_orms, extracted_entities)
             if _logger.isEnabledFor(logging.INFO):
                 docs_and_entities = tqdm(
