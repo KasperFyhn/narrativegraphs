@@ -117,10 +117,10 @@ class OpenAiCompatibleClient(LlmClient):
                 },
             )
         except Exception as e:
-            if _is_systematic_error(e):
-                raise LlmError(f"Cannot query the model: {e}") from e
-            _logger.warning("Model request failed, skipping document: %s", e)
-            return None
+            if _is_transient(e):
+                _logger.warning("Model request failed, skipping document: %s", e)
+                return None
+            raise LlmError(f"Cannot query the model: {e}") from e
         return self._parse_response(response)
 
     def _parse_response(self, response: Any) -> Optional[dict[str, Any]]:
@@ -178,18 +178,18 @@ def _parse_json_object(content: str) -> Optional[dict[str, Any]]:
     return None
 
 
-def _is_systematic_error(error: Exception) -> bool:
-    """Tell configuration errors from transient ones."""
+def _is_transient(error: Exception) -> bool:
+    """Tell a per-document hiccup from a setup problem.
+
+    As in the Anthropic client: only what is known to be worth skipping a
+    document over is transient, so a misconfiguration stops the run instead of
+    being swallowed once per document.
+    """
     try:
         import openai
     except ImportError:
         return False
-    return isinstance(
-        error,
-        (
-            openai.AuthenticationError,
-            openai.PermissionDeniedError,
-            openai.BadRequestError,
-            openai.NotFoundError,
-        ),
-    )
+    if isinstance(error, (openai.APIConnectionError, openai.RateLimitError)):
+        return True
+    status = getattr(error, "status_code", None)
+    return isinstance(status, int) and status >= 500

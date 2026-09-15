@@ -3,7 +3,7 @@ import json
 import unittest
 from types import SimpleNamespace
 
-from narrativegraphs.nlp.common.llm import AnthropicClient
+from narrativegraphs.nlp.common.llm import AnthropicClient, LlmError
 from narrativegraphs.nlp.triplets.llm import (
     LlmBatchTripletExtractor,
     LlmTripletExtractor,
@@ -28,6 +28,14 @@ class FakeMessages:
 class FakeClient:
     def __init__(self, *responses):
         self.messages = FakeMessages(responses)
+
+
+class _StatusError(Exception):
+    """An SDK error as the clients see it: an exception carrying a status."""
+
+    def __init__(self, status_code):
+        super().__init__(f"HTTP {status_code}")
+        self.status_code = status_code
 
 
 class FakeBatches:
@@ -252,9 +260,46 @@ class TestRobustness(unittest.TestCase):
         self.assertEqual([], extractor.extract("Frodo carried the ring."))
 
     def test_transient_failure_skips_the_document(self):
-        extractor = make_extractor(RuntimeError("connection reset"))
+        import anthropic
+        import httpx
+
+        extractor = make_extractor(
+            anthropic.APIConnectionError(
+                request=httpx.Request("POST", "https://api.anthropic.com/v1/messages")
+            )
+        )
 
         self.assertEqual([], extractor.extract("Frodo carried the ring."))
+
+    def test_an_overloaded_server_skips_the_document(self):
+        extractor = make_extractor(_StatusError(503))
+
+        self.assertEqual([], extractor.extract("Frodo carried the ring."))
+
+    def test_unresolvable_credentials_stop_the_run(self):
+        """No API key set: every later document would fail the same way.
+
+        The SDK reports this as a plain `TypeError` rather than an
+        `AuthenticationError`, since it never gets as far as a request.
+        """
+        extractor = make_extractor(
+            TypeError(
+                "Could not resolve authentication method. Expected one of "
+                "api_key, auth_token, or credentials to be set."
+            )
+        )
+
+        with self.assertRaises(LlmError) as raised:
+            extractor.extract("Frodo carried the ring.")
+
+        self.assertIn("authentication", str(raised.exception))
+
+    def test_an_unrecognized_failure_stops_the_run(self):
+        """Anything not known to be transient is treated as a setup problem."""
+        extractor = make_extractor(RuntimeError("something unforeseen"))
+
+        with self.assertRaises(LlmError):
+            extractor.extract("Frodo carried the ring.")
 
     def test_missing_dependency_is_not_swallowed(self):
         extractor = LlmTripletExtractor("Extract relations.", llm=AnthropicClient())

@@ -50,6 +50,14 @@ class FakeOpenAiClient:
         self.chat = SimpleNamespace(completions=self.completions)
 
 
+class _StatusError(Exception):
+    """An SDK error as the client sees it: an exception carrying a status."""
+
+    def __init__(self, status_code):
+        super().__init__(f"HTTP {status_code}")
+        self.status_code = status_code
+
+
 def make_client(content=None, **response_kwargs):
     fake = FakeOpenAiClient(content, **response_kwargs)
     return OpenAiCompatibleClient("llama3.1:8b", client=fake)
@@ -137,8 +145,21 @@ class TestFailures(unittest.TestCase):
 
         self.assertIsNone(client.request_json("s", "u", SCHEMA))
 
-    def test_transient_failure_yields_nothing(self):
-        client = make_client(error=RuntimeError("connection reset"))
+    def test_an_unreachable_server_yields_nothing(self):
+        """A local server that blinked: worth skipping the document over."""
+        import httpx
+        import openai
+
+        client = make_client(
+            error=openai.APIConnectionError(
+                request=httpx.Request("POST", "http://localhost:11434/v1/chat")
+            )
+        )
+
+        self.assertIsNone(client.request_json("s", "u", SCHEMA))
+
+    def test_an_overloaded_server_yields_nothing(self):
+        client = make_client(error=_StatusError(503))
 
         self.assertIsNone(client.request_json("s", "u", SCHEMA))
 
@@ -212,6 +233,20 @@ class TestErrors(unittest.TestCase):
 
     def test_llm_error_is_available_for_systematic_failures(self):
         self.assertTrue(issubclass(LlmError, RuntimeError))
+
+    def test_unresolvable_credentials_stop_the_run(self):
+        """A server that needs a key and got none must not be skipped per document."""
+        client = make_client(error=TypeError("api_key client option must be set"))
+
+        with self.assertRaises(LlmError):
+            client.request_json("s", "u", SCHEMA)
+
+    def test_an_unrecognized_failure_stops_the_run(self):
+        """Anything not known to be transient is treated as a setup problem."""
+        client = make_client(error=RuntimeError("something unforeseen"))
+
+        with self.assertRaises(LlmError):
+            client.request_json("s", "u", SCHEMA)
 
 
 if __name__ == "__main__":

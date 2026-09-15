@@ -274,8 +274,13 @@ fitting several times, for instance to compare mappers over identical triplets.
 - Structured outputs (`output_config.format`) guarantee schema-valid JSON.
 - The default `effort="low"` suits bounded extraction at corpus scale; raise it for
   instructions that call for genuine judgement.
-- Refusals, truncated responses and transient failures skip the document with a warning;
-  authentication and request errors raise, since every later document would hit them too.
+- Refusals, truncated responses and genuinely transient failures — a dropped connection,
+  a rate limit, an overloaded server — skip the document with a warning. Everything else
+  raises `LlmError`, since every later document would fail the same way: unresolved
+  credentials (which the Anthropic SDK reports as a `TypeError`, not an
+  `AuthenticationError`, because no request is ever sent), an unknown model, a malformed
+  request. Classifying it this way round means an unforeseen failure stops the run rather
+  than being swallowed once per document, leaving an empty graph behind.
 - A batch request that errored or expired yields no triplets for that document and is
   logged with a summary count at the end, so one bad document does not cost the run.
 

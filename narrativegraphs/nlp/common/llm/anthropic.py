@@ -77,10 +77,10 @@ class AnthropicClient(BatchLlmClient):
                 **self._message_params(system_prompt, user_prompt, schema)
             )
         except Exception as e:
-            if _is_systematic_error(e):
-                raise LlmError(f"Cannot query the model: {e}") from e
-            _logger.warning("Model request failed, skipping document: %s", e)
-            return None
+            if _is_transient(e):
+                _logger.warning("Model request failed, skipping document: %s", e)
+                return None
+            raise LlmError(f"Cannot query the model: {e}") from e
         return self._parse_message(message)
 
     def submit_batches(
@@ -212,26 +212,28 @@ class AnthropicClient(BatchLlmClient):
         return self._parse_message(outcome.message)
 
 
-def _is_systematic_error(error: Exception) -> bool:
-    """Tell configuration errors from transient ones.
+def _is_transient(error: Exception) -> bool:
+    """Tell a per-document hiccup from a setup problem.
 
-    The SDK already retries rate limits and server errors, so anything that
-    reaches us is either a per-document hiccup or a setup problem that every
-    subsequent document would hit as well.
+    Only what is known to be worth skipping a document over counts as
+    transient; everything else stops the run. Enumerating it the other way
+    round — listing the setup problems — means any failure not on the list is
+    swallowed per document, and a corpus-wide one then spends an hour building
+    an empty graph. Unresolvable credentials are exactly that case: the SDK
+    reports them as a plain `TypeError`, not as an `AuthenticationError`,
+    since no request is ever sent.
+
+    The SDK already retries rate limits and overloaded servers, so one that
+    still reaches us may be a genuine hiccup on that document.
     """
     try:
         import anthropic
     except ImportError:
         return False
-    return isinstance(
-        error,
-        (
-            anthropic.AuthenticationError,
-            anthropic.PermissionDeniedError,
-            anthropic.BadRequestError,
-            anthropic.NotFoundError,
-        ),
-    )
+    if isinstance(error, (anthropic.APIConnectionError, anthropic.RateLimitError)):
+        return True
+    status = getattr(error, "status_code", None)
+    return isinstance(status, int) and status >= 500
 
 
 def _chunked(items, chunk_size):
