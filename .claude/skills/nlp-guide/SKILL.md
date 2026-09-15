@@ -1,7 +1,7 @@
 ---
 name: nlp-guide
 description: Overview of the NLP layer for text extraction and mapping
-user-invocable: false
+user-invocable: true
 ---
 
 # NLP Layer Guide

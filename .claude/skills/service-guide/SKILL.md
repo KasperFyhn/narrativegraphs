@@ -1,7 +1,7 @@
 ---
 name: service-guide
 description: Overview of the service layer architecture and usage
-user-invocable: false
+user-invocable: true
 ---
 
 # Service Layer Guide

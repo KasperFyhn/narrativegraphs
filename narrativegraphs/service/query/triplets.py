@@ -68,14 +68,14 @@ class TripletService(OrmAssociatedService):
 
         return cleaned
 
-    def get_single(self, id_: int) -> dict:
-        return self._get_by_id_and_transform(id_, lambda x: x.__dict__)
+    def get_single(self, id_: int) -> Triplet:
+        return self._get_by_id_and_transform(id_, Triplet.from_orm)
 
     def get_multiple(
         self, ids: list[int] = None, limit: Optional[int] = None
-    ) -> list[dict]:
+    ) -> list[Triplet]:
         return self._get_multiple_by_ids_and_transform(
-            lambda x: x.__dict__, ids=ids, limit=limit
+            Triplet.from_orm, ids=ids, limit=limit
         )
 
     def get_by_entity_ids(self, entity_ids: list[int]) -> list[Triplet]:

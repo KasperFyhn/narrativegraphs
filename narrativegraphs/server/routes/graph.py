@@ -4,8 +4,7 @@ from narrativegraphs.dto.filter import DataBounds
 from narrativegraphs.dto.graph import Community
 from narrativegraphs.server.requests import CommunitiesRequest, GraphQuery
 from narrativegraphs.server.routes.common import get_query_service
-from narrativegraphs.service import QueryService
-from narrativegraphs.service.graph import ConnectionType
+from narrativegraphs.service import ConnectionType, QueryService
 
 router = APIRouter()
 

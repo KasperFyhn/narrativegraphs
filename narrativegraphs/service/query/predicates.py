@@ -57,5 +57,4 @@ class PredicateService(OrmAssociatedService):
             )
             if limit:
                 query = query.limit(limit)
-
-        return [doc.id for doc in query.all()]
+            return [row.id for row in query.all()]

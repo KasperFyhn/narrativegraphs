@@ -1,7 +1,7 @@
 ---
 name: visualizer-guide
 description: Overview of the React frontend for graph visualization
-user-invocable: false
+user-invocable: true
 ---
 
 # Visualizer Frontend Guide

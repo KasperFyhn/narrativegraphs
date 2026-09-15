@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, Any, Literal
 
 import networkx as nx
 import pandas as pd
-from sqlalchemy import text
 
 from narrativegraphs.db.engine import get_engine
 from narrativegraphs.nlp.entities.common import EntityExtractor
@@ -23,7 +22,7 @@ _logger = logging.getLogger("narrativegraphs")
 _logger.setLevel(logging.INFO)
 
 
-class BaseGraph(QueryService):
+class BaseGraph:
     """Base class for graph implementations.
 
     Provides shared functionality for database management, persistence,
@@ -55,7 +54,14 @@ class BaseGraph(QueryService):
                         "or set on_existing_db to 'overwrite' or 'reuse'."
                     )
 
-        super().__init__(get_engine(sqlite_db_path))
+        self._engine = get_engine(sqlite_db_path)
+        self._service = QueryService(self._engine)
+        self.documents = self._service.documents
+        self.entities = self._service.entities
+        self.cooccurrences = self._service.cooccurrences
+        self.tuplets = self._service.tuplets
+        self.mentions = self._service.mentions
+        self.graph = self._service.graph
 
     @property
     def entities_(self) -> pd.DataFrame:
@@ -133,8 +139,7 @@ class BaseGraph(QueryService):
             else:
                 os.remove(file_path)
 
-        with self.get_session_context() as session:
-            session.execute(text(f"VACUUM main INTO '{file_path}'"))
+        self._service.vacuum_into_file(file_path)
 
     @classmethod
     def load(cls, file_path: str):
@@ -286,6 +291,9 @@ class NarrativeGraph(BaseGraph):
             n_cpu: Number of CPUs for parallel processing (-1 for all).
         """
         super().__init__(sqlite_db_path, on_existing_db)
+        self.relations = self._service.relations
+        self.predicates = self._service.predicates
+        self.triplets = self._service.triplets
         self._pipeline = Pipeline(
             self._engine,
             triplet_extractor=triplet_extractor,

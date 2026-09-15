@@ -8,13 +8,13 @@ from narrativegraphs.db.tuplets import TupletOrm
 from narrativegraphs.nlp.common.annotation import SpanAnnotation
 from narrativegraphs.nlp.triplets.common import Triplet
 from narrativegraphs.nlp.tuplets.common import Tuplet
-from narrativegraphs.service.cache import (
+from narrativegraphs.service.common import DbService
+from narrativegraphs.service.population.cache import (
     CooccurrenceCache,
     EntityCache,
     PredicateCache,
     RelationCache,
 )
-from narrativegraphs.service.common import DbService
 
 
 class PopulationService(DbService):
