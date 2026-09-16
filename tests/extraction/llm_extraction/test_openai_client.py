@@ -82,6 +82,27 @@ class TestRequest(unittest.TestCase):
         self.assertEqual("json_schema", call["response_format"]["type"])
         self.assertEqual(SCHEMA, call["response_format"]["json_schema"]["schema"])
 
+    def test_extra_body_is_forwarded_to_the_server(self):
+        """The escape hatch for whatever a given server wants, e.g. thinking off."""
+        options = {"chat_template_kwargs": {"enable_thinking": False}}
+        client = OpenAiCompatibleClient(
+            "qwen/qwen3.5-9b",
+            client=FakeOpenAiClient('{"triplets": []}'),
+            extra_body=options,
+        )
+
+        client.request_json("s", "u", SCHEMA)
+
+        (call,) = client.client.completions.calls
+        self.assertEqual(options, call["extra_body"])
+
+    def test_no_extra_body_by_default(self):
+        client = make_client('{"triplets": []}')
+        client.request_json("s", "u", SCHEMA)
+
+        (call,) = client.client.completions.calls
+        self.assertIsNone(call["extra_body"])
+
     def test_strict_is_off_by_default_for_compatibility(self):
         client = make_client('{"triplets": []}')
         client.request_json("s", "u", SCHEMA)

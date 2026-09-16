@@ -180,6 +180,12 @@ The two differ in what they can do beyond a single request:
 - **Batching** is `BatchLlmClient`, a narrower interface that only `AnthropicClient`
   implements. `LlmBatchTripletExtractor` requires it and raises `TypeError` at
   construction otherwise, since most OpenAI-compatible servers have no batch API at all.
+- **Server-specific options**: `OpenAiCompatibleClient` takes `extra_body`, merged over the
+  request it builds. The keys belong to the server, not to us, and differ across LM Studio,
+  vLLM, Ollama and hosted OpenAI. The usual reason to reach for it is a thinking model:
+  thinking comes out of the same `max_tokens` budget as the answer and buys little for
+  schema-constrained extraction, so `extra_body={"chat_template_kwargs": {"enable_thinking":
+  False}}` is both faster and safer against the cap.
 - **Sloppy output**: small local models wrap JSON in code fences even when given a schema,
   so `OpenAiCompatibleClient` strips them. `strict` schema adherence is off by default
   because not every compatible server implements it; hosted OpenAI does, and the schemas

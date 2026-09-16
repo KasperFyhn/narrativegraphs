@@ -49,6 +49,22 @@ class OpenAiCompatibleClient(LlmClient):
         strict: whether to ask for strict schema adherence. Off by default
             because not every compatible server implements it; hosted OpenAI
             does, and the schemas used here are strict-compatible.
+        extra_body: extra fields for the request body, merged over the ones
+            built here. The accepted keys belong to the server, not to this
+            package, and differ between LM Studio, vLLM, Ollama and hosted
+            OpenAI. The common reason to reach for it is a thinking model:
+            thinking is drawn from the same `max_tokens` budget as the answer,
+            and for schema-constrained extraction it buys little, so turning
+            it off is faster and leaves the whole budget for triplets:
+
+                OpenAiCompatibleClient(
+                    "qwen/qwen3.5-9b",
+                    base_url="http://127.0.0.1:1234/v1",
+                    extra_body={"chat_template_kwargs": {"enable_thinking": False}},
+                )
+
+            A key that collides with one sent here wins, and the merge is
+            shallow, so a nested value replaces rather than extends it.
         client: a pre-configured `openai.OpenAI` instance
     """
 
@@ -60,12 +76,14 @@ class OpenAiCompatibleClient(LlmClient):
         temperature: float = 0.0,
         max_tokens: int = 16000,
         strict: bool = False,
+        extra_body: dict[str, Any] = None,
         client: Any = None,
     ):
         self.model = model
         self.temperature = temperature
         self.max_tokens = max_tokens
         self.strict = strict
+        self.extra_body = extra_body
         self._base_url = base_url
         self._api_key = api_key
         self._client = client
@@ -114,6 +132,7 @@ class OpenAiCompatibleClient(LlmClient):
                         "strict": self.strict,
                     },
                 },
+                extra_body=self.extra_body,
             )
         except Exception as e:
             if _is_transient(e):
