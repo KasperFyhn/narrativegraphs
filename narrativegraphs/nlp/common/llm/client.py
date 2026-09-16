@@ -9,16 +9,12 @@ is the only thing this abstracts. An implementation takes a system prompt, a
 user prompt and a JSON schema, and returns the object the model produced.
 """
 
-import logging
 from abc import ABC, abstractmethod
 from typing import Any, Generator, Iterable, Optional
 
 from pydantic import BaseModel
 
 JsonSchema = dict[str, Any]
-
-# INFO logging for each 200 is a bit excessive
-logging.getLogger("httpx2").setLevel(logging.WARNING)
 
 
 def json_schema_of(model: type[BaseModel]) -> JsonSchema:
