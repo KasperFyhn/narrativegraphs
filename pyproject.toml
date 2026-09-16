@@ -48,6 +48,7 @@ dependencies = [
     "numpy>=2.2.6",
     "networkx>=3.4.2",
     "kagglehub>=0.4.1",
+    "gutenbergpy",
     # LLM clients. Thin HTTP SDKs next to spaCy and scikit-learn, and asking
     # for an extra before a model can be prompted costs more than it saves.
     # "openai" covers any OpenAI-compatible server: OpenAI, LM Studio, Ollama, vLLM.

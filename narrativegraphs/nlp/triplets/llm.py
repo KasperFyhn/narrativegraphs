@@ -24,10 +24,7 @@ from narrativegraphs.nlp.triplets.common import Triplet, TripletExtractor
 _logger = logging.getLogger("narrativegraphs.nlp.extraction")
 
 _SYSTEM_PROMPT = """\
-You extract subject-predicate-object triplets from text for a narrative graph.
-
-The user's extraction instructions:
-{instructions}
+You extract subject-predicate-object semantic triplets from text.
 
 Rules:
 - Copy the subject, predicate and object verbatim from the text. Never \
@@ -37,14 +34,14 @@ character by character.
 - Keep each part short: a subject or object is a noun phrase without its \
 modifying clauses, a predicate is the verb and, where the relation needs it, \
 its particle or preposition.
-- The three parts must be non-overlapping spans of the same sentence, and must \
-normally appear in the order subject, predicate, object.
-- Quote that whole sentence, again verbatim, as the evidence.
+- The three parts must be non-overlapping spans of the same sentence.
+- Quote that whole sentence verbatim as the evidence.
 - Resolve pronouns to the entity they refer to only if that entity is named \
 elsewhere in the same sentence; otherwise skip the triplet.
-- Extract only relations that are actually asserted by the text and that match \
-the instructions above. Extracting nothing is a valid answer for a document \
-that holds no such relations.
+- Extracting nothing is a valid answer for a document that holds no such relations.
+
+The user's extraction instructions:
+{instructions}
 """
 
 

@@ -138,6 +138,16 @@ class OpenAiCompatibleClient(LlmClient):
 
         content = getattr(choice.message, "content", None)
         if not content:
+            # Reasoning models (Qwen3's hybrid thinking, DeepSeek-R1-style
+            # servers, ...) can put the whole schema-constrained answer in a
+            # separate reasoning field and leave `content` empty, even though
+            # the request finished normally.
+            content = getattr(choice.message, "reasoning_content", None)
+            if content:
+                _logger.debug(
+                    "Model left content empty; using reasoning_content instead"
+                )
+        if not content:
             _logger.warning(
                 "Empty model response (finish_reason: %s); skipping document",
                 getattr(choice, "finish_reason", None),
