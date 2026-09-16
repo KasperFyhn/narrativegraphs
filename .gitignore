@@ -177,5 +177,6 @@ output/
 *.sqlite
 *.db
 *.pkl
+docs/notebooks/texts/
 
 ignored/

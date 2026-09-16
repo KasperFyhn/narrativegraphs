@@ -1,11 +1,13 @@
 """Common spaCy utilities shared across entity and triplet extraction."""
 
 import logging
+from typing import Iterable, Optional
 
 import psutil
 import spacy
 from spacy import Language
 from spacy.tokens import Doc, Span
+from spacy.vocab import Vocab
 
 from narrativegraphs.nlp.common.annotation import SpanAnnotation
 from narrativegraphs.nlp.coref import CoreferenceResolver
@@ -42,10 +44,42 @@ def calculate_batch_size(texts: list[str], n_cpu: int = -1) -> int:
     return max(10, min(scaled_size, 2000))
 
 
-def ensure_spacy_model(name: str):
-    """Ensure spaCy model is available, downloading if necessary."""
+# One Vocab per model name, shared by every pipeline loaded from that model.
+#
+# spaCy deliberately does not cache loaded models, and for good reason: a
+# Language object is mutable, and the callers here reconfigure it in
+# incompatible ways — the triplet extractor adds a sentencizer and needs the
+# parser enabled, while the mapping normalizer disables the parser. A shared
+# Language would let one of those silently reconfigure the other.
+#
+# The Vocab is a different matter. It holds the expensive part (the string
+# store and lexemes), it is identical for a given model, and pipelines only
+# ever add to it. spaCy exposes the `vocab` argument precisely so it can be
+# shared, which is what this does: a NarrativeGraph loads en_core_web_sm three
+# times over — once for the extractor and once per mapper — and sharing the
+# vocabulary between them roughly halves the memory that costs.
+_shared_vocabs: dict[str, Vocab] = {}
+
+
+def ensure_spacy_model(name: str, enable: Optional[Iterable[str]] = None) -> Language:
+    """Ensure spaCy model is available, downloading if necessary.
+
+    Every call returns its own Language object, free to be reconfigured, but
+    pipelines loaded from the same model share one vocabulary.
+
+    Args:
+        name: name of the spaCy model
+        enable: if given, the only pipeline components to enable
+
+    Returns:
+        the loaded pipeline
+    """
+    load_args = {"vocab": _shared_vocabs.get(name, True)}
+    if enable is not None:
+        load_args["enable"] = enable
+
     try:
-        return spacy.load(name)
+        nlp = spacy.load(name, **load_args)
     except OSError:
         _logger.info(
             f"First-time setup: downloading spaCy model '{name}'. "
@@ -55,7 +89,7 @@ def ensure_spacy_model(name: str):
 
         try:
             spacy.cli.download(name)
-            return spacy.load(name)
+            nlp = spacy.load(name, **load_args)
         except Exception as e:
             _logger.error(f"Failed to download model '{name}': {e}")
             raise RuntimeError(
@@ -65,6 +99,14 @@ def ensure_spacy_model(name: str):
                 f"If you continue to have issues, see: "
                 f"https://spacy.io/usage/models"
             ) from e
+
+    _shared_vocabs.setdefault(name, nlp.vocab)
+    return nlp
+
+
+def clear_shared_vocabs() -> None:
+    """Drop the shared vocabularies, so the next load builds a fresh one."""
+    _shared_vocabs.clear()
 
 
 @Language.component("custom_sentencizer")

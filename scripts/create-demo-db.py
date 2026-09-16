@@ -1,3 +1,8 @@
+"""Build the demo database from the Kaggle news-category dataset.
+
+Needs the corpus fetchers: pip install -e ".[demo]"
+"""
+
 import kagglehub
 from kagglehub import KaggleDatasetAdapter
 

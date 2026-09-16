@@ -7,19 +7,19 @@ import networkx as nx
 import pandas as pd
 
 from narrativegraphs.db.engine import get_engine
+from narrativegraphs.nlp.common.annotation import SpanAnnotation
 from narrativegraphs.nlp.entities.common import EntityExtractor
 from narrativegraphs.nlp.mapping import Mapper
 from narrativegraphs.nlp.pipeline import CooccurrencePipeline, Pipeline
 from narrativegraphs.nlp.triplets import TripletExtractor
+from narrativegraphs.nlp.triplets.common import Triplet
 from narrativegraphs.nlp.tuplets.common import CooccurrenceExtractor
 from narrativegraphs.service import QueryService
 
 if TYPE_CHECKING:
     from narrativegraphs.server.backgroundserver import BackgroundServer
 
-logging.basicConfig(level=logging.INFO)
 _logger = logging.getLogger("narrativegraphs")
-_logger.setLevel(logging.INFO)
 
 
 class BaseGraph:
@@ -215,6 +215,7 @@ class CooccurrenceGraph(BaseGraph):
             | list[dict[str, str | list[str]]]
         ) = None,
         metadata: list[dict[str, Any]] = None,
+        entities: list[list[SpanAnnotation]] = None,
     ) -> "CooccurrenceGraph":
         """Fit a co-occurrence graph from documents.
 
@@ -228,6 +229,9 @@ class CooccurrenceGraph(BaseGraph):
                 multiple categories. A document can have a single or multiple labels
                 per category.
             metadata: Optional list of document metadata. Same length as docs.
+            entities: Optional pre-computed entities, one list per document,
+                used instead of running the entity extractor. Lets extraction
+                be done once and reused across several fits.
 
         Returns:
             A fitted CooccurrenceGraph instance.
@@ -239,6 +243,7 @@ class CooccurrenceGraph(BaseGraph):
             timestamps_ordinal=timestamps_ordinal,
             categories=categories,
             metadata=metadata,
+            annotations=entities,
         )
         return self
 
@@ -315,6 +320,7 @@ class NarrativeGraph(BaseGraph):
             | list[dict[str, str | list[str]]]
         ) = None,
         metadata: list[str | list[str]] = None,
+        triplets: list[list[Triplet]] = None,
     ) -> "NarrativeGraph":
         """
         Fit a narrative graph from documents. The docs can be accompanied by lists with
@@ -329,6 +335,16 @@ class NarrativeGraph(BaseGraph):
                 multiple categories. A document can have a single or multiple labels
                 per category.
             metadata: Optional list of document metadata. Same length as docs.
+            triplets: Optional pre-computed triplets, one list per document,
+                used instead of running the triplet extractor. Lets extraction
+                be done once and reused across several fits, and lets a batch
+                run be submitted one day and collected the next:
+
+                    extractor = LlmBatchTripletExtractor("Extract ...")
+                    batch_ids = extractor.submit(docs)
+                    # ... another day ...
+                    triplets = extractor.collect(batch_ids, docs)
+                    ng = NarrativeGraph().fit(docs, triplets=triplets)
 
         Returns:
             A fitted NarrativeGraph instance.
@@ -341,6 +357,7 @@ class NarrativeGraph(BaseGraph):
             timestamps_ordinal=timestamps_ordinal,
             categories=categories,
             metadata=metadata,
+            annotations=triplets,
         )
         return self
 
