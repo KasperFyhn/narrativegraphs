@@ -20,9 +20,7 @@ from narrativegraphs.service import QueryService
 if TYPE_CHECKING:
     from narrativegraphs.server.backgroundserver import BackgroundServer
 
-logging.basicConfig(level=logging.INFO)
 _logger = logging.getLogger("narrativegraphs")
-_logger.setLevel(logging.INFO)
 
 
 class BaseGraph(QueryService):

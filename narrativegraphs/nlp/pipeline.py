@@ -24,9 +24,7 @@ from narrativegraphs.nlp.tuplets.cooccurrences import (
 from narrativegraphs.service import PopulationService
 from narrativegraphs.service.stats import StatsCalculator
 
-logging.basicConfig(level=logging.INFO)
 _logger = logging.getLogger("narrativegraphs.pipeline")
-_logger.setLevel(logging.INFO)
 
 
 class _AbstractPipeline(ABC):
@@ -154,13 +152,14 @@ class Pipeline(_AbstractPipeline):
                 extracted_triplets = self._triplet_extractor.batch_extract(
                     [d.text for d in doc_orms], n_cpu=self.n_cpu
                 )
-            docs_and_triplets = zip(doc_orms, extracted_triplets)
-            if _logger.isEnabledFor(logging.INFO):
-                docs_and_triplets = tqdm(
-                    docs_and_triplets,
-                    desc="Extracting triplets",
-                    total=len(doc_orms),
-                )
+            # disable=None: a progress bar when someone is watching, silence
+            # when the output is piped to a file or a log.
+            docs_and_triplets = tqdm(
+                zip(doc_orms, extracted_triplets),
+                desc="Extracting triplets",
+                total=len(doc_orms),
+                disable=None,
+            )
             for doc, doc_triplets in docs_and_triplets:
                 # Extract entities from the triplets, then record every
                 # other mention of them the document makes: extractors only
@@ -243,11 +242,12 @@ class CooccurrencePipeline(_AbstractPipeline):
                 extracted_entities = self._entity_extractor.batch_extract(
                     [d.text for d in doc_orms], n_cpu=self.n_cpu
                 )
-            docs_and_entities = zip(doc_orms, extracted_entities)
-            if _logger.isEnabledFor(logging.INFO):
-                docs_and_entities = tqdm(
-                    docs_and_entities, desc="Extracting entities", total=len(doc_orms)
-                )
+            docs_and_entities = tqdm(
+                zip(doc_orms, extracted_entities),
+                desc="Extracting entities",
+                total=len(doc_orms),
+                disable=None,
+            )
             for doc, doc_entities in docs_and_entities:
                 # Add entity occurrences first, get lookup for efficient referencing
                 occ_lookup = self._populator.add_entity_occurrences(doc, doc_entities)

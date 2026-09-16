@@ -41,8 +41,10 @@ plugins:
   - mkdocs-jupyter:
       include_source: true
       execute: true
-      # execute_ignore:
-      #   - "notebooks/slow_example.ipynb"  # Ignore specific notebooks
+      execute_ignore:
+        # Runs real LLM requests against a paid API; rendered from its stored
+        # output rather than re-run on every docs build.
+        - "notebooks/llmextraction.ipynb"
 
 markdown_extensions:
   - pymdownx.highlight:
@@ -59,6 +61,7 @@ nav:
   - Tutorials:
       - Demo: notebooks/demo.ipynb
       - Categories: notebooks/categories.ipynb
+      - LLM Extraction: notebooks/llmextraction.ipynb
   - API Reference:
       - Overview: api/index.md
       - Graph: api/graph.md
