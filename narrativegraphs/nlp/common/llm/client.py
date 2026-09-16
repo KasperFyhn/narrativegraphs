@@ -9,12 +9,100 @@ is the only thing this abstracts. An implementation takes a system prompt, a
 user prompt and a JSON schema, and returns the object the model produced.
 """
 
+import json
+import re
 from abc import ABC, abstractmethod
 from typing import Any, Generator, Iterable, Optional
 
 from pydantic import BaseModel
 
 JsonSchema = dict[str, Any]
+
+# Code fences that smaller local models like to wrap JSON in, despite being
+# asked for a schema. The closing fence is optional: a response cut off at the
+# token cap never gets to write it.
+_FENCE = re.compile(r"^\s*```(?:json)?\s*(.*?)(?:\s*```)?\s*$", re.DOTALL)
+
+
+def parse_json_object(text: str) -> Optional[dict[str, Any]]:
+    """Read a model's response text as a JSON object.
+
+    Three things go wrong often enough to handle once here rather than in each
+    provider: a server honouring the schema returns bare JSON, smaller local
+    models wrap it in a code fence even when told not to, and a response that
+    ran into the token cap stops mid-object. The last is recovered up to the
+    last element that was complete, which keeps the work the model had already
+    done instead of dropping the document over its final, half-written item.
+
+    Returns:
+        the object, or None if nothing usable could be read
+    """
+    for candidate in (text.strip(), _unfenced(text)):
+        if candidate is None:
+            continue
+        try:
+            parsed = json.loads(candidate)
+        except json.JSONDecodeError:
+            parsed = _parse_truncated(candidate)
+        if isinstance(parsed, dict):
+            return parsed
+    return None
+
+
+def _unfenced(text: str) -> Optional[str]:
+    fenced = _FENCE.match(text)
+    return fenced.group(1) if fenced else None
+
+
+def _parse_truncated(text: str) -> Optional[Any]:
+    """Parse as much of a cut-off JSON document as is syntactically complete."""
+    closable = _close_at_last_complete_element(text)
+    if closable is None:
+        return None
+    try:
+        return json.loads(closable)
+    except json.JSONDecodeError:
+        return None
+
+
+def _close_at_last_complete_element(text: str) -> Optional[str]:
+    """Trim to the last finished element and close the brackets still open.
+
+    An element is finished where a comma or a closing bracket follows it, so
+    the brackets open at that point — recorded as they were then, not as they
+    are at the end of the text — are what has to be closed again.
+    """
+    open_brackets: list[str] = []
+    cut_at: Optional[tuple[int, tuple[str, ...]]] = None
+    in_string = False
+    escaped = False
+
+    for index, char in enumerate(text):
+        if in_string:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                in_string = False
+            continue
+        if char == '"':
+            in_string = True
+        elif char in "[{":
+            open_brackets.append("]" if char == "[" else "}")
+        elif char in "]}":
+            if not open_brackets:
+                return None
+            open_brackets.pop()
+            cut_at = (index + 1, tuple(open_brackets))
+        elif char == "," and open_brackets:
+            cut_at = (index, tuple(open_brackets))
+
+    if not open_brackets or cut_at is None:
+        # Nothing was cut off, or nothing was finished before the cut.
+        return None
+    index, still_open = cut_at
+    return text[:index] + "".join(reversed(still_open))
 
 
 def json_schema_of(model: type[BaseModel]) -> JsonSchema:

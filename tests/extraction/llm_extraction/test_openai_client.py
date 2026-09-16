@@ -5,6 +5,7 @@ nothing reaches the network. What is under test is the translation: one schema
 in, one dict out, whatever envelope the server wants in between.
 """
 
+import json
 import unittest
 from types import SimpleNamespace
 
@@ -155,6 +156,35 @@ class TestFailures(unittest.TestCase):
                 request=httpx.Request("POST", "http://localhost:11434/v1/chat")
             )
         )
+
+        self.assertIsNone(client.request_json("s", "u", SCHEMA))
+
+    def test_a_response_cut_off_at_the_cap_keeps_what_was_complete(self):
+        """A reasoning model spends the same token budget on its thinking."""
+        text = "Frodo carried the ring. Sam cooked potatoes."
+        truncated = (
+            '{"triplets": ['
+            + json.dumps(
+                {
+                    "subject": "Frodo",
+                    "predicate": "carried",
+                    "object": "the ring",
+                    "evidence": "Frodo carried the ring.",
+                }
+            )
+            + ', {"subject": "Sam", "predicate": "coo'
+        )
+        fake = FakeOpenAiClient(truncated, finish_reason="length")
+        extractor = LlmTripletExtractor(
+            "Extract relations.", llm=OpenAiCompatibleClient("m", client=fake)
+        )
+
+        (triplet,) = extractor.extract(text)
+
+        self.assertEqual("Frodo", triplet.subj.text)
+
+    def test_a_cut_off_response_with_nothing_complete_yields_nothing(self):
+        client = make_client('{"triplets": [{"subject": "Fro', finish_reason="length")
 
         self.assertIsNone(client.request_json("s", "u", SCHEMA))
 

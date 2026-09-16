@@ -259,6 +259,26 @@ class TestRobustness(unittest.TestCase):
 
         self.assertEqual([], extractor.extract("Frodo carried the ring."))
 
+    def test_a_response_cut_off_at_the_cap_keeps_what_was_complete(self):
+        """Extended thinking draws on the same budget, so this does happen."""
+        text = "Frodo carried the ring to Mordor."
+        truncated = (
+            '{"triplets": ['
+            + json.dumps(triplet_dict("Frodo", "carried", "the ring", text))
+            + ', {"subject": "Sam", "predicate": "coo'
+        )
+        extractor = make_extractor(
+            SimpleNamespace(
+                content=[SimpleNamespace(type="text", text=truncated)],
+                stop_reason="max_tokens",
+                stop_details=None,
+            )
+        )
+
+        (triplet,) = extractor.extract(text)
+
+        self.assertEqual("Frodo", triplet.subj.text)
+
     def test_transient_failure_skips_the_document(self):
         import anthropic
         import httpx

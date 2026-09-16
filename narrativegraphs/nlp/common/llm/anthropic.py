@@ -4,7 +4,6 @@ Everything in here is specific to that API and invisible to pipeline
 components, which see only `LlmClient`.
 """
 
-import json
 import logging
 import time
 from typing import Any, Generator, Iterable, Optional
@@ -13,6 +12,7 @@ from narrativegraphs.nlp.common.llm.client import (
     BatchLlmClient,
     JsonSchema,
     LlmError,
+    parse_json_object,
 )
 
 _logger = logging.getLogger("narrativegraphs.nlp.llm")
@@ -189,18 +189,18 @@ class AnthropicClient(BatchLlmClient):
             _logger.warning("No text block in model response; skipping document")
             return None
 
-        try:
-            return json.loads(text)
-        except json.JSONDecodeError:
-            if getattr(message, "stop_reason", None) == "max_tokens":
-                _logger.warning(
-                    "Response hit the %d token cap and was cut off; "
-                    "raise max_tokens or shorten the documents",
-                    self.max_tokens,
-                )
-            else:
-                _logger.warning("Could not parse model response as JSON")
-            return None
+        parsed = parse_json_object(text)
+        if getattr(message, "stop_reason", None) == "max_tokens":
+            _logger.warning(
+                "Response hit the %d token cap and was cut off, %s. Extended "
+                "thinking draws on this same budget, so raise max_tokens or "
+                "send shorter documents.",
+                self.max_tokens,
+                "keeping what was complete" if parsed else "leaving nothing usable",
+            )
+        elif parsed is None:
+            _logger.warning("Could not parse model response as JSON")
+        return parsed
 
     def _parse_batch_result(self, result: Any) -> Optional[dict[str, Any]]:
         outcome = result.result

@@ -274,6 +274,12 @@ fitting several times, for instance to compare mappers over identical triplets.
 - Structured outputs (`output_config.format`) guarantee schema-valid JSON.
 - The default `effort="low"` suits bounded extraction at corpus scale; raise it for
   instructions that call for genuine judgement.
+- `max_tokens` caps the whole completion, and a thinking model spends that same budget on
+  its reasoning before it writes a single triplet. Claude runs adaptive thinking by
+  default, and local hybrid-thinking models (Qwen3, DeepSeek-R1-style servers) think by
+  default too, so a response can run out of room mid-object. What was complete up to that
+  point is kept rather than thrown away, and the cap is logged as a warning naming the
+  limit — raise `max_tokens` or send shorter documents if it recurs.
 - Refusals, truncated responses and genuinely transient failures — a dropped connection,
   a rate limit, an overloaded server — skip the document with a warning. Everything else
   raises `LlmError`, since every later document would fail the same way: unresolved

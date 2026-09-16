@@ -12,23 +12,22 @@ Everything in here is specific to that API and invisible to pipeline
 components, which see only `LlmClient`.
 """
 
-import json
 import logging
 import os
-import re
 from typing import Any, Optional
 
-from narrativegraphs.nlp.common.llm.client import JsonSchema, LlmClient, LlmError
+from narrativegraphs.nlp.common.llm.client import (
+    JsonSchema,
+    LlmClient,
+    LlmError,
+    parse_json_object,
+)
 
 _logger = logging.getLogger("narrativegraphs.nlp.llm")
 
 # The name the schema is given in the request. OpenAI requires one; it does
 # not affect the object that comes back.
 _SCHEMA_NAME = "extraction"
-
-# Code fences that smaller local models like to wrap JSON in, despite being
-# asked for a schema.
-_FENCE = re.compile(r"^\s*```(?:json)?\s*(.*?)\s*```\s*$", re.DOTALL)
 
 
 class OpenAiCompatibleClient(LlmClient):
@@ -154,38 +153,18 @@ class OpenAiCompatibleClient(LlmClient):
             )
             return None
 
-        parsed = _parse_json_object(content)
-        if parsed is None:
-            if getattr(choice, "finish_reason", None) == "length":
-                _logger.warning(
-                    "Response hit the %d token cap and was cut off; "
-                    "raise max_tokens or shorten the documents",
-                    self.max_tokens,
-                )
-            else:
-                _logger.warning("Could not parse model response as JSON")
+        parsed = parse_json_object(content)
+        if getattr(choice, "finish_reason", None) == "length":
+            _logger.warning(
+                "Response hit the %d token cap and was cut off, %s. A "
+                "reasoning model spends this same budget on its thinking, so "
+                "raise max_tokens or send shorter documents.",
+                self.max_tokens,
+                "keeping what was complete" if parsed else "leaving nothing usable",
+            )
+        elif parsed is None:
+            _logger.warning("Could not parse model response as JSON")
         return parsed
-
-
-def _parse_json_object(content: str) -> Optional[dict[str, Any]]:
-    """Parse the response text into an object.
-
-    A server that honours the schema returns bare JSON; smaller local models
-    wrap it in a code fence even when told not to, so that is stripped too.
-    """
-    candidates = [content.strip()]
-    fenced = _FENCE.match(content)
-    if fenced:
-        candidates.append(fenced.group(1))
-
-    for candidate in candidates:
-        try:
-            parsed = json.loads(candidate)
-        except json.JSONDecodeError:
-            continue
-        if isinstance(parsed, dict):
-            return parsed
-    return None
 
 
 def _is_transient(error: Exception) -> bool:
