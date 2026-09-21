@@ -1,10 +1,10 @@
-name: 'Build and Verify Package'
-description: 'Build the narrativegraphs package with frontend'
+name: "Build and Verify Package"
+description: "Build the narrativegraphs package with frontend"
 runs:
   using: "composite"
   steps:
-    - name: Set up Python 3.12
-      uses: actions/setup-python@v5
+    - name: Set up uv with Python 3.12
+      uses: astral-sh/setup-uv@v5
       with:
         python-version: "3.12"
 
@@ -13,10 +13,6 @@ runs:
       with:
         node-version: "22"
 
-    - name: Install Python dependencies
-      shell: bash
-      run: pip install -e ".[dev]"
-
     - name: Build and verify package
       shell: bash
-      run: ./scripts/build.sh
+      run: uv run --locked ./scripts/build.sh

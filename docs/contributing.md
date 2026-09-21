@@ -6,29 +6,31 @@ Contributions are welcome! This document explains how to set up a development en
 
 1. Clone the repository:
 
-    ```bash
-    git clone https://github.com/kasperilarsen/narrativegraphs.git
-    cd narrativegraphs
-    ```
+   ```bash
+   git clone https://github.com/kasperilarsen/narrativegraphs.git
+   cd narrativegraphs
+   ```
 
-2. Create a virtual environment and install in editable mode:
+2. Install the package and dev tools with [uv](https://docs.astral.sh/uv/):
 
-    ```bash
-    python -m venv .venv
-    source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-    pip install -e ".[dev]"
-    ```
+   ```bash
+   uv sync
+   ```
+
+   This creates `.venv` from the committed `uv.lock`. Prefix commands with `uv run`
+   (e.g. `uv run pytest`) or activate `.venv` yourself.
 
 3. Install pre-commit hooks:
 
-    ```bash
-    pre-commit install
-    ```
+   ```bash
+   uv run pre-commit install
+   ```
 
 ## Running Tests
 
 ```bash
-pytest
+uv run ./tests/setup.sh  # once, downloads the spaCy model
+uv run pytest
 ```
 
 ## Building Documentation
@@ -44,8 +46,8 @@ This project uses:
 - `ruff` for linting and formatting Python code
 - Type hints throughout (checked with `mypy`)
 - Google-style docstrings
-- `eslint` for linting React/TypeScript code and `prettier` for formatting 
-- 
+- `eslint` for linting React/TypeScript code and `prettier` for formatting
+-
 
 ## Submitting Changes
 

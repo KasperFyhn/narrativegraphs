@@ -62,19 +62,22 @@ demo = [
     "gutenbergpy>=0.3.5"
 ]
 
-dev = [
-    "pytest>=8.0",
-    "ruff>=0.14",
-    "build>=1.3.0",
-    "twine>=6.2.0"
-]
-
 docs = [
     "mkdocs>=1.5",
     "mkdocs-material>=9.5",
     "mkdocstrings[python]>=0.24",
     "mkdocs-jupyter>=0.24",
     "narrativegraphs[demo]"  # notebooks are executed at build time
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "ruff==0.14",
+    "build>=1.3.0",
+    "twine>=6.2.0",
+    "pre-commit>=3.5",
+    "pip>=23",  # `python -m spacy download` shells out to pip
 ]
 
 [project.urls]
