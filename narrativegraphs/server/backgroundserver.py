@@ -3,7 +3,6 @@ import logging
 
 import nest_asyncio
 import uvicorn
-from IPython.lib.display import IFrame
 from sqlalchemy import Engine
 
 from narrativegraphs.server.app import app
@@ -82,7 +81,3 @@ class BackgroundServer:
         # nest_asyncio allows run_until_complete() within Jupyter's running event loop
         nest_asyncio.apply()
         asyncio.get_running_loop().run_until_complete(self._stop())
-
-    def show_iframe(self, width=None, height=None):
-        url = f"http://localhost:{self._port}"
-        return IFrame(url, width=width or "100%", height=height or 800)

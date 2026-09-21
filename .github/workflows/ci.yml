@@ -2,9 +2,9 @@ name: Continuous Integration
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
   workflow_call:
 
 jobs:
@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ "3.10", "3.11", "3.12" ]
+        python-version: ["3.10", "3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
 
@@ -43,6 +43,33 @@ jobs:
 
       - name: Test with pytest
         run: pytest tests
+
+  test-lowest:
+    # Keeps the lower bounds in pyproject.toml honest.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - uses: astral-sh/setup-uv@v5
+
+      - name: Install lowest supported direct dependencies
+        run: |
+          uv venv
+          uv pip install --resolution lowest-direct -e ".[dev]"
+
+      - name: Test setup
+        run: |
+          source .venv/bin/activate
+          ./tests/setup.sh
+
+      - name: Test with pytest
+        run: |
+          source .venv/bin/activate
+          pytest tests
 
   build:
     runs-on: ubuntu-latest
