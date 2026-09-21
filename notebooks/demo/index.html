@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -838,6 +838,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llmextraction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Triplet extraction with LLMs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1519,34 +1547,6 @@
         }, 1000)
       })
 </script>
-<script>
-(function() {
-  function addWidgetsRenderer() {
-    var mimeElement = document.querySelector('script[type="application/vnd.jupyter.widget-view+json"]');
-    var scriptElement = document.createElement('script');
-    
-    var widgetRendererSrc = 'https://unpkg.com/@jupyter-widgets/html-manager@*/dist/embed-amd.js';
-    
-    var widgetState;
-
-    // Fallback for older version:
-    try {
-      widgetState = mimeElement && JSON.parse(mimeElement.innerHTML);
-
-      if (widgetState && (widgetState.version_major < 2 || !widgetState.version_major)) {
-        
-        var widgetRendererSrc = 'https://unpkg.com/@jupyter-js-widgets@*/dist/embed.js';
-        
-      }
-    } catch(e) {}
-
-    scriptElement.src = widgetRendererSrc;
-    document.body.appendChild(scriptElement);
-  }
-
-  document.addEventListener('DOMContentLoaded', addWidgetsRenderer);
-}());
-</script>
 <style type="text/css">
     pre { line-height: 125%; }
 td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
@@ -1644,7 +1644,12 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
     if (!diagrams.length) {
       return;
     }
-    const mermaid = (await import("https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.7.0/mermaid.esm.min.mjs")).default;
+    const mermaid = (await import("https://cdnjs.cloudflare.com/ajax/libs/mermaid/11.10.0/mermaid.esm.min.mjs")).default;
+    const elkUrl = "https://cdnjs.cloudflare.com/ajax/libs/mermaid-layout-elk/0.1.9/mermaid-layout-elk.esm.min.mjs";
+    if(elkUrl) {
+      const elkLayouts = (await import(elkUrl)).default;
+      mermaid.registerLayoutLoaders(elkLayouts);
+    }
     const parser = new DOMParser();
 
     mermaid.initialize({
@@ -1741,7 +1746,8 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
      * Post-process to ensure mermaid diagrams contain only valid SVG and XHTML.
      */
     function cleanMermaidSvg(svg) {
-      return svg.replace(RE_VOID_ELEMENT, replaceVoidElement);
+      svg = svg.replace(RE_VOID_ELEMENT, replaceVoidElement);
+      return `${SVG_XML_HEADER}${svg}`;
     }
 
 
@@ -1767,6 +1773,285 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
       }
       return `<${tag} ${rest}>`;
     }
+
+
+  /**
+   * Named HTML entities with their decimal equivalent codes.
+   *
+   * @see https://www.w3.org/TR/WD-html40-970708/sgml/entities.html
+   * */
+  const HTML_ENTITIES = `<!ENTITY Aacute "&#193;">
+<!ENTITY aacute "&#225;">
+<!ENTITY Acirc "&#194;">
+<!ENTITY acirc "&#226;">
+<!ENTITY acute "&#180;">
+<!ENTITY AElig "&#198;">
+<!ENTITY aelig "&#230;">
+<!ENTITY Agrave "&#192;">
+<!ENTITY agrave "&#224;">
+<!ENTITY alefsym "&#8501;">
+<!ENTITY Alpha "&#913;">
+<!ENTITY alpha "&#945;">
+<!ENTITY amp "&#38;">
+<!ENTITY and "&#8869;">
+<!ENTITY ang "&#8736;">
+<!ENTITY Aring "&#197;">
+<!ENTITY aring "&#229;">
+<!ENTITY asymp "&#8776;">
+<!ENTITY Atilde "&#195;">
+<!ENTITY atilde "&#227;">
+<!ENTITY Auml "&#196;">
+<!ENTITY auml "&#228;">
+<!ENTITY bdquo "&#8222;">
+<!ENTITY Beta "&#914;">
+<!ENTITY beta "&#946;">
+<!ENTITY brvbar "&#166;">
+<!ENTITY bull "&#8226;">
+<!ENTITY cap "&#8745;">
+<!ENTITY Ccedil "&#199;">
+<!ENTITY ccedil "&#231;">
+<!ENTITY cedil "&#184;">
+<!ENTITY cent "&#162;">
+<!ENTITY Chi "&#935;">
+<!ENTITY chi "&#967;">
+<!ENTITY circ "&#710;">
+<!ENTITY clubs "&#9827;">
+<!ENTITY cong "&#8773;">
+<!ENTITY copy "&#169;">
+<!ENTITY crarr "&#8629;">
+<!ENTITY cup "&#8746;">
+<!ENTITY curren "&#164;">
+<!ENTITY dagger "&#8224;">
+<!ENTITY Dagger "&#8225;">
+<!ENTITY darr "&#8595;">
+<!ENTITY dArr "&#8659;">
+<!ENTITY deg "&#176;">
+<!ENTITY Delta "&#916;">
+<!ENTITY delta "&#948;">
+<!ENTITY diams "&#9830;">
+<!ENTITY divide "&#247;">
+<!ENTITY Eacute "&#201;">
+<!ENTITY eacute "&#233;">
+<!ENTITY Ecirc "&#202;">
+<!ENTITY ecirc "&#234;">
+<!ENTITY Egrave "&#200;">
+<!ENTITY egrave "&#232;">
+<!ENTITY empty "&#8709;">
+<!ENTITY emsp "&#8195;">
+<!ENTITY ensp "&#8194;">
+<!ENTITY epsilon "&#949;">
+<!ENTITY Epsilon "&#917;">
+<!ENTITY equiv "&#8801;">
+<!ENTITY Eta "&#919;">
+<!ENTITY eta "&#951;">
+<!ENTITY ETH "&#208;">
+<!ENTITY eth "&#240;">
+<!ENTITY Euml "&#203;">
+<!ENTITY euml "&#235;">
+<!ENTITY exist "&#8707;">
+<!ENTITY fnof "&#402;">
+<!ENTITY forall "&#8704;">
+<!ENTITY frac12 "&#189;">
+<!ENTITY frac14 "&#188;">
+<!ENTITY frac34 "&#190;">
+<!ENTITY frasl "&#8260;">
+<!ENTITY Gamma "&#915;">
+<!ENTITY gamma "&#947;">
+<!ENTITY ge "&#8805;">
+<!ENTITY gt "&#62;">
+<!ENTITY harr "&#8596;">
+<!ENTITY hArr "&#8660;">
+<!ENTITY hearts "&#9829;">
+<!ENTITY hellip "&#8230;">
+<!ENTITY Iacute "&#205;">
+<!ENTITY iacute "&#237;">
+<!ENTITY Icirc "&#206;">
+<!ENTITY icirc "&#238;">
+<!ENTITY iexcl "&#161;">
+<!ENTITY Igrave "&#204;">
+<!ENTITY igrave "&#236;">
+<!ENTITY image "&#8465;">
+<!ENTITY infin "&#8734;">
+<!ENTITY int "&#8747;">
+<!ENTITY Iota "&#921;">
+<!ENTITY iota "&#953;">
+<!ENTITY iquest "&#191;">
+<!ENTITY isin "&#8712;">
+<!ENTITY Iuml "&#207;">
+<!ENTITY iuml "&#239;">
+<!ENTITY Kappa "&#922;">
+<!ENTITY kappa "&#954;">
+<!ENTITY Lambda "&#923;">
+<!ENTITY lambda "&#955;">
+<!ENTITY lang "&#9001;">
+<!ENTITY laquo "&#171;">
+<!ENTITY larr "&#8592;">
+<!ENTITY lArr "&#8656;">
+<!ENTITY lceil "&#8968;">
+<!ENTITY ldquo "&#8220;">
+<!ENTITY le "&#8804;">
+<!ENTITY lfloor "&#8970;">
+<!ENTITY lowast "&#8727;">
+<!ENTITY loz "&#9674;">
+<!ENTITY lrm "&#8206;">
+<!ENTITY lsaquo "&#8249;">
+<!ENTITY lsquo "&#8216;">
+<!ENTITY lt "&#60;">
+<!ENTITY macr "&#175;">
+<!ENTITY mdash "&#8212;">
+<!ENTITY micro "&#181;">
+<!ENTITY middot "&#183;">
+<!ENTITY minus "&#8722;">
+<!ENTITY Mu "&#924;">
+<!ENTITY mu "&#956;">
+<!ENTITY nabla "&#8711;">
+<!ENTITY nbsp "&#160;">
+<!ENTITY ndash "&#8211;">
+<!ENTITY ne "&#8800;">
+<!ENTITY ni "&#8715;">
+<!ENTITY not "&#172;">
+<!ENTITY notin "&#8713;">
+<!ENTITY nsub "&#8836;">
+<!ENTITY Ntilde "&#209;">
+<!ENTITY ntilde "&#241;">
+<!ENTITY Nu "&#925;">
+<!ENTITY nu "&#957;">
+<!ENTITY Oacute "&#211;">
+<!ENTITY oacute "&#243;">
+<!ENTITY Ocirc "&#212;">
+<!ENTITY ocirc "&#244;">
+<!ENTITY OElig "&#338;">
+<!ENTITY oelig "&#339;">
+<!ENTITY Ograve "&#210;">
+<!ENTITY ograve "&#242;">
+<!ENTITY oline "&#8254;">
+<!ENTITY Omega "&#937;">
+<!ENTITY omega "&#969;">
+<!ENTITY Omicron "&#927;">
+<!ENTITY omicron "&#959;">
+<!ENTITY oplus "&#8853;">
+<!ENTITY or "&#8870;">
+<!ENTITY ordf "&#170;">
+<!ENTITY ordm "&#186;">
+<!ENTITY Oslash "&#216;">
+<!ENTITY oslash "&#248;">
+<!ENTITY Otilde "&#213;">
+<!ENTITY otilde "&#245;">
+<!ENTITY otimes "&#8855;">
+<!ENTITY Ouml "&#214;">
+<!ENTITY ouml "&#246;">
+<!ENTITY para "&#182;">
+<!ENTITY part "&#8706;">
+<!ENTITY permil "&#8240;">
+<!ENTITY perp "&#8869;">
+<!ENTITY Phi "&#934;">
+<!ENTITY phi "&#966;">
+<!ENTITY Pi "&#928;">
+<!ENTITY pi "&#960;">
+<!ENTITY piv "&#982;">
+<!ENTITY plusmn "&#177;">
+<!ENTITY pound "&#163;">
+<!ENTITY prime "&#8242;">
+<!ENTITY Prime "&#8243;">
+<!ENTITY prod "&#8719;">
+<!ENTITY prop "&#8733;">
+<!ENTITY Psi "&#936;">
+<!ENTITY psi "&#968;">
+<!ENTITY quot "&#34;">
+<!ENTITY radic "&#8730;">
+<!ENTITY rang "&#9002;">
+<!ENTITY raquo "&#187;">
+<!ENTITY rarr "&#8594;">
+<!ENTITY rArr "&#8658;">
+<!ENTITY rceil "&#8969;">
+<!ENTITY rdquo "&#8221;">
+<!ENTITY real "&#8476;">
+<!ENTITY reg "&#174;">
+<!ENTITY rfloor "&#8971;">
+<!ENTITY Rho "&#929;">
+<!ENTITY rho "&#961;">
+<!ENTITY rlm "&#8207;">
+<!ENTITY rsaquo "&#8250;">
+<!ENTITY rsquo "&#8217;">
+<!ENTITY sbquo "&#8218;">
+<!ENTITY Scaron "&#352;">
+<!ENTITY scaron "&#353;">
+<!ENTITY sdot "&#8901;">
+<!ENTITY sect "&#167;">
+<!ENTITY shy "&#173;">
+<!ENTITY Sigma "&#931;">
+<!ENTITY sigma "&#963;">
+<!ENTITY sigmaf "&#962;">
+<!ENTITY sim "&#8764;">
+<!ENTITY spades "&#9824;">
+<!ENTITY sub "&#8834;">
+<!ENTITY sube "&#8838;">
+<!ENTITY sum "&#8721;">
+<!ENTITY sup "&#8835;">
+<!ENTITY sup1 "&#185;">
+<!ENTITY sup2 "&#178;">
+<!ENTITY sup3 "&#179;">
+<!ENTITY supe "&#8839;">
+<!ENTITY szlig "&#223;">
+<!ENTITY Tau "&#932;">
+<!ENTITY tau "&#964;">
+<!ENTITY there4 "&#8756;">
+<!ENTITY Theta "&#920;">
+<!ENTITY theta "&#952;">
+<!ENTITY thetasym "&#977;">
+<!ENTITY thinsp "&#8201;">
+<!ENTITY THORN "&#222;">
+<!ENTITY thorn "&#254;">
+<!ENTITY tilde "&#732;">
+<!ENTITY times "&#215;">
+<!ENTITY trade "&#8482;">
+<!ENTITY Uacute "&#218;">
+<!ENTITY uacute "&#250;">
+<!ENTITY uarr "&#8593;">
+<!ENTITY uArr "&#8657;">
+<!ENTITY Ucirc "&#219;">
+<!ENTITY ucirc "&#251;">
+<!ENTITY Ugrave "&#217;">
+<!ENTITY ugrave "&#249;">
+<!ENTITY uml "&#168;">
+<!ENTITY upsih "&#978;">
+<!ENTITY Upsilon "&#933;">
+<!ENTITY upsilon "&#965;">
+<!ENTITY Uuml "&#220;">
+<!ENTITY uuml "&#252;">
+<!ENTITY weierp "&#8472;">
+<!ENTITY Xi "&#926;">
+<!ENTITY xi "&#958;">
+<!ENTITY Yacute "&#221;">
+<!ENTITY yacute "&#253;">
+<!ENTITY yen "&#165;">
+<!ENTITY Yuml "&#376;">
+<!ENTITY yuml "&#255;">
+<!ENTITY Zeta "&#918;">
+<!ENTITY zeta "&#950;">
+<!ENTITY zwj "&#8205;">
+<!ENTITY zwnj "&#8204;">`.replace(/\n/g, ' ');
+
+  /**
+   * A reasonably strict xml declaration.
+   */
+  const XML_DECL = '<?xml version="1.0" standalone="no"?>';
+
+  /**
+   * The beginning of the XML doctype declaration.
+   */
+  const DOCTYPE_START = `<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd" [`;
+
+  /**
+   * The end of the XML docype declaration.
+   */
+  const DOCTYPE_END = ']>';
+
+  /**
+   * A full header for an SVG XML document.
+   */
+  const SVG_XML_HEADER = `${XML_DECL}
+    ${DOCTYPE_START}${HTML_ENTITIES}${DOCTYPE_END}`;
 
     void Promise.all([...diagrams].map(renderOneMarmaid));
   });
@@ -1906,6 +2191,14 @@ data.head()</div>
 <div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>/Users/au479461/PycharmProjects/narrative-graph/.venv/lib/python3.12/site-packages/tqdm/auto.py:21: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
+  from .autonotebook import tqdm as notebook_tqdm
+</pre>
+</div>
+</div>
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
 <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[1]:</div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
@@ -2098,53 +2391,182 @@ model.fit(docs, doc_ids=ids, categories=categories, timestamps=timestamps)</div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
-<pre>INFO:narrativegraphs.pipeline:Adding 5000 documents to database
-</pre>
+<pre>Extracting triplets:   0%|                                                                                                                                                                                                                                                               | 0/5000 [00:00&lt;?, ?it/s]</pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
-<pre>INFO:narrativegraphs.pipeline:Extracting triplets
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jupyter-widgets jp-OutputArea-output" id="e0ea454f-c005-4d96-8e66-fbe30b5b472d" tabindex="0">
-<script type="text/javascript">
-var element = document.getElementById('e0ea454f-c005-4d96-8e66-fbe30b5b472d');
-</script>
-<script type="application/vnd.jupyter.widget-view+json">
-{"version_major": 2, "version_minor": 0, "model_id": "aca9465cc613423195e884d65c7469e6"}
-</script>
+<pre>Extracting triplets:   0%|                                                                                                                                                                                                                                                     | 1/5000 [00:01&lt;2:14:36,  1.62s/it]</pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
-<pre>INFO:narrativegraphs.pipeline:Resolving entities and predicates
-</pre>
+<pre>Extracting triplets:   3%|████████▍                                                                                                                                                                                                                                           | 173/5000 [00:01&lt;00:34, 140.28it/s]</pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
-<pre>INFO:narrativegraphs.pipeline:Mapping triplets and tuplets
-</pre>
+<pre>Extracting triplets:   8%|██████████████████▍                                                                                                                                                                                                                                 | 379/5000 [00:01&lt;00:13, 339.85it/s]</pre>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
-<pre>INFO:narrativegraphs.pipeline:Calculating stats
+<pre>Extracting triplets:  11%|█████████████████████████▊                                                                                                                                                                                                                          | 528/5000 [00:03&lt;00:27, 164.65it/s]</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>Extracting triplets:  15%|████████████████████████████████████▊                                                                                                                                                                                                               | 754/5000 [00:03&lt;00:14, 287.39it/s]</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>Extracting triplets:  19%|███████████████████████████████████████████████▍                                                                                                                                                                                                    | 973/5000 [00:03&lt;00:09, 433.87it/s]</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>Extracting triplets:  23%|███████████████████████████████████████████████████████▍                                                                                                                                                                                           | 1140/5000 [00:05&lt;00:17, 223.76it/s]</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>Extracting triplets:  27%|██████████████████████████████████████████████████████████████████▋                                                                                                                                                                                | 1371/5000 [00:05&lt;00:10, 336.29it/s]</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>Extracting triplets:  30%|██████████████████████████████████████████████████████████████████████████                                                                                                                                                                         | 1524/5000 [00:06&lt;00:16, 208.84it/s]</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>Extracting triplets:  35%|████████████████████████████████████████████████████████████████████████████████████▉                                                                                                                                                              | 1748/5000 [00:06&lt;00:10, 306.63it/s]</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>Extracting triplets:  40%|███████████████████████████████████████████████████████████████████████████████████████████████▉                                                                                                                                                   | 1975/5000 [00:07&lt;00:06, 433.01it/s]</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>Extracting triplets:  43%|████████████████████████████████████████████████████████████████████████████████████████████████████████▏                                                                                                                                          | 2144/5000 [00:08&lt;00:12, 237.69it/s]</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>Extracting triplets:  47%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████                                                                                                                                  | 2326/5000 [00:08&lt;00:08, 317.33it/s]</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>Extracting triplets:  50%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▌                                                                                                                         | 2501/5000 [00:10&lt;00:11, 212.63it/s]</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>Extracting triplets:  55%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▊                                                                                                              | 2734/5000 [00:10&lt;00:07, 312.12it/s]</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>Extracting triplets:  59%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▌                                                                                                   | 2954/5000 [00:10&lt;00:04, 430.82it/s]</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>Extracting triplets:  62%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▌                                                                                           | 3119/5000 [00:12&lt;00:07, 242.42it/s]</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>Extracting triplets:  67%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▏                                                                                | 3337/5000 [00:12&lt;00:04, 341.17it/s]</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>Extracting triplets:  70%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▏                                                                        | 3501/5000 [00:13&lt;00:06, 218.78it/s]</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>Extracting triplets:  75%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████                                                              | 3726/5000 [00:13&lt;00:04, 314.41it/s]</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>Extracting triplets:  79%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████                                                   | 3953/5000 [00:13&lt;00:02, 437.54it/s]</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>Extracting triplets:  82%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▎                                          | 4121/5000 [00:15&lt;00:03, 253.63it/s]</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>Extracting triplets:  87%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▎                              | 4368/5000 [00:15&lt;00:01, 369.92it/s]</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>Extracting triplets:  91%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████                       | 4527/5000 [00:16&lt;00:02, 227.93it/s]</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>Extracting triplets:  95%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▋            | 4747/5000 [00:17&lt;00:00, 321.68it/s]</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>Extracting triplets: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▌| 4990/5000 [00:17&lt;00:00, 455.69it/s]</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>Extracting triplets: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5000/5000 [00:17&lt;00:00, 291.71it/s]</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>
 </pre>
 </div>
 </div>
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
 <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[3]:</div>
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
-<pre>&lt;narrativegraphs.graphs.NarrativeGraph at 0x177aba7b0&gt;</pre>
+<pre>&lt;narrativegraphs.graphs.NarrativeGraph at 0x10312a930&gt;</pre>
 </div>
 </div>
 </div>
@@ -2162,8 +2584,8 @@ var element = document.getElementById('e0ea454f-c005-4d96-8e66-fbe30b5b472d');
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=47379af2c9bf0731">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=47379af2c9bf0731">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2196,22 +2618,9 @@ server = model.serve_visualizer(block=False)</div>
 </div>
 </div>
 </div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
 </div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
-<pre>INFO:root:Server started in background on port 8001
-</pre>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=441715f8d5e054d3">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=441715f8d5e054d3">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2232,19 +2641,6 @@ server = model.serve_visualizer(block=False)</div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">server</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-5">server.stop()</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
-<pre>INFO:root:Background server stopped
-</pre>
 </div>
 </div>
 </div>
@@ -2383,9 +2779,9 @@ server = model.serve_visualizer(block=False)</div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>(1, {'id': 1, 'label': 'An App', 'frequency': 1, 'focus': False})
-(2, {'id': 2, 'label': 'Deportation Agents', 'frequency': 1, 'focus': False})
-(3, {'id': 3, 'label': 'that its estimate', 'frequency': 1, 'focus': False})
+<pre>(1, {'id': 1, 'label': 'Election Day Past', 'frequency': 1, 'focus': False})
+(2, {'id': 2, 'label': 'the ghost', 'frequency': 1, 'focus': False})
+(3, {'id': 3, 'label': 'Election Day', 'frequency': 4, 'focus': False})
 </pre>
 </div>
 </div>
@@ -2458,7 +2854,6 @@ server = model.serve_visualizer(block=False)</div>
 <th>label</th>
 <th>frequency</th>
 <th>doc_frequency</th>
-<th>spread</th>
 <th>adjusted_tf_idf</th>
 <th>first_occurrence</th>
 <th>last_occurrence</th>
@@ -2470,67 +2865,62 @@ server = model.serve_visualizer(block=False)</div>
 <tr>
 <th>0</th>
 <td>1</td>
-<td>An App</td>
+<td>Election Day Past</td>
 <td>1</td>
 <td>1</td>
-<td>0.0002</td>
-<td>0.000000</td>
-<td>2022-03-11</td>
-<td>2022-03-11</td>
+<td>0.0</td>
+<td>2014-11-02</td>
+<td>2014-11-02</td>
 <td>[]</td>
 <td>[POLITICS]</td>
 </tr>
 <tr>
 <th>1</th>
 <td>2</td>
-<td>Deportation Agents</td>
+<td>the ghost</td>
 <td>1</td>
 <td>1</td>
-<td>0.0002</td>
-<td>0.000000</td>
-<td>2022-03-11</td>
-<td>2022-03-11</td>
+<td>0.0</td>
+<td>2014-11-02</td>
+<td>2014-11-02</td>
 <td>[]</td>
 <td>[POLITICS]</td>
 </tr>
 <tr>
 <th>2</th>
 <td>3</td>
-<td>that its estimate</td>
-<td>1</td>
-<td>1</td>
-<td>0.0002</td>
-<td>0.000000</td>
-<td>2017-12-11</td>
-<td>2017-12-11</td>
+<td>Election Day</td>
+<td>4</td>
+<td>3</td>
+<td>3750.0</td>
+<td>2014-11-01</td>
+<td>2016-09-28</td>
 <td>[]</td>
-<td>[POLITICS]</td>
+<td>[POLITICS, POLITICS, POLITICS, POLITICS]</td>
 </tr>
 <tr>
 <th>3</th>
 <td>4</td>
-<td>the non-partisan Congressional Budget Office (CBO</td>
+<td>the early hours</td>
 <td>1</td>
 <td>1</td>
-<td>0.0002</td>
-<td>0.000000</td>
-<td>2017-12-11</td>
-<td>2017-12-11</td>
+<td>0.0</td>
+<td>2014-11-02</td>
+<td>2014-11-02</td>
 <td>[]</td>
 <td>[POLITICS]</td>
 </tr>
 <tr>
 <th>4</th>
 <td>5</td>
-<td>The city council</td>
-<td>2</td>
-<td>2</td>
-<td>0.0004</td>
-<td>1666.666667</td>
-<td>2016-03-29</td>
-<td>2016-08-20</td>
+<td>Deportation Agents</td>
+<td>1</td>
+<td>1</td>
+<td>0.0</td>
+<td>2022-03-11</td>
+<td>2022-03-11</td>
 <td>[]</td>
-<td>[POLITICS, POLITICS]</td>
+<td>[POLITICS]</td>
 </tr>
 <tr>
 <th>...</th>
@@ -2543,76 +2933,70 @@ server = model.serve_visualizer(block=False)</div>
 <td>...</td>
 <td>...</td>
 <td>...</td>
-<td>...</td>
 </tr>
 <tr>
-<th>3416</th>
-<td>3417</td>
-<td>His Mind</td>
+<th>7376</th>
+<td>7377</td>
+<td>Rank-and-file voters</td>
 <td>1</td>
 <td>1</td>
-<td>0.0002</td>
-<td>0.000000</td>
-<td>2016-04-13</td>
-<td>2016-04-13</td>
-<td>[]</td>
-<td>[POLITICS]</td>
-</tr>
-<tr>
-<th>3417</th>
-<td>3418</td>
-<td>The DNC Contenders</td>
-<td>1</td>
-<td>1</td>
-<td>0.0002</td>
-<td>0.000000</td>
+<td>0.0</td>
 <td>2017-01-19</td>
 <td>2017-01-19</td>
 <td>[]</td>
 <td>[POLITICS]</td>
 </tr>
 <tr>
-<th>3418</th>
-<td>3419</td>
-<td>Interested</td>
+<th>7377</th>
+<td>7378</td>
+<td>Russian-aligned Wikileaks</td>
 <td>1</td>
 <td>1</td>
-<td>0.0002</td>
-<td>0.000000</td>
-<td>2017-01-19</td>
-<td>2017-01-19</td>
+<td>0.0</td>
+<td>2017-01-04</td>
+<td>2017-01-04</td>
 <td>[]</td>
 <td>[POLITICS]</td>
 </tr>
 <tr>
-<th>3419</th>
-<td>3420</td>
+<th>7378</th>
+<td>7379</td>
+<td>Jerusalem</td>
+<td>2</td>
+<td>1</td>
+<td>2500.0</td>
+<td>2017-12-16</td>
+<td>2017-12-16</td>
+<td>[]</td>
+<td>[POLITICS, POLITICS]</td>
+</tr>
+<tr>
+<th>7379</th>
+<td>7380</td>
 <td>the stage</td>
 <td>1</td>
 <td>1</td>
-<td>0.0002</td>
-<td>0.000000</td>
+<td>0.0</td>
 <td>2017-12-16</td>
 <td>2017-12-16</td>
 <td>[]</td>
 <td>[POLITICS]</td>
 </tr>
 <tr>
-<th>3420</th>
-<td>3421</td>
-<td>House Science Committee</td>
+<th>7380</th>
+<td>7381</td>
+<td>James M. Dorsey US president Donald J. Trump’s...</td>
 <td>1</td>
 <td>1</td>
-<td>0.0002</td>
-<td>0.000000</td>
-<td>2014-05-22</td>
-<td>2014-05-22</td>
+<td>0.0</td>
+<td>2017-12-16</td>
+<td>2017-12-16</td>
 <td>[]</td>
 <td>[POLITICS]</td>
 </tr>
 </tbody>
 </table>
-<p>3421 rows × 10 columns</p>
+<p>7381 rows × 9 columns</p>
 </div>
 </div>
 </div>
@@ -2677,8 +3061,16 @@ democrats_matches[:10]</div>
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
 <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[10]:</div>
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
-<pre>[EntityLabel(id=114, label='Democrats'),
- EntityLabel(id=1476, label="Democrats' big reform bill")]</pre>
+<pre>[EntityLabel(id=242, label='Democrats'),
+ EntityLabel(id=5186, label="Democrats' Rebuttal"),
+ EntityLabel(id=3254, label="Democrats' big reform bill"),
+ EntityLabel(id=1203, label='House Democrats'),
+ EntityLabel(id=1969, label='U.S. Democrats'),
+ EntityLabel(id=2492, label='Senate Democrats'),
+ EntityLabel(id=308, label='Two Democrats'),
+ EntityLabel(id=1353, label='2016 Democrats'),
+ EntityLabel(id=399, label='Iowa Democrats'),
+ EntityLabel(id=6415, label='Taunt Democrats')]</pre>
 </div>
 </div>
 </div>
@@ -2794,141 +3186,105 @@ for edge in democrats_graph.edges:
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>NODES
-13 Trump
-23 GOP
-24 Bill
-33 Betsy DeVos
-64 Obama
-77 State
-86 Biden
-113 A majority
-114 Democrats
-143 this week's "Candidate Confessional
-183 Jefferson Jackson Dinner
-260 Chuck Schumer
-325 A Landslide
-347 A Run
-411 Liberals
-428 health care
-476 different findings
-537 Record Donations
-603 an even more ambitious vision
-606 Planned Parenthood Shooting
-616 A candidate
-638 Republican Mike DeWine
-678 Tehran
-682 Anthony Weiner
-701 judicial nominee Steven Menashi
-739 This Billionaire Environmental Activist
-908 Pennsylvania Republican
-953 Republican Lt. Gov. Kim Guadagno
-1067 the ballot box
-1068 Special Election
-1069 Resources
-1219 more clarity
-1320 world leaders
-1322 Eyeing 2018 Senate Takeover
-1366 key states
-1369 Little Time
-1440 Hugh Hewitt
-1572 The Longest-Serving Woman
-1748 Hemp
-1778 ‘Hostage Czar
-1858 Nationwide Day
-1933 Black candidates
-1941 the Call
-2026 For Independent Commission
-2073 Republican Cory Gardner
-2174 Rep. Ruben Kihuen
-2219 Renewed Push
-2271 Oversight Committee
-2387 California Assembly Member Roger Hernandez
-2423 Their Nadir
-2440 To End 'Corporate Culture
-2454 Gubernatorial Primary
-2490 A New Committee
-2629 Probe
-2665 About Her
-2862 An Investigation
-2867 over an
-2988 Rep. Jamie Raskin
-3007 Short But Outperform Expectations
-3126 Cuomo
-3395 their worst electoral position
+241 a majority
+242 Democrats
+243 Republicans Flip Virginia House
+405 Obama
+478 Senate
+762 A Landslide
+892 Trump Voters
+907 Bill
+1034 More GOP-Held State House Seats
+1079 This committee
+1081 different findings
+1253 good news
+1455 Calls
+1497 Tehran
+1545 judicial nominee Steven Menashi
+1575 the Ohio Republican's slam
+1632 a bitter partisan battle
+1652 This Billionaire Environmental Activist
+1965 Key States
+2021 Pennsylvania Republican
+2112 Republican Lt. Gov. Kim Guadagno
+2388 Special Election
+2389 the ballot box
+2390 Resources
+2690 More Clarity
+2920 Eyeing 2018 Senate Takeover
+3034 Little Time
+3071 Inaugural Address Worthy
+3177 Hugh Hewitt
+3481 The Longest-Serving Woman
+3836 Hemp
+4053 Nationwide Day
+4216 Black candidates
+4263 a scapegoat
+4394 For Independent Commission
+4485 More Than A Dozen State Legislative Chambers
+4697 Rep. Ruben Kihuen
+4811 Renewed Push
+4914 Oversight Committee
+5236 Their Nadir
+5324 Investigations
+5698 Probe
+6425 Roughly 40 percent
+6430 Short But Outperform Expectations
+6711 Biden's Decision
+6753 Trump's Voter Fraud Investigation
+6918 Suspected Russian Role
+7318 their worst electoral position
 
 EDGES
-Trump -- puts -&gt; the Call
-Trump -- is -&gt; health care
-Trump -- is -&gt; A candidate
-GOP -- challenging, Stick -&gt; Trump
-GOP -- Considering, Wanted -&gt; Obama
-GOP -- Moves -&gt; Democrats
-Bill -- Survives -&gt; GOP
-Bill -- strip -&gt; health care
-Bill -- Points -&gt; Trump
-Obama -- ripped -&gt; Trump
-State -- Explains -&gt; Trump
-Biden -- slammed -&gt; Trump
-Democrats -- concede -&gt; A majority
-Democrats -- discuss -&gt; this week's "Candidate Confessional
-Democrats -- Rename -&gt; Jefferson Jackson Dinner
-Democrats -- Turns -&gt; A Run
-Democrats -- Boycotting, participated, needs -&gt; Trump
-Democrats -- advanced, calls -&gt; Bill
-Democrats -- Emphasizes -&gt; health care
-Democrats -- Flip, Wins -&gt; State
-Democrats -- Having -&gt; different findings
-Democrats -- Rake -&gt; Record Donations
-Democrats -- Lay -&gt; an even more ambitious vision
-Democrats -- React -&gt; Planned Parenthood Shooting
-Democrats -- Faces -&gt; Republican Mike DeWine
-Democrats -- Booted -&gt; Anthony Weiner
-Democrats -- Asks -&gt; judicial nominee Steven Menashi
-Democrats -- fled, Push -&gt; Obama
+a majority -- of -&gt; Democrats
+a majority -- in -&gt; Senate
+Democrats -- conceded -&gt; a majority
+Democrats -- needs -&gt; Trump Voters
+Democrats -- advanced, Calls -&gt; Bill
+Democrats -- Flip -&gt; More GOP-Held State House Seats
+Democrats -- Has -&gt; different findings
+Democrats -- on -&gt; This committee
+Democrats -- asked -&gt; judicial nominee Steven Menashi
 Democrats -- Defeated -&gt; Republican Lt. Gov. Kim Guadagno
-Democrats -- Wins -&gt; Special Election
+Democrats -- won -&gt; Special Election
 Democrats -- dominated -&gt; the ballot box
 Democrats -- Pumped -&gt; Resources
-Democrats -- Demands -&gt; more clarity
-Democrats -- assured -&gt; world leaders
-Democrats -- Begins -&gt; Eyeing 2018 Senate Takeover
-Democrats -- lead -&gt; key states
-Democrats -- Having -&gt; Little Time
+Democrats -- Demands -&gt; More Clarity
+Democrats -- Begin -&gt; Eyeing 2018 Senate Takeover
+Democrats -- fled -&gt; Obama
+Democrats -- led -&gt; Key States
+Democrats -- Has -&gt; Little Time
+Democrats -- for -&gt; Senate
 Democrats -- Became -&gt; The Longest-Serving Woman
-Democrats -- agree -&gt; Hemp
-Democrats -- calls -&gt; ‘Hostage Czar
-Democrats -- lead -&gt; Nationwide Day
+Democrats -- Agree -&gt; Hemp
+Democrats -- led -&gt; Nationwide Day
 Democrats -- nominate -&gt; Black candidates
-Democrats -- Renew -&gt; the Call
+Democrats -- Renew -&gt; Calls
+Democrats -- cast -&gt; a scapegoat
 Democrats -- Push -&gt; For Independent Commission
-Democrats -- lose -&gt; Republican Cory Gardner
-Democrats -- calls -&gt; Rep. Ruben Kihuen
-Democrats -- Make -&gt; Renewed Push
-Democrats -- Asks -&gt; Oversight Committee
+Democrats -- won -&gt; More Than A Dozen State Legislative Chambers
+Democrats -- Calls -&gt; Rep. Ruben Kihuen
+Democrats -- made -&gt; Renewed Push
+Democrats -- asked -&gt; Oversight Committee
 Democrats -- needs -&gt; A Landslide
-Democrats -- Are -&gt; Their Nadir
-Democrats -- Push -&gt; To End 'Corporate Culture
-Democrats -- Compete -&gt; Gubernatorial Primary
-Democrats -- Wanted -&gt; A New Committee
-Democrats -- gave -&gt; Betsy DeVos
-Democrats -- calls -&gt; Probe
-Democrats -- is -&gt; About Her
-Democrats -- Wanted -&gt; An Investigation
-Democrats -- presided -&gt; over an
-Democrats -- Tap -&gt; Rep. Jamie Raskin
-Democrats -- Coming -&gt; Short But Outperform Expectations
-Democrats -- calls -&gt; Cuomo
-Democrats -- Welcome, Supporting -&gt; Biden
-Democrats -- Are -&gt; their worst electoral position
-Chuck Schumer -- Warns, Be -&gt; Democrats
-Chuck Schumer -- Vows -&gt; Trump
-Liberals -- puts -&gt; Democrats
-A candidate -- is -&gt; Democrats
-Tehran -- seeing -&gt; Democrats
-This Billionaire Environmental Activist -- Picks -&gt; Democrats
-Pennsylvania Republican -- Wanted -&gt; Democrats
-Hugh Hewitt -- backed -&gt; Democrats
-California Assembly Member Roger Hernandez -- challenging -&gt; Democrats
+Democrats -- is -&gt; Their Nadir
+Democrats -- Calls -&gt; Probe
+Democrats -- Want -&gt; Investigations
+Democrats -- Comes -&gt; Short But Outperform Expectations
+Democrats -- Supporting -&gt; Biden's Decision
+Democrats -- Participating -&gt; Trump's Voter Fraud Investigation
+Democrats -- of -&gt; Suspected Russian Role
+Democrats -- is -&gt; their worst electoral position
+Republicans Flip Virginia House -- to -&gt; Democrats
+good news -- for -&gt; Democrats
+Tehran -- see -&gt; Democrats
+the Ohio Republican's slam -- of -&gt; Democrats
+a bitter partisan battle -- With -&gt; Democrats
+This Billionaire Environmental Activist -- picked -&gt; Democrats
+Pennsylvania Republican -- Want -&gt; Democrats
+Inaugural Address Worthy -- of -&gt; Democrats
+Hugh Hewitt -- Backs -&gt; Democrats
+Roughly 40 percent -- of -&gt; Democrats
 </pre>
 </div>
 </div>
@@ -3037,9 +3393,6 @@ California Assembly Member Roger Hernandez -- challenging -&gt; Democrats
 </div>
 </div> <!-- jp-Notebook -->
 </div> <!-- jupyter-wrapper -->
-<script type="application/vnd.jupyter.widget-state+json">
-{"state": {"9b0448dd8965478fbc61ecb25459d7f4": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets\/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets\/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets\/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "6a14b0c239844796ae21ccec402d7c5f": {"model_name": "ProgressStyleModel", "model_module": "@jupyter-widgets\/controls", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets\/controls", "_model_module_version": "2.0.0", "_model_name": "ProgressStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets\/base", "_view_module_version": "2.0.0", "_view_name": "StyleView", "bar_color": null, "description_width": ""}}, "9f2a4018b9784cec91f282edd906111d": {"model_name": "FloatProgressModel", "model_module": "@jupyter-widgets\/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets\/controls", "_model_module_version": "2.0.0", "_model_name": "FloatProgressModel", "_view_count": null, "_view_module": "@jupyter-widgets\/controls", "_view_module_version": "2.0.0", "_view_name": "ProgressView", "bar_style": "success", "description": "", "description_allow_html": false, "layout": "IPY_MODEL_9b0448dd8965478fbc61ecb25459d7f4", "max": 5000.0, "min": 0.0, "orientation": "horizontal", "style": "IPY_MODEL_6a14b0c239844796ae21ccec402d7c5f", "tabbable": null, "tooltip": null, "value": 5000.0}}, "5efc12770e594386b014051fed397968": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets\/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets\/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets\/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "f7bac8c7ebf243359af75f8708f473ce": {"model_name": "HTMLStyleModel", "model_module": "@jupyter-widgets\/controls", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets\/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets\/base", "_view_module_version": "2.0.0", "_view_name": "StyleView", "background": null, "description_width": "", "font_size": null, "text_color": null}}, "2fbcfe18a77f46509a805f819ee7dee9": {"model_name": "HTMLModel", "model_module": "@jupyter-widgets\/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets\/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets\/controls", "_view_module_version": "2.0.0", "_view_name": "HTMLView", "description": "", "description_allow_html": false, "layout": "IPY_MODEL_5efc12770e594386b014051fed397968", "placeholder": "\u200b", "style": "IPY_MODEL_f7bac8c7ebf243359af75f8708f473ce", "tabbable": null, "tooltip": null, "value": "Extracting\u2007triplets:\u2007100%"}}, "d0192aab89114f6193573646d84e8e77": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets\/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets\/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets\/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "b8d43147535c496e80c5704ebb9392bb": {"model_name": "HTMLStyleModel", "model_module": "@jupyter-widgets\/controls", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets\/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets\/base", "_view_module_version": "2.0.0", "_view_name": "StyleView", "background": null, "description_width": "", "font_size": null, "text_color": null}}, "80a244fe5351490c806310268c5b098b": {"model_name": "HTMLModel", "model_module": "@jupyter-widgets\/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets\/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets\/controls", "_view_module_version": "2.0.0", "_view_name": "HTMLView", "description": "", "description_allow_html": false, "layout": "IPY_MODEL_d0192aab89114f6193573646d84e8e77", "placeholder": "\u200b", "style": "IPY_MODEL_b8d43147535c496e80c5704ebb9392bb", "tabbable": null, "tooltip": null, "value": "\u20075000\/5000\u2007[00:16&lt;00:00,\u2007385.11it\/s]"}}, "3096f44a139c42f0be0056af12191918": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets\/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets\/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets\/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "aca9465cc613423195e884d65c7469e6": {"model_name": "HBoxModel", "model_module": "@jupyter-widgets\/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets\/controls", "_model_module_version": "2.0.0", "_model_name": "HBoxModel", "_view_count": null, "_view_module": "@jupyter-widgets\/controls", "_view_module_version": "2.0.0", "_view_name": "HBoxView", "box_style": "", "children": ["IPY_MODEL_2fbcfe18a77f46509a805f819ee7dee9", "IPY_MODEL_9f2a4018b9784cec91f282edd906111d", "IPY_MODEL_80a244fe5351490c806310268c5b098b"], "layout": "IPY_MODEL_3096f44a139c42f0be0056af12191918", "tabbable": null, "tooltip": null}}}, "version_major": 2, "version_minor": 0}
-</script>
 
         <style>
         ['pre { line-height: 125%; }\ntd.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }\nspan.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }\ntd.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }\nspan.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }\n.highlight-ipynb .hll { background-color: var(--jp-cell-editor-active-background) }\n.highlight-ipynb { background: var(--jp-cell-editor-background); color: var(--jp-mirror-editor-variable-color) }\n.highlight-ipynb .c { color: var(--jp-mirror-editor-comment-color); font-style: italic } /* Comment */\n.highlight-ipynb .err { color: var(--jp-mirror-editor-error-color) } /* Error */\n.highlight-ipynb .k { color: var(--jp-mirror-editor-keyword-color); font-weight: bold } /* Keyword */\n.highlight-ipynb .o { color: var(--jp-mirror-editor-operator-color); font-weight: bold } /* Operator */\n.highlight-ipynb .p { color: var(--jp-mirror-editor-punctuation-color) } /* Punctuation */\n.highlight-ipynb .ch { color: var(--jp-mirror-editor-comment-color); font-style: italic } /* Comment.Hashbang */\n.highlight-ipynb .cm { color: var(--jp-mirror-editor-comment-color); font-style: italic } /* Comment.Multiline */\n.highlight-ipynb .cp { color: var(--jp-mirror-editor-comment-color); font-style: italic } /* Comment.Preproc */\n.highlight-ipynb .cpf { color: var(--jp-mirror-editor-comment-color); font-style: italic } /* Comment.PreprocFile */\n.highlight-ipynb .c1 { color: var(--jp-mirror-editor-comment-color); font-style: italic } /* Comment.Single */\n.highlight-ipynb .cs { color: var(--jp-mirror-editor-comment-color); font-style: italic } /* Comment.Special */\n.highlight-ipynb .kc { color: var(--jp-mirror-editor-keyword-color); font-weight: bold } /* Keyword.Constant */\n.highlight-ipynb .kd { color: var(--jp-mirror-editor-keyword-color); font-weight: bold } /* Keyword.Declaration */\n.highlight-ipynb .kn { color: var(--jp-mirror-editor-keyword-color); font-weight: bold } /* Keyword.Namespace */\n.highlight-ipynb .kp { color: var(--jp-mirror-editor-keyword-color); font-weight: bold } /* Keyword.Pseudo */\n.highlight-ipynb .kr { color: var(--jp-mirror-editor-keyword-color); font-weight: bold } /* Keyword.Reserved */\n.highlight-ipynb .kt { color: var(--jp-mirror-editor-keyword-color); font-weight: bold } /* Keyword.Type */\n.highlight-ipynb .m { color: var(--jp-mirror-editor-number-color) } /* Literal.Number */\n.highlight-ipynb .s { color: var(--jp-mirror-editor-string-color) } /* Literal.String */\n.highlight-ipynb .ow { color: var(--jp-mirror-editor-operator-color); font-weight: bold } /* Operator.Word */\n.highlight-ipynb .pm { color: var(--jp-mirror-editor-punctuation-color) } /* Punctuation.Marker */\n.highlight-ipynb .w { color: var(--jp-mirror-editor-variable-color) } /* Text.Whitespace */\n.highlight-ipynb .mb { color: var(--jp-mirror-editor-number-color) } /* Literal.Number.Bin */\n.highlight-ipynb .mf { color: var(--jp-mirror-editor-number-color) } /* Literal.Number.Float */\n.highlight-ipynb .mh { color: var(--jp-mirror-editor-number-color) } /* Literal.Number.Hex */\n.highlight-ipynb .mi { color: var(--jp-mirror-editor-number-color) } /* Literal.Number.Integer */\n.highlight-ipynb .mo { color: var(--jp-mirror-editor-number-color) } /* Literal.Number.Oct */\n.highlight-ipynb .sa { color: var(--jp-mirror-editor-string-color) } /* Literal.String.Affix */\n.highlight-ipynb .sb { color: var(--jp-mirror-editor-string-color) } /* Literal.String.Backtick */\n.highlight-ipynb .sc { color: var(--jp-mirror-editor-string-color) } /* Literal.String.Char */\n.highlight-ipynb .dl { color: var(--jp-mirror-editor-string-color) } /* Literal.String.Delimiter */\n.highlight-ipynb .sd { color: var(--jp-mirror-editor-string-color) } /* Literal.String.Doc */\n.highlight-ipynb .s2 { color: var(--jp-mirror-editor-string-color) } /* Literal.String.Double */\n.highlight-ipynb .se { color: var(--jp-mirror-editor-string-color) } /* Literal.String.Escape */\n.highlight-ipynb .sh { color: var(--jp-mirror-editor-string-color) } /* Literal.String.Heredoc */\n.highlight-ipynb .si { color: var(--jp-mirror-editor-string-color) } /* Literal.String.Interpol */\n.highlight-ipynb .sx { color: var(--jp-mirror-editor-string-color) } /* Literal.String.Other */\n.highlight-ipynb .sr { color: var(--jp-mirror-editor-string-color) } /* Literal.String.Regex */\n.highlight-ipynb .s1 { color: var(--jp-mirror-editor-string-color) } /* Literal.String.Single */\n.highlight-ipynb .ss { color: var(--jp-mirror-editor-string-color) } /* Literal.String.Symbol */\n.highlight-ipynb .il { color: var(--jp-mirror-editor-number-color) } /* Literal.Number.Integer.Long */']
@@ -3103,7 +3456,7 @@ California Assembly Member Roger Hernandez -- challenging -&gt; Democrats
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

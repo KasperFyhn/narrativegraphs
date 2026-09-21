@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://kasperfyhn.github.io/narrativegraphs/notebooks/categories/">
+        <link rel="canonical" href="https://kasperfyhn.github.io/narrativegraphs/notebooks/llmextraction/">
       
       
-        <link rel="prev" href="../demo/">
+        <link rel="prev" href="../categories/">
       
       
-        <link rel="next" href="../llmextraction/">
+        <link rel="next" href="../../api/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Categories metadata - narrativegraphs</title>
+        <title>Triplet extraction with LLMs - narrativegraphs</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#categories-metadata" class="md-skip">
+        <a href="#triplet-extraction-with-llms" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Categories metadata
+              Triplet extraction with LLMs
             
           </span>
         </div>
@@ -673,37 +673,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Categories metadata
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../categories/" class="md-nav__link">
         
   
   
@@ -719,59 +692,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#single-level-single-labels" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Single level, single labels
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#single-level-multiple-labels" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Single level, multiple labels
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#multiple-levels-variable-levels" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Multiple levels, variable levels
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -781,10 +701,19 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../llmextraction/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -800,6 +729,7 @@
   
 
       </a>
+      
     </li>
   
 
@@ -1204,47 +1134,6 @@
   
     
   
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#single-level-single-labels" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Single level, single labels
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#single-level-multiple-labels" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Single level, multiple labels
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#multiple-levels-variable-levels" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Multiple levels, variable levels
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
   
 </nav>
                   </div>
@@ -1985,34 +1874,34 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </style>
 <!-- End of mermaid configuration --><div class="jupyter-wrapper">
 <div class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=64f3bb3fc58173fb">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=a6bffb817ccfaea0">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h1 id="categories-metadata">Categories metadata<a class="anchor-link" href="#categories-metadata">¶</a></h1><p>When you fit a <code>NarrativeGraph</code> object, the <code>categories</code> argument can be given in many different ways. This is because the system supports various levels of categorization.</p>
+<h1 id="triplet-extraction-with-llms">Triplet extraction with LLMs<a class="anchor-link" href="#triplet-extraction-with-llms">¶</a></h1><p><code>narrativegraphs</code> ships with a component that takes natural language instructions for doing triplet extraction of the entities and relations that you are interested in. An <code>LlmTripletExtractor</code> is created with instructions and passed to the <code>NarrativeGraph</code> object on creation.</p>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=9f8f312c9ab58747">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=setup-deps">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="single-level-single-labels">Single level, single labels<a class="anchor-link" href="#single-level-single-labels">¶</a></h2><p>The simplest case is when you have on type of category. That could be the newspaper section that a document is from. This is given as a single list with a single label per category.</p>
+<p>This notebook downloads its text with <code>gutenbergpy</code>. If you are running it outside the repository, install it first: <code>pip install gutenbergpy</code>.</p>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=1d7d7dc624374110">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=54cca7091f2e4f86">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [1]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [7]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-1">
@@ -2025,32 +1914,43 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">single_level_single_label</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"Politics"</span><span class="p">,</span> <span class="s2">"Sports"</span><span class="p">,</span> <span class="s2">"Food"</span><span class="p">]</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gutenbergpy.textget</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_text_by_id</span><span class="p">,</span> <span class="n">strip_headers</span>
+
+<span class="c1"># first, let us fetch something as documents</span>
+<span class="n">raw_text</span> <span class="o">=</span> <span class="n">get_text_by_id</span><span class="p">(</span><span class="mi">1342</span><span class="p">)</span>  <span class="c1"># Pride &amp; Prejudice by Jane Austen</span>
+<span class="n">clean_text</span> <span class="o">=</span> <span class="n">strip_headers</span><span class="p">(</span><span class="n">raw_text</span><span class="p">)</span>
+<span class="n">decoded_text</span> <span class="o">=</span> <span class="n">clean_text</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+<span class="n">splitter</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\n</span><span class="si">{4}</span><span class="s2">(?:Chapter|CHAPTER) [IVX]+\."</span><span class="p">)</span>
+<span class="n">chapters</span> <span class="o">=</span> <span class="n">splitter</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">decoded_text</span><span class="p">)[</span><span class="mi">1</span><span class="p">:</span><span class="mi">3</span><span class="p">]</span>  <span class="c1"># just the first two chapters for demo purposes</span>
+<span class="n">ids</span><span class="p">,</span> <span class="n">paragraphs</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="p">[(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">j</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+                        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">chapters</span><span class="p">)</span>
+                        <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"</span><span class="se">\n\n</span><span class="s2">"</span><span class="p">))])</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-1">single_level_single_label = ["Politics", "Sports", "Food"]</div>
+<div class="clipboard-copy-txt" id="cell-1">import re
+from gutenbergpy.textget import get_text_by_id, strip_headers
+
+# first, let us fetch something as documents
+raw_text = get_text_by_id(1342)  # Pride &amp; Prejudice by Jane Austen
+clean_text = strip_headers(raw_text)
+decoded_text = clean_text.decode("utf-8")
+splitter = re.compile(r"\n{4}(?:Chapter|CHAPTER) [IVX]+\.")
+chapters = splitter.split(decoded_text)[1:3]  # just the first two chapters for demo purposes
+ids, paragraphs = zip(*[(f"{i}-{j}", p)
+                        for i, c in enumerate(chapters)
+                        for j, p in enumerate(c.split("\n\n"))])</div>
 </div>
 </div>
 </div>
 </div>
 </div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=1016f65e7e05fb32">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="single-level-multiple-labels">Single level, multiple labels<a class="anchor-link" href="#single-level-multiple-labels">¶</a></h2><p>A similar case is when you have one type of category, but where a single document can have multiple labels for that category. It could be newspaper thematic/topical tags. This is given as a single list with a list of labels for each document.</p>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=1586ef1ba5d5f6b5">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=initial_id">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [2]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [8]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-2">
@@ -2063,41 +1963,65 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">single_level_multi_label</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="p">[</span><span class="s2">"Politics"</span><span class="p">,</span> <span class="s2">"Celebrities"</span><span class="p">],</span>
-    <span class="p">[</span><span class="s2">"Sports"</span><span class="p">,</span> <span class="s2">"Celebrities"</span><span class="p">],</span>
-    <span class="p">[</span><span class="s2">"Sports"</span><span class="p">,</span> <span class="s2">"Food"</span><span class="p">]</span>
-<span class="p">]</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">narrativegraphs</span><span class="w"> </span><span class="kn">import</span> <span class="n">NarrativeGraph</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">narrativegraphs.nlp.triplets</span><span class="w"> </span><span class="kn">import</span> <span class="n">LlmTripletExtractor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">narrativegraphs.nlp.common.llm</span><span class="w"> </span><span class="kn">import</span> <span class="n">OpenAiCompatibleClient</span>
+
+<span class="n">extractor</span> <span class="o">=</span> <span class="n">LlmTripletExtractor</span><span class="p">(</span>
+<span class="w">    </span><span class="sd">"""The text is a paragraph from Pride &amp; Prejudice by Jane Austen.</span>
+
+<span class="sd">    Extract only character names as subjects and objects. Predicates must be verbs or contain verbs."""</span><span class="p">,</span>
+    <span class="n">llm</span><span class="o">=</span><span class="n">OpenAiCompatibleClient</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">"qwen/qwen3.5-9b"</span><span class="p">,</span> <span class="n">base_url</span><span class="o">=</span><span class="s2">"http://127.0.0.1:1234/v1"</span><span class="p">)</span>  <span class="c1"># Local LM Studio</span>
+<span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">NarrativeGraph</span><span class="p">(</span>
+    <span class="n">triplet_extractor</span><span class="o">=</span><span class="n">extractor</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">paragraphs</span><span class="p">,</span> <span class="n">doc_ids</span><span class="o">=</span><span class="n">ids</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-2">single_level_multi_label = [
-    ["Politics", "Celebrities"],
-    ["Sports", "Celebrities"],
-    ["Sports", "Food"]
-]</div>
+<div class="clipboard-copy-txt" id="cell-2">from narrativegraphs import NarrativeGraph
+from narrativegraphs.nlp.triplets import LlmTripletExtractor
+from narrativegraphs.nlp.common.llm import OpenAiCompatibleClient
+
+extractor = LlmTripletExtractor(
+    """The text is a paragraph from Pride &amp; Prejudice by Jane Austen.
+
+    Extract only character names as subjects and objects. Predicates must be verbs or contain verbs.""",
+    llm=OpenAiCompatibleClient(model="qwen/qwen3.5-9b", base_url="http://127.0.0.1:1234/v1")  # Local LM Studio
+)
+model = NarrativeGraph(
+    triplet_extractor=extractor,
+)
+model.fit(paragraphs, doc_ids=ids)</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>Extracting triplets:   0%|          | 0/77 [00:00&lt;?, ?it/s]</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child jp-OutputArea-executeResult">
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[8]:</div>
+<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
+<pre>&lt;narrativegraphs.graphs.NarrativeGraph at 0x3052c3920&gt;</pre>
 </div>
 </div>
 </div>
 </div>
 </div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=12288eb56513331a">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="multiple-levels-variable-levels">Multiple levels, variable levels<a class="anchor-link" href="#multiple-levels-variable-levels">¶</a></h2><p>The more complex case is when you have multiple categories, and each of these categories may behave differently. It could be the tags from above in one category (multi-label) and sentiment in another (single-label).</p>
-<p>This can be given in two ways: a dict with list values or a list with dict entries.</p>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=84a7380a4d3c6c16">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=1964b7b21827b29e">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [3]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [10]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-3">
@@ -2110,35 +2034,56 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">multi_level_multi_label</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">"section"</span><span class="p">:</span> <span class="p">[</span>
-        <span class="p">[</span><span class="s2">"Politics"</span><span class="p">,</span> <span class="s2">"Celebrities"</span><span class="p">],</span>
-        <span class="p">[</span><span class="s2">"Sports"</span><span class="p">,</span> <span class="s2">"Celebrities"</span><span class="p">],</span>
-        <span class="p">[</span><span class="s2">"Sports"</span><span class="p">,</span> <span class="s2">"Food"</span><span class="p">]</span>
-    <span class="p">],</span>
-    <span class="s2">"sentiment"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"positive"</span><span class="p">,</span> <span class="s2">"negative"</span><span class="p">,</span> <span class="s2">"positive"</span><span class="p">]</span>
-<span class="p">}</span>
-
-<span class="n">multi_level_multi_label</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="p">{</span><span class="s2">"section"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"Politics"</span><span class="p">,</span> <span class="s2">"Celebrities"</span><span class="p">],</span> <span class="s2">"sentiment"</span><span class="p">:</span> <span class="s2">"positive"</span><span class="p">},</span>
-    <span class="p">{</span><span class="s2">"section"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"Sports"</span><span class="p">,</span> <span class="s2">"Celebrities"</span><span class="p">],</span> <span class="s2">"sentiment"</span><span class="p">:</span> <span class="s2">"negative"</span><span class="p">},</span>
-    <span class="p">{</span><span class="s2">"section"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"Sports"</span><span class="p">,</span> <span class="s2">"Food"</span><span class="p">],</span> <span class="s2">"sentiment"</span><span class="p">:</span> <span class="s2">"positive"</span><span class="p">}</span>
-<span class="p">]</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">model</span><span class="o">.</span><span class="n">serve_visualizer</span><span class="p">()</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-3">multi_level_multi_label = {
-    "section": [
-        ["Politics", "Celebrities"],
-        ["Sports", "Celebrities"],
-        ["Sports", "Food"]
-    ],
-    "sentiment": ["positive", "negative", "positive"]
-}
-
-multi_level_multi_label = [
-    {"section": ["Politics", "Celebrities"], "sentiment": "positive"},
-    {"section": ["Sports", "Celebrities"], "sentiment": "negative"},
-    {"section": ["Sports", "Food"], "sentiment": "positive"}
-]</div>
+<div class="clipboard-copy-txt" id="cell-3">model.serve_visualizer()</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>INFO:     Started server process [66951]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8001 (Press CTRL+C to quit)
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [66951]
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=8a8b155d64e591e5">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="CodeMirror cm-s-jupyter">
+<div class="zeroclipboard-container">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-4">
+<div>
+<span class="notice" hidden="">Copied!</span>
+<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
+<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+</clipboard-copy>
+</div>
+<div class="highlight-ipynb hl-python"><pre><span></span>
+</pre></div>
+<div class="clipboard-copy-txt" id="cell-4"></div>
 </div>
 </div>
 </div>
