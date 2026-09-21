@@ -50,6 +50,9 @@ jobs:
         with:
           python-version: "3.10"
 
+      - name: List resolved versions
+        run: uv run --isolated --resolution lowest-direct uv pip list
+
       - name: Test setup
         run: uv run --isolated --resolution lowest-direct ./tests/setup.sh
 
