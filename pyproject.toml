@@ -54,23 +54,14 @@ dependencies = [
 [project.optional-dependencies]
 coref-fastcoref = ["fastcoref>=2.1.3"]
 
-# Corpora for the demo notebooks, scripts/ and examples/. Nothing in the
-# package imports these: they fetch the texts the demos are built from, so they
-# are only needed to run a demo or build the docs, not to use the library.
+[dependency-groups]
+# Fetch the corpora the demo notebooks, scripts/ and examples/ are built from.
+# Nothing in the package imports these.
 demo = [
     "kagglehub>=0.4.1",
     "gutenbergpy>=0.3.5"
 ]
 
-docs = [
-    "mkdocs>=1.5",
-    "mkdocs-material>=9.5",
-    "mkdocstrings[python]>=0.24",
-    "mkdocs-jupyter>=0.24",
-    "narrativegraphs[demo]"  # notebooks are executed at build time
-]
-
-[dependency-groups]
 dev = [
     "pytest>=8.0",
     "ruff==0.14.10",
@@ -78,6 +69,16 @@ dev = [
     "twine>=6.2.0",
     "pre-commit>=3.5",
     "pip>=23",  # `python -m spacy download` shells out to pip
+    "notebook>=7.0",  # Jupyter server to run the demo notebooks (brings ipykernel)
+    {include-group = "demo"},
+]
+
+docs = [
+    "mkdocs>=1.5",
+    "mkdocs-material>=9.5",
+    "mkdocstrings[python]>=0.24",
+    "mkdocs-jupyter>=0.24",
+    {include-group = "demo"},  # notebooks are executed at build time
 ]
 
 [project.urls]

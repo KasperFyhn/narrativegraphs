@@ -36,8 +36,10 @@ uv run pytest
 ## Building Documentation
 
 ```bash
-mkdocs serve
+uv run --group docs mkdocs serve
 ```
+
+The docs tooling lives in the `docs` dependency group, which `uv sync` does not install by default.
 
 ## Code Style
 

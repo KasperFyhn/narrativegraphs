@@ -2,13 +2,12 @@ import math
 from collections import Counter
 from typing import Iterable
 
-import nltk
-
 from narrativegraphs.nlp.common.spacy import ensure_spacy_model
 
 
 def _bigrams(tokens: list[str]):
-    return nltk.ngrams(tokens[:-1], 2)
+    tokens = tokens[:-1]
+    return zip(tokens, tokens[1:])
 
 
 class BigramFilter:
