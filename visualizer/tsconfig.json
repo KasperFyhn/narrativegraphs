@@ -15,10 +15,8 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "jsx": "react-jsx",
-    "outDir": "dist",
-    "paths": {
-      "@shared/*": ["../shared/*"]
-    }
+    "outDir": "dist"
   },
-  "include": ["src"]
+  "include": ["src"],
+  "references": [{ "path": "./tsconfig.node.json" }]
 }
