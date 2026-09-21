@@ -1,6 +1,12 @@
 default_stages: [pre-commit, pre-push]
 
 repos:
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.7.9
+    hooks:
+      - id: uv-lock
+        files: ^(pyproject\.toml|uv\.lock)$
+
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.14.10
     hooks:

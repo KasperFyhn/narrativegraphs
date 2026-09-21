@@ -9,7 +9,7 @@ jobs:
     uses: ./.github/workflows/ci.yml
 
   publish:
-    needs: ci  # Wait for all CI jobs (lint, test, build) to pass
+    needs: ci # Wait for all CI jobs (lint, test, build) to pass
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -25,4 +25,4 @@ jobs:
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-        run: twine upload dist/*
+        run: uvx twine upload dist/*

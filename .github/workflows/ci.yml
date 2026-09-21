@@ -2,9 +2,9 @@ name: Continuous Integration
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
   workflow_call:
 
 jobs:
@@ -13,36 +13,51 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Install ruff
-        run: pip install ruff
+      - uses: astral-sh/setup-uv@v5
 
       - name: Lint
-        run: ruff check .
+        run: uvx ruff check .
 
   test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ "3.10", "3.11", "3.12" ]
+        python-version: ["3.10", "3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@v5
         with:
+          enable-cache: true
           python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
-        run: pip install -e ".[dev]"
+        run: uv sync --locked
 
       - name: Test setup
-        run: ./tests/setup.sh
+        run: uv run ./tests/setup.sh
 
       - name: Test with pytest
-        run: pytest tests
+        run: uv run pytest tests
+
+  test-lowest:
+    # Keeps the lower bounds in pyproject.toml honest.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.10"
+
+      - name: List resolved versions
+        run: uv run --isolated --resolution lowest-direct uv pip list
+
+      - name: Test setup
+        run: uv run --isolated --resolution lowest-direct ./tests/setup.sh
+
+      - name: Test with pytest
+        run: uv run --isolated --resolution lowest-direct pytest tests
 
   build:
     runs-on: ubuntu-latest

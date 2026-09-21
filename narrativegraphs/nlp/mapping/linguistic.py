@@ -3,9 +3,6 @@ import logging
 from collections import Counter, defaultdict
 from typing import Callable, Literal, Sequence
 
-import nltk
-from nltk import SnowballStemmer, pos_tag, word_tokenize
-
 from narrativegraphs.nlp.common.spacy import ensure_spacy_model
 from narrativegraphs.nlp.mapping.common import Mapper
 
@@ -14,17 +11,25 @@ _logger = logging.getLogger("narrativegraphs.nlp.mapping.linguistic")
 NormalizerFn = Callable[[str], str]
 
 
+# nltk is imported inside the functions below: importing it eagerly costs over a
+# second, which would be paid by every `import narrativegraphs`.
 def _ensure_nltk_model(name: str):
+    import nltk
+
     nltk.download(name, quiet=True)
 
 
 @functools.lru_cache(maxsize=4096)
 def _pos_tagged_tokens(label: str):
+    from nltk import pos_tag, word_tokenize
+
     return pos_tag(word_tokenize(label))
 
 
 def snowball_normalizer(language: str = "english") -> NormalizerFn:
     """Returns a normalizer using NLTK's SnowballStemmer."""
+    from nltk import SnowballStemmer
+
     stemmer = SnowballStemmer(language)
     return stemmer.stem
 
@@ -124,6 +129,8 @@ class NormalizationMapper(Mapper):
 
     @staticmethod
     def _negative_length(label: str) -> int:
+        from nltk import word_tokenize
+
         return -len(word_tokenize(label))
 
     def _ranker(self, labels: list[str]) -> Callable[[str], tuple]:

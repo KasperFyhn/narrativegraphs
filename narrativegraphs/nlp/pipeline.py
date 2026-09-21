@@ -157,7 +157,6 @@ class Pipeline(_AbstractPipeline):
                 zip(doc_orms, extracted_triplets),
                 desc="Extracting triplets",
                 total=len(doc_orms),
-                disable=None,
             )
             for doc, doc_triplets in docs_and_triplets:
                 # Extract entities from the triplets, then record every
@@ -245,7 +244,6 @@ class CooccurrencePipeline(_AbstractPipeline):
                 zip(doc_orms, extracted_entities),
                 desc="Extracting entities",
                 total=len(doc_orms),
-                disable=None,
             )
             for doc, doc_entities in docs_and_entities:
                 # Add entity occurrences first, get lookup for efficient referencing
