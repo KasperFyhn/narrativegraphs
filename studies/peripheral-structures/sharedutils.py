@@ -374,7 +374,7 @@ def multi_spike_heatmap(df, save_path: str):
 
 
 def activation_score(comm, contexts):
-    """A score function to surface those micro-narratives that are the strongest
+    """A score function to surface those peripheral structures that are the strongest
     activated across their contexts"""
     members = {e.id for e in comm.members}
     scores = []
@@ -388,7 +388,7 @@ def activation_score(comm, contexts):
     return np.mean(scores)
 
 
-def slice_micro_narratives(
+def slice_peripheral_structures(
     comms_with_contexts, df, min_spread, max_spread, min_spikes, max_spikes
 ):
     sliced_df = df[
@@ -398,15 +398,17 @@ def slice_micro_narratives(
         & (df.spikes < max_spikes)
     ]
     print("Number of comms:", len(sliced_df))
-    micro_narratives = [comms_with_contexts[row[0]] for row in sliced_df.iterrows()]
-    micro_narratives.sort(key=lambda tpl: activation_score(*tpl), reverse=True)
-    return micro_narratives
+    peripheral_structures = [
+        comms_with_contexts[row[0]] for row in sliced_df.iterrows()
+    ]
+    peripheral_structures.sort(key=lambda tpl: activation_score(*tpl), reverse=True)
+    return peripheral_structures
 
 
-def print_micro_narratives(
+def print_peripheral_structures(
     comms_with_contexts, df, min_spread, max_spread, min_spikes, max_spikes
 ):
-    for comm, context in slice_micro_narratives(
+    for comm, context in slice_peripheral_structures(
         comms_with_contexts, df, min_spread, max_spread, min_spikes, max_spikes
     ):
         print_comm_with_contexts(comm, context)

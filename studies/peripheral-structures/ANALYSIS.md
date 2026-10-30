@@ -1,6 +1,6 @@
-# Micro-narrative analysis of _The Lord of the Rings_
+# Peripheral structure analysis of _The Lord of the Rings_
 
-In this analysis, we try to extract "micro-narratives" from _The Lord of the Rings_ (LotR). A narrative graph provides a macro-view of a text collection, in this case three books of one series. Using community detection on the graph with PMI as edge weightings, we can extract small communities where connections between rare entities are favored due to PMI's inflation of rare events.
+In this analysis, we try to extract peripheral structures from _The Lord of the Rings_ (LotR). A narrative graph provides a macro-view of a text collection, in this case three books of one series. Using community detection on the graph with PMI as edge weightings, we can extract small communities where connections between rare entities are favored due to PMI's inflation of rare events.
 
 Scripts run in order: `01` → `02` → `03` → `04` → `05` → `06` → `07`.
 
@@ -38,7 +38,7 @@ PMI is known to inflate for rare events. And more generally, it is higher for lo
 
 This means – one of the core hypotheses of this analysis – that if we weight edges in our graph with PMI and/or filter edges by PMI, we can surface the rare entity connections as well as particularly strong connections with the more frequent entities.
 
-We can sort of eyeball which area we are interested in: anything above `min_weight = 2.5` will on average retain half of connections in the 200–300 frequency area and therefore even more in the lower end.
+We can sort of eyeball which area we are interested in: anything above `min_weight = 3.5` will on average retain half of connections in the 100-150 frequency area and therefore even more in the lower end.
 
 ---
 
@@ -53,7 +53,7 @@ There are two hyperparameters:
 - **k**: the minimum size of a clique. The smaller, the more small cliques we get, but the more merged cliques in bigger communities we get.
 - **w**: the minimum weight of an edge, in our case PMI.
 
-A thing that tends to happen according to the authors of the method is that one giant community tends to show up that eats up a lot of smaller communities. This can be alleviated by tuning hyperparameters, but we may also interpret it differently: this giant community means that whatever micro-narratives are in there are not sufficiently delimited from the general narrative. We keep this community on the side and do not mix it in with the rest.
+A thing that tends to happen according to the authors of the method is that one giant community tends to show up that eats up a lot of smaller communities.
 
 We let `k=4` to allow for small meaningful communities. `k=2` essentially yields connected components (since it merges all connected nodes) and is therefore too small. `k=3` also results in too many cliques being merged into one giant community.
 
@@ -81,7 +81,7 @@ Quantifying overlap between the two methods shows that they produce quite differ
 
 ## Typology of communities (`06_typology_analysis.py`, `07_explore_communities.py`)
 
-Intuitively, micro-narratives can appear in a few ways, with these as reference points on a two-dimensional continuum:
+Intuitively, peripheral structures can appear in a few ways, with these as reference points on a two-dimensional continuum:
 
 1. Appear once
 2. Appear a few times in close vicinity
@@ -89,18 +89,18 @@ Intuitively, micro-narratives can appear in a few ways, with these as reference 
 4. Appear a few times with great distance
 5. Appear multiple times with great distance
 
-From the qualitative assessment, many communities appeared in just one short context snippet in one section of the book. These make up the bulk of the extracted micro-narratives.
+From the qualitative assessment, many communities appeared in just one short context snippet in one section of the book. These make up the bulk of the extracted peripheral structures.
 
 We operationalize:
 
 - **Spread**: floored log₁₀ of (max − min doc id + 1) — order of magnitude of the narrative span
 - **Spikes**: floored log₂ of unique document count — pair / few / multiple / many
 
-### Single-spike micro-narratives
+### Single-spike peripheral structures
 
 These appear to be small clusters of rather specific mentions of rare entities. When one thinks about it, it makes sense that these surface as communities in a PMI-weighted graph: they are the rare connections of rare entities.
 
-### Multi-spike micro-narratives
+### Multi-spike peripheral structures
 
 The spread of communities is highly comparable between methods, but Louvain communities tend to have fewer spikes than k-clique communities.
 

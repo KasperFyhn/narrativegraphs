@@ -1,4 +1,4 @@
-"""Typology of micro-narratives by spike count and temporal spread."""
+"""Typology of peripheral structures by spike count and temporal spread."""
 
 from contextlib import redirect_stdout
 
@@ -9,7 +9,7 @@ from sharedutils import (
     multi_spike_heatmap,
     output_path,
     print_comm_with_contexts,
-    print_micro_narratives,
+    print_peripheral_structures,
     spike_analysis,
 )
 
@@ -71,4 +71,4 @@ typology_cells = [
 for filename, k_args in typology_cells:
     with open(output_path(filename), "w") as f, redirect_stdout(f):
         print("--- k-clique ---")
-        print_micro_narratives(k_clique_comms_with_contexts, k_clique_df, *k_args)
+        print_peripheral_structures(k_clique_comms_with_contexts, k_clique_df, *k_args)
