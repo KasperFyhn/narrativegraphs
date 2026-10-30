@@ -151,8 +151,6 @@ class Pipeline(_AbstractPipeline):
                 extracted_triplets = self._triplet_extractor.batch_extract(
                     [d.text for d in doc_orms], n_cpu=self.n_cpu
                 )
-            # disable=None: a progress bar when someone is watching, silence
-            # when the output is piped to a file or a log.
             docs_and_triplets = tqdm(
                 zip(doc_orms, extracted_triplets),
                 desc="Extracting triplets",
@@ -161,9 +159,7 @@ class Pipeline(_AbstractPipeline):
             for doc, doc_triplets in docs_and_triplets:
                 # Extract entities from the triplets, then record every
                 # other mention of them the document makes: extractors only
-                # report the entities of the relations they found, and a
-                # generative model consolidates a relation stated several
-                # times into one.
+                # report the entities of the relations they found
                 entities = list(
                     {e for triplet in doc_triplets for e in [triplet.subj, triplet.obj]}
                 )
